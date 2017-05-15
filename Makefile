@@ -142,6 +142,7 @@ run_ncsim: tests build_ncsim
 	done ; \
 	irun \
 	-R \
+  -64bit		\
 	+test_info=$(test_info) \
 	+test_results=$(test_results) \
 	+imem_pattern=$(imem_pattern) \
@@ -182,6 +183,7 @@ build_ncsim: $(rtl_bld_dir)
 	irun \
 	-elaborate \
 	-64bit		\
+  -disable_sem2009 \
 	-verbose		\
 	-timescale 1ns/1ps		\
 	-incdir $(rtl_inc)		\
