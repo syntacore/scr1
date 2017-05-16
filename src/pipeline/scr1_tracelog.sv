@@ -191,9 +191,20 @@ end
 
 assign trace_update = update_pc_en | mprf_wr_en;
 
+int unsigned temp_fhandler;
+
 initial begin
     #1 hart.hextoa(fuse_mhartid);
 
+    //erase old logs 
+    temp_fhandler= $fopen({"trace_mprf_", hart, ".log"}, "w");
+    $fclose(temp_fhandler);
+    temp_fhandler = $fopen({"trace_mprf_diff_", hart, ".log"}, "w");
+    $fclose(temp_fhandler);
+    temp_fhandler = $fopen({"trace_csr_", hart, ".log"}, "w");
+    $fclose(temp_fhandler);
+
+    
 `ifdef SCR1_TRACE_LOG_FULL
     tracelog_full   = 1'b1;
 `else // SCR1_TRACE_LOG_FULL
@@ -213,8 +224,9 @@ always_ff @(negedge rst_n, posedge clk) begin
     end else begin
         // open file
         if ((trace_fhandler == 0) & tracelog_full) begin
-            trace_fhandler = $fopen({"trace_mprf_", hart, ".log"}, "w");
+            trace_fhandler = $fopen({"trace_mprf_", hart, ".log"}, "a+");
             // Write Header
+            $fwrite(trace_fhandler,  "\n");
             $fwrite(trace_fhandler,  "          Clk# ");
             $fwrite(trace_fhandler,  "Delay ");
             $fwrite(trace_fhandler,  " PC     ");
@@ -274,8 +286,9 @@ always_ff @(negedge rst_n, posedge clk) begin
     end else begin
         // open file
         if ((trace_fhandler_diff == 0) & ~tracelog_full) begin
-            trace_fhandler_diff = $fopen({"trace_mprf_diff_", hart, ".log"}, "w");
+            trace_fhandler_diff = $fopen({"trace_mprf_diff_", hart, ".log"}, "a+");
             // Write Header
+            $fwrite(trace_fhandler_diff,  "\n");
             $fwrite(trace_fhandler_diff,  "      Clk# ");
             $fwrite(trace_fhandler_diff,  "  PC ");
             $fwrite(trace_fhandler_diff,  "\n");
@@ -358,9 +371,10 @@ always_ff @(negedge rst_n, posedge clk) begin
     end else begin
         // open file
         if (trace_csr_fhandler == 0) begin
-            trace_csr_fhandler = $fopen({"trace_csr_", hart, ".log"}, "w");
+            trace_csr_fhandler = $fopen({"trace_csr_", hart, ".log"}, "a+");
 
             // Write Header
+            $fwrite(trace_csr_fhandler, "\n");
             $fwrite(trace_csr_fhandler, "        Clk#  ");
             $fwrite(trace_csr_fhandler, "  MSTATUS");
             $fwrite(trace_csr_fhandler, "    MTVEC");

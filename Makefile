@@ -7,6 +7,7 @@ XLEN := 32
 ARCH := IMC
 RVM := 1
 RVC := 1
+NCSIM_OPTS := ""
 # Testbench memory delay patterns (FFFFFFFF - no delay, 00000000 - random delay, 00000001 - max delay)
 imem_pattern := FFFFFFFF
 dmem_pattern := FFFFFFFF
@@ -98,7 +99,7 @@ tests_noext := $(addprefix $(bld_dir)/,$(tests_list))
 
 
 # Build
-.PHONY: clean build_vcs build_modelsim run_vcs run_modelsim tests
+.PHONY: clean build_vcs build_modelsim build_ncsim run_vcs run_modelsim run_ncsim tests
 
 default: run_modelsim
 
@@ -131,7 +132,23 @@ run_modelsim: tests build_modelsim
 	+dmem_pattern=$(dmem_pattern) \
 	work.scr1_top_tb
 
-
+run_ncsim: tests build_ncsim
+	cd $(rtl_bld_dir) ; \
+	printf "" > $(test_results) ; \
+	printf "" > $(test_info) ; \
+	for i in $(tests_noext) ; do \
+		sc_exit=$$( $(RISCV_READELF) $$i.elf | grep -w "sc_exit" | awk '{ print $$2 }' ) ; \
+		printf "%s.hex\t%s\n" "$$i" "$$sc_exit" >> $(test_info) ; \
+	done ; \
+	irun \
+	-R \
+  -64bit		\
+	+test_info=$(test_info) \
+	+test_results=$(test_results) \
+	+imem_pattern=$(imem_pattern) \
+	+dmem_pattern=$(dmem_pattern) \
+	$(NCSIM_OPTS) 
+  
 build_vcs: $(rtl_bld_dir)
 	cd $(rtl_bld_dir); \
 	vcs \
@@ -161,6 +178,22 @@ build_modelsim: $(rtl_bld_dir)
 	$(rtl_tb)/*.sv 						\
 	$(rtl_top)/*.sv
 
+build_ncsim: $(rtl_bld_dir)
+	cd $(rtl_bld_dir); \
+	irun \
+	-elaborate \
+	-64bit		\
+  -disable_sem2009 \
+	-verbose		\
+	-timescale 1ns/1ps		\
+	-incdir $(rtl_inc)		\
+	-debug		\
+	$(rtl_core)/*.sv 					\
+	$(rtl_primitives)/*.sv 				\
+	$(rtl_pipeline)/*.sv 				\
+	$(rtl_tb)/*.sv 						\
+	$(rtl_top)/*.sv           \
+	-top scr1_top_tb
 
 tests: $(tests_hex) $(tests_dump) $(tests_elf)
 
