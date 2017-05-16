@@ -151,6 +151,7 @@ int unsigned                        trace_fhandler;
 int unsigned                        trace_fhandler_diff;
 int                                 time_cnt2;
 string                              hart;
+string                              test_name;
 
 task trace_write_mprf;
     $fwrite(trace_fhandler,  "%12d ", time_cnt);
@@ -196,20 +197,22 @@ int unsigned temp_fhandler;
 initial begin
     #1 hart.hextoa(fuse_mhartid);
 
-    //erase old logs 
-    temp_fhandler= $fopen({"trace_mprf_", hart, ".log"}, "w");
-    $fclose(temp_fhandler);
-    temp_fhandler = $fopen({"trace_mprf_diff_", hart, ".log"}, "w");
-    $fclose(temp_fhandler);
-    temp_fhandler = $fopen({"trace_csr_", hart, ".log"}, "w");
-    $fclose(temp_fhandler);
-
-    
 `ifdef SCR1_TRACE_LOG_FULL
     tracelog_full   = 1'b1;
 `else // SCR1_TRACE_LOG_FULL
     tracelog_full   = 1'b0;
 `endif // SCR1_TRACE_LOG_FULL
+
+    // erase old logs
+    if (tracelog_full) begin
+        temp_fhandler= $fopen({"trace_mprf_", hart, ".log"}, "w");
+        $fclose(temp_fhandler);
+    end else begin
+        temp_fhandler = $fopen({"trace_mprf_diff_", hart, ".log"}, "w");
+        $fclose(temp_fhandler);
+    end
+    temp_fhandler = $fopen({"trace_csr_", hart, ".log"}, "w");
+    $fclose(temp_fhandler);
 end
 
 always_ff @(negedge rst_n, posedge clk) begin
@@ -226,7 +229,7 @@ always_ff @(negedge rst_n, posedge clk) begin
         if ((trace_fhandler == 0) & tracelog_full) begin
             trace_fhandler = $fopen({"trace_mprf_", hart, ".log"}, "a+");
             // Write Header
-            $fwrite(trace_fhandler,  "\n");
+            $fwrite(trace_fhandler,  "# Test: %s\n", test_name);
             $fwrite(trace_fhandler,  "          Clk# ");
             $fwrite(trace_fhandler,  "Delay ");
             $fwrite(trace_fhandler,  " PC     ");
@@ -288,7 +291,7 @@ always_ff @(negedge rst_n, posedge clk) begin
         if ((trace_fhandler_diff == 0) & ~tracelog_full) begin
             trace_fhandler_diff = $fopen({"trace_mprf_diff_", hart, ".log"}, "a+");
             // Write Header
-            $fwrite(trace_fhandler_diff,  "\n");
+            $fwrite(trace_fhandler_diff,  "# Test: %s\n", test_name);
             $fwrite(trace_fhandler_diff,  "      Clk# ");
             $fwrite(trace_fhandler_diff,  "  PC ");
             $fwrite(trace_fhandler_diff,  "\n");
@@ -374,7 +377,7 @@ always_ff @(negedge rst_n, posedge clk) begin
             trace_csr_fhandler = $fopen({"trace_csr_", hart, ".log"}, "a+");
 
             // Write Header
-            $fwrite(trace_csr_fhandler, "\n");
+            $fwrite(trace_csr_fhandler, "# Test: %s\n", test_name);
             $fwrite(trace_csr_fhandler, "        Clk#  ");
             $fwrite(trace_csr_fhandler, "  MSTATUS");
             $fwrite(trace_csr_fhandler, "    MTVEC");

@@ -13,8 +13,7 @@ la t0, sc_exit;  \
 jr	 t0;
 
 .pushsection sc_test_section, "ax"
-sc_exit: wfi;
-j sc_exit;
+sc_exit: j SIM_EXIT;
 .align 5
 .popsection
 #define sc_pass report_results(0x0)

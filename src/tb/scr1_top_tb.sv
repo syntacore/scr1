@@ -14,7 +14,8 @@ module scr1_top_tb ();
 //-------------------------------------------------------------------------------
 // Local parameters
 //-------------------------------------------------------------------------------
-localparam SCR1_MEM_POWER_SIZE  = 24;
+localparam                          SCR1_MEM_POWER_SIZE = 24;
+localparam logic [`SCR1_XLEN-1:0]   SCR1_EXIT_ADDR      = 32'h000000F8;
 
 //-------------------------------------------------------------------------------
 // Local signal declaration
@@ -65,12 +66,13 @@ logic                                   dmem_hready;
 logic   [SCR1_AHB_WIDTH-1:0]            dmem_hrdata;
 logic                                   dmem_hresp;
 
-logic [`SCR1_XLEN-1:0]                  sc_exit_addr;
-
 int unsigned                            f_results;
 int unsigned                            f_info;
 string                                  s_results;
 string                                  s_info;
+
+int unsigned                            tests_passed;
+int unsigned                            tests_total;
 
 
 always #5   clk     = ~clk;         // 100 MHz
@@ -99,14 +101,17 @@ initial begin
 
     forever begin
         if ($feof(f_info)) break;
-        $fscanf(f_info, "%s\t%h", i_memory_tb.stuff_file, sc_exit_addr);
-        $write("\033[0;34m---Test: %s  Exit address: 0x%h\033[0m\n", i_memory_tb.stuff_file, sc_exit_addr);
+        $fscanf(f_info, "%s\n", i_memory_tb.stuff_file);
+        i_top.i_core_top.i_pipe_top.i_tracelog.test_name = i_memory_tb.stuff_file;
+        $write("\033[0;34m---Test: %s\033[0m\n", i_memory_tb.stuff_file);
         reset();
         forever begin
             @(posedge clk);
-            if (i_top.i_core_top.i_pipe_top.curr_pc == sc_exit_addr) begin
+            if (i_top.i_core_top.i_pipe_top.curr_pc == SCR1_EXIT_ADDR) begin
                 bit test_pass;
                 test_pass = (i_top.i_core_top.i_pipe_top.i_pipe_mprf.mprf_int[10] == 0);
+                tests_total     += 1;
+                tests_passed    += test_pass;
                 $fwrite(f_results, "%s\t\t%s\n", i_memory_tb.stuff_file, (test_pass ? "PASS" : "__FAIL"));
                 if (test_pass) $write("\033[0;32mTest passed\033[0m\n");
                 else $write("\033[0;31mTest failed\033[0m\n");
@@ -114,6 +119,9 @@ initial begin
             end
         end
     end
+    $display("\n#--------------------------------------");
+    $display("# Summary: %0d/%0d tests passed", tests_passed, tests_total);
+    $display("#--------------------------------------\n");
     $fclose(f_info);
     $fclose(f_results);
     $finish();
