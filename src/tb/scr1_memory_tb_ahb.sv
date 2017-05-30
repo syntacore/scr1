@@ -18,8 +18,8 @@ module scr1_memory_tb_ahb #(
     input   integer                                 dmem_req_ack_stall_in,
 
     // Instruction Memory Interface
-    input   logic   [3:0]                           imem_hprot,
-    input   logic   [2:0]                           imem_hburst,
+    // input   logic   [3:0]                           imem_hprot,
+    // input   logic   [2:0]                           imem_hburst,
     input   logic   [2:0]                           imem_hsize,
     input   logic   [1:0]                           imem_htrans,
     input   logic   [SCR1_AHB_WIDTH-1:0]            imem_haddr,
@@ -28,8 +28,8 @@ module scr1_memory_tb_ahb #(
     output  logic                                   imem_hresp,
 
     // Memory Interface
-    input   logic   [3:0]                           dmem_hprot,
-    input   logic   [2:0]                           dmem_hburst,
+    // input   logic   [3:0]                           dmem_hprot,
+    // input   logic   [2:0]                           dmem_hburst,
     input   logic   [2:0]                           dmem_hsize,
     input   logic   [1:0]                           dmem_htrans,
     input   logic   [SCR1_AHB_WIDTH-1:0]            dmem_haddr,
@@ -102,7 +102,7 @@ begin
                                         ? (w_hazard[i])
                                             ? w_data[(i*8)+:8]
                                             : mirage[addr_mirage+i]
-                                        : 'x;;
+                                        : 'x;
         end
     end
     return tmp;

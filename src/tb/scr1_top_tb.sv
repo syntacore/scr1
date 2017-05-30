@@ -83,6 +83,19 @@ task reset();
     #1 rst_n    = 1;
 endtask
 
+`ifdef SCR1_DBGC_EN
+initial begin
+    trst_n  = 1'b0;
+    tck     = 1'b0;
+    tdi     = 1'b0;
+    #900ns trst_n   = 1'b1;
+    #500ns tms      = 1'b1;
+    #800ns tms      = 1'b0;
+    #500ns trst_n   = 1'b0;
+    #100ns tms      = 1'b1;
+end
+`endif // SCR1_DBGC_EN
+
 //-------------------------------------------------------------------------------
 // Run tests
 //-------------------------------------------------------------------------------
@@ -106,7 +119,7 @@ initial begin
         $write("\033[0;34m---Test: %s\033[0m\n", i_memory_tb.stuff_file);
         reset();
         forever begin
-            @(posedge clk);
+            @(posedge clk)
             if (i_top.i_core_top.i_pipe_top.curr_pc == SCR1_EXIT_ADDR) begin
                 bit test_pass;
                 test_pass = (i_top.i_core_top.i_pipe_top.i_pipe_mprf.mprf_int[10] == 0);
@@ -193,8 +206,8 @@ scr1_memory_tb_ahb #(
     .dmem_req_ack_stall_in  (imem_req_ack_stall),
 
     // Instruction Memory Interface
-    .imem_hprot             (imem_hprot ),
-    .imem_hburst            (imem_hburst),
+    // .imem_hprot             (imem_hprot ),
+    // .imem_hburst            (imem_hburst),
     .imem_hsize             (imem_hsize ),
     .imem_htrans            (imem_htrans),
     .imem_haddr             (imem_haddr ),
@@ -203,8 +216,8 @@ scr1_memory_tb_ahb #(
     .imem_hresp             (imem_hresp ),
 
     // Memory Interface
-    .dmem_hprot             (dmem_hprot ),
-    .dmem_hburst            (dmem_hburst),
+    // .dmem_hprot             (dmem_hprot ),
+    // .dmem_hburst            (dmem_hburst),
     .dmem_hsize             (dmem_hsize ),
     .dmem_htrans            (dmem_htrans),
     .dmem_haddr             (dmem_haddr ),
