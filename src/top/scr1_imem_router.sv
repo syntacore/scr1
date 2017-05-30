@@ -167,7 +167,7 @@ assign port1_addr  = (port_sel) ? imem_addr : 'x;
 //-------------------------------------------------------------------------------
 
 SCR1_SVA_IMEM_RT_XCHECK : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     imem_req |-> !$isunknown({port_sel, imem_cmd})
     ) else $error("IMEM router Error: unknown values");
 

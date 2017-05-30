@@ -30,10 +30,12 @@ module scr1_pipe_exu (
     input   logic                               idu2exu_req,            // Request form IDU to EXU
     output  logic                               exu2idu_rdy,            // EXU ready for new data from IDU
     input   type_scr1_exu_cmd_s                 idu2exu_cmd,            // EXU command
+`ifndef SCR1_EXU_STAGE_BYPASS
     input   logic                               idu2exu_use_rs1,        // Clock gating on rs1_addr field
     input   logic                               idu2exu_use_rs2,        // Clock gating on rs2_addr field
     input   logic                               idu2exu_use_rd,         // Clock gating on rd_addr field
     input   logic                               idu2exu_use_imm,        // Clock gating on imm field
+`endif // SCR1_EXU_STAGE_BYPASS
 
     // EXU <-> MPRF interface
     output  logic [`SCR1_MPRF_ADDR_WIDTH-1:0]   exu2mprf_rs1_addr,      // MPRF rs1 read address
@@ -715,34 +717,34 @@ assign update_pc    = new_pc_req ? new_pc : inc_pc;
 // X checks
 
 SCR1_SVA_EXU_XCHECK_CTRL : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     !$isunknown({idu2exu_req, csr2exu_irq, csr2exu_irq_pen, lsu_req, lsu_rdy, exc_req})
     ) else $error("EXU Error: unknown control values");
 
 SCR1_SVA_EXU_XCHECK_QUEUE : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     idu2exu_req |-> !$isunknown(idu2exu_cmd)
     ) else $error("EXU Error: unknown values in queue");
 
 SCR1_SVA_EXU_XCHECK_MPRF_WDATA : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     exu2mprf_w_req |-> !$isunknown({exu2mprf_rd_addr, exu2mprf_rd_data})
     ) else $error("EXU Error: unknown values for write to MPRF");
 
 SCR1_SVA_EXU_XCHECK_CSR_RDATA : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     exu2csr_r_req |-> !$isunknown({csr2exu_r_data, csr2exu_rw_exc})
     ) else $error("EXU Error: unknown values from CSR");
 
 // Behavior checks
 
 SCR1_SVA_EXU_ONEHOT : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     $onehot0({exu_queue.jump_req, exu_queue.branch_req, lsu_req})
     ) else $error("EXU Error: illegal combination of control signals");
 
 SCR1_SVA_EXU_ONEHOT_EXC : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     exu_queue_vd |->
     $onehot0({exu_queue.exc_req, lsu_exc, csr2exu_rw_exc
 `ifndef SCR1_RVC_EXT
@@ -753,7 +755,7 @@ SCR1_SVA_EXU_ONEHOT_EXC : assert property (
 
 `ifdef SCR1_BRKM_EN
 SCR1_SVA_EXU_BRKPT : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     brkpt_hw |-> brkpt
     ) else $error("EXU Error: brkpt is 0");
 `endif // SCR1_BRKM_EN

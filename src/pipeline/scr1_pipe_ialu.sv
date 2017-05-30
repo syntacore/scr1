@@ -537,12 +537,12 @@ end
 // X checks
 
 SCR1_SVA_IALU_XCHECK : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     !$isunknown({ialu_vd, curr_state})
     ) else $error("IALU Error: unknown values");
 
 SCR1_SVA_IALU_XCHECK_QUEUE : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     ialu_vd |-> !$isunknown({ialu_op1, ialu_op2, ialu_cmd})
     ) else $error("IALU Error: unknown values in queue");
 
@@ -550,42 +550,42 @@ SCR1_SVA_IALU_XCHECK_QUEUE : assert property (
 
  `ifndef SCR1_FAST_MUL
 SCR1_SVA_IALU_ILL_ITER_OPS : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     $onehot0({mul_vd, div_vd})
     ) else $error("IALU Error: illegal combination of control signals");
  `endif // SCR1_FAST_MUL
 
 SCR1_SVA_IALU_ILL_STATE : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     $onehot0({~ialu_vd, (curr_state == SCR1_IALU_FSM_ITER), (curr_state == SCR1_IALU_FSM_CORR)})
     ) else $error("IALU Error: illegal state");
 
 SCR1_SVA_IALU_JUMP_FROM_IDLE : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     ((curr_state == SCR1_IALU_FSM_IDLE) & (~ialu_vd | ~iter_req))
     |=> (curr_state == SCR1_IALU_FSM_IDLE)
     ) else $error("EXU Error: illegal jump from IDLE state");
 
 SCR1_SVA_IALU_IDLE_TO_ITER : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     ((curr_state == SCR1_IALU_FSM_IDLE) & ialu_vd & iter_req)
     |=> (curr_state == SCR1_IALU_FSM_ITER)
     ) else $error("EXU Error: illegal change state form IDLE to ITER");
 
 SCR1_SVA_IALU_JUMP_FROM_ITER : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     ((curr_state == SCR1_IALU_FSM_ITER) & ~iter_rdy)
     |=> (curr_state == SCR1_IALU_FSM_ITER)
     ) else $error("EXU Error: illegal jump from ITER state");
 
 SCR1_SVA_IALU_ITER_TO_IDLE : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     ((curr_state == SCR1_IALU_FSM_ITER) & iter_rdy & ~corr_req)
     |=> (curr_state == SCR1_IALU_FSM_IDLE)
     ) else $error("EXU Error: illegal state change ITER to IDLE");
 
 SCR1_SVA_IALU_ITER_TO_CORR : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     ((curr_state == SCR1_IALU_FSM_ITER) & iter_rdy & corr_req)
     |=> ((curr_state == SCR1_IALU_FSM_CORR) ##1 (curr_state == SCR1_IALU_FSM_IDLE))
     ) else $error("EXU Error: illegal state change ITER to CORR");

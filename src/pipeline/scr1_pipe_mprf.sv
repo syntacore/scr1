@@ -60,7 +60,7 @@ end
 //-------------------------------------------------------------------------------
 
 SCR1_SVA_MPRF_WRITEX : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     exu2mprf_w_req |-> !$isunknown({exu2mprf_rd_addr, (|exu2mprf_rd_addr ? exu2mprf_rd_data : `SCR1_XLEN'd0)})
     ) else $error("MPRF error: unknown values");
 

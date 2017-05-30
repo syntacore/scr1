@@ -781,28 +781,32 @@ assign csr2brkm_wdata   = exu2csr_w_data;
 // X checks
 
 SCR1_SVA_CSR_XCHECK_CTRL : assert property (
-    @(posedge clk) disable iff (~rst_n)
-    !$isunknown({exu2csr_r_req, exu2csr_w_req, exu2csr_take_irq, exu2csr_take_exc, exu2csr_take_eret, instret_nexc})
+    @(negedge clk) disable iff (~rst_n)
+    !$isunknown({exu2csr_r_req, exu2csr_w_req, exu2csr_take_irq, exu2csr_take_exc, exu2csr_take_eret
+`ifndef SCR1_CSR_REDUCED_CNT
+    ,instret_nexc
+`endif // SCR1_CSR_REDUCED_CNT
+    })
     ) else $error("CSR Error: unknown control values");
 
 SCR1_SVA_CSR_XCHECK_READ : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     exu2csr_r_req |-> !$isunknown({exu2csr_rw_addr, csr2exu_r_data, csr2exu_rw_exc})
     ) else $error("CSR Error: unknown control values");
 
 SCR1_SVA_CSR_XCHECK_WRITE : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     exu2csr_w_req |-> !$isunknown({exu2csr_rw_addr, exu2csr_w_cmd, exu2csr_w_data, csr2exu_rw_exc})
     ) else $error("CSR Error: unknown control values");
 
 `ifdef SCR1_IPIC_EN
 SCR1_SVA_CSR_XCHECK_READ_IPIC : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     csr2ipic_r_req |-> !$isunknown({csr2ipic_addr, ipic2csr_rdata})
     ) else $error("CSR Error: unknown control values");
 
 SCR1_SVA_CSR_XCHECK_WRITE_IPIC : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     csr2ipic_w_req |-> !$isunknown({csr2ipic_addr, csr2ipic_wdata})
     ) else $error("CSR Error: unknown control values");
 `endif // SCR1_IPIC_EN
@@ -810,43 +814,43 @@ SCR1_SVA_CSR_XCHECK_WRITE_IPIC : assert property (
 // Behavior checks
 
 SCR1_SVA_CSR_ERET : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     exu2csr_take_eret |=> ($stable(csr_mepc) & $stable(csr_mbadaddr))
     ) else $error("CSR Error: ERET wrong behavior");
 
 SCR1_SVA_CSR_ERET_IRQ : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     (exu2csr_take_eret & exu2csr_take_irq & csr_mstatus_ie1) |=>
     (~csr_mstatus_ie0 & $stable(csr_mepc) & (csr_mcause_i==1'b1) & (curr_pc==SCR1_MTRAP_VECTOR))
     ) else $error("CSR Error: wrong ERET+IRQ when IE1==1");
 
 SCR1_COV_CSR_ERET_IRQ_IE1 : cover property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     (exu2csr_take_eret & exu2csr_take_irq & csr_mstatus_ie1)
 );
 
 SCR1_SVA_CSR_EXC_IRQ : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     (exu2csr_take_exc & exu2csr_take_irq) |=>
     (~csr_mstatus_ie0 & ~($stable(csr_mepc)) & (~csr_mcause_i) & (curr_pc==SCR1_MTRAP_VECTOR))
     ) else $error("CSR Error: wrong EXC+IRQ");
 
 SCR1_SVA_CSR_EVENTS : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     $onehot0({e_irq, e_exc, e_eret, e_eret_irq})
     ) else $error("CSR Error: more than one event at a time");
 
 SCR1_SVA_CSR_RW_EXC : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     csr2exu_rw_exc |-> (exu2csr_w_req | exu2csr_r_req)
     ) else $error("CSR Error: impossible exception");
 
 SCR1_SVA_CSR_TIME_INC : assert property (
     @(
 `ifndef SCR1_CLKCTRL_EN
-posedge clk
+negedge clk
 `else // SCR1_CLKCTRL_EN
-posedge clk_alw_on
+negedge clk_alw_on
 `endif // SCR1_CLKCTRL_EN
     ) disable iff (~rst_n)
     (time_posedge & ~csr_time_up
@@ -862,9 +866,9 @@ posedge clk_alw_on
 SCR1_SVA_CSR_TIME_STOP : assert property (
     @(
 `ifndef SCR1_CLKCTRL_EN
-posedge clk
+negedge clk
 `else // SCR1_CLKCTRL_EN
-posedge clk_alw_on
+negedge clk_alw_on
 `endif // SCR1_CLKCTRL_EN
     ) disable iff (~rst_n)
     ((~time_posedge
@@ -883,9 +887,9 @@ posedge clk_alw_on
 SCR1_SVA_CSR_CYCLE_INC : assert property (
     @(
 `ifndef SCR1_CLKCTRL_EN
-posedge clk
+negedge clk
 `else // SCR1_CLKCTRL_EN
-posedge clk_alw_on
+negedge clk_alw_on
 `endif // SCR1_CLKCTRL_EN
     ) disable iff (~rst_n)
     (1'b1
@@ -899,9 +903,9 @@ posedge clk_alw_on
 SCR1_SVA_CSR_CYCLE_STOP : assert property (
     @(
 `ifndef SCR1_CLKCTRL_EN
-posedge clk
+negedge clk
 `else // SCR1_CLKCTRL_EN
-posedge clk_alw_on
+negedge clk_alw_on
 `endif // SCR1_CLKCTRL_EN
     ) disable iff (~rst_n)
     (csr_mtimeclkset[SCR1_CSR_MTIMECLKSET_CYCLE_STOP_OFFSET])
@@ -910,7 +914,7 @@ posedge clk_alw_on
 `endif // SCR1_CSR_CNT_FLAG
 
 SCR1_SVA_CSR_INSTRET_INC : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     (instret_nexc
 `ifdef SCR1_CSR_CNT_FLAG
         & ~csr_mtimeclkset[SCR1_CSR_MTIMECLKSET_INSTRET_STOP_OFFSET]
@@ -919,7 +923,7 @@ SCR1_SVA_CSR_INSTRET_INC : assert property (
     ) else $error("CSR Error: INSTRET increment wrong behavior");
 
 SCR1_SVA_CSR_INSTRET_STOP : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     (~instret_nexc
 `ifdef SCR1_CSR_CNT_FLAG
     | csr_mtimeclkset[SCR1_CSR_MTIMECLKSET_INSTRET_STOP_OFFSET]

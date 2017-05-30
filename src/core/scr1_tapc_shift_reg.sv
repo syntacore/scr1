@@ -90,7 +90,7 @@ assign dout_serial = shift_reg[0];
 
 // X checks
 SCR1_SVA_TAPC_SHIFTREG_XCHECK : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     !$isunknown({
         rst_n_sync,
         fsm_dr_select,

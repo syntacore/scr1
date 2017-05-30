@@ -259,32 +259,32 @@ assign dbgc_hart_dreg_wr    = csr2dbga_ddr_we;
 //-------------------------------------------------------------------------------
 
 SCR1_COV_DBGA_ACK : cover property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     enforce_dbg_mode & ~dbgc_hart_cmd_ack
 );
 
 SCR1_SVA_DBGA_HALT_CHK : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     dbg_halted |-> ~instret
 ) else $warning("DBGA warning: instret during dbg_halt");
 
 SCR1_SVA_DBGA_H2R : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     dbg_halt2run |=> ~dbg_halt2run
 ) else $error("DBGA Error: more than 1 cycle");
 
 SCR1_SVA_DBGA_R2H : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     dbg_run2halt |=> ~dbg_run2halt
 ) else $error("DBGA Error: more than 1 cycle");
 
 SCR1_SVA_DBGA_SSTEP : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     (dbg_run_start & ~fetch_dbgc) |=> ~dbg_halted
 ) else $error("DBGA Error: sstep must be at least 2 cycles");
 
 SCR1_SVA_DBGA_HALT : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     (dbg_run2halt & ~dbgc_timeout_flag) |-> ~exu_busy
 ) else $error("DBGA Error: core not ready to halt");
 

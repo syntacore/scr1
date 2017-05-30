@@ -831,19 +831,19 @@ end // RV32I(MC) decode
 // X checks
 
 SCR1_SVA_IDU_XCHECK : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     !$isunknown({ifu2idu_vd, exu2idu_rdy})
     ) else $error("IDU Error: unknown values");
 
 SCR1_SVA_IDU_XCHECK2 : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     ifu2idu_vd |-> !$isunknown({ifu2idu_imem_err, (ifu2idu_imem_err ? 0 : ifu2idu_instr)})
     ) else $error("IDU Error: unknown values");
 
 // Behavior checks
 
 SCR1_SVA_IDU_IALU_CMD_RANGE : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     (idu2exu_cmd.ialu_cmd >= SCR1_IALU_CMD_NONE) &
     (idu2exu_cmd.ialu_cmd <=
 `ifdef SCR1_RVM_EXT

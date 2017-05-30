@@ -250,7 +250,7 @@ assign lsu_hwbrk    = (exu2lsu_req & brkm2lsu_i_x_req) | brkm2lsu_d_x_req;
 // X checks
 
 SCR1_SVA_LSU_XCHECK_CTRL : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     !$isunknown({exu2lsu_req, fsm
 `ifdef SCR1_BRKM_EN
         , brkm2lsu_i_x_req, brkm2lsu_d_x_req
@@ -259,40 +259,40 @@ SCR1_SVA_LSU_XCHECK_CTRL : assert property (
     ) else $error("LSU Error: unknown control value");
 
 SCR1_SVA_LSU_XCHECK_CMD : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     exu2lsu_req |-> !$isunknown({exu2lsu_cmd, exu2lsu_addr})
     ) else $error("LSU Error: exception code undefined");
 
 SCR1_SVA_LSU_XCHECK_SDATA : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     (exu2lsu_req & (lsu2dmem_cmd == SCR1_MEM_CMD_WR)) |-> !$isunknown({exu2lsu_s_data})
     ) else $error("LSU Error: exception code undefined");
 
 SCR1_SVA_LSU_XCHECK_EXC : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     lsu2exu_exc |-> !$isunknown(lsu2exu_exc_code)
     ) else $error("LSU Error: exception code undefined");
 
 // Behavior checks
 
 SCR1_SVA_LSU_EXC_ONEHOT : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     $onehot0({dmem_resp_er, l_misalign, s_misalign})
     ) else $error("LSU Error: more than one exception at a time");
 
 SCR1_SVA_LSU_UNEXPECTED_DMEM_RESP : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     (fsm == SCR1_FSM_IDLE) |-> ~(dmem_resp_ok | dmem_resp_er)
     ) else $error("LSU Error: not expecting memory response");
 
 SCR1_SVA_LSU_REQ_EXC : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     lsu2exu_exc |-> exu2lsu_req
     ) else $error("LSU Error: impossible exception");
 
 `ifdef SCR1_BRKM_EN
 SCR1_COV_LSU_MISALIGN_BRKPT : cover property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     (l_misalign | s_misalign) & lsu_hwbrk
 );
 `endif // SCR1_BRKM_EN

@@ -1035,7 +1035,7 @@ end
 
 // X checks
 SCR1_SVA_BRKM_XCHECK : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     !$isunknown({
         init,
         dsbl,

@@ -290,38 +290,38 @@ assign haddr  = req_fifo[0].haddr;
 
 // Check Core interafce
 SCR1_SVA_IMEM_AHB_BRIDGE_REQ_XCHECK : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     !$isunknown(imem_req)
     ) else $error("IMEM AHB bridge Error: imem_req has unknown values");
 
 SCR1_IMEM_AHB_BRIDGE_CMD_XCHECK : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     imem_req |-> !$isunknown(imem_cmd)
     ) else $error("IMEM AHB bridge Error: imem_cmd has unknown values");
 
 SCR1_IMEM_AHB_BRIDGE_ADDR_XCHECK : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     imem_req |-> !$isunknown(imem_addr)
     ) else $error("IMEM AHB bridge Error: imem_addr has unknown values");
 
 SCR1_IMEM_AHB_BRIDGE_ADDR_ALLIGN : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     imem_req |-> (imem_addr[1:0] == '0)
     ) else $error("IMEM AHB bridge Error: imem_addr has unalign values");
 
 SCR1_IMEM_AHB_BRIDGE_CMD_VD : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     imem_req |-> (imem_cmd === SCR1_MEM_CMD_RD)
     ) else $error("IMEM AHB bridge Error: imem_cmd has not valid command");
 
 // Check AHB interface
 SCR1_IMEM_AHB_BRIDGE_HREADY_XCHECK : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     !$isunknown(hready)
     ) else $error("IMEM AHB bridge Error: hready has unknown values");
 
 SCR1_IMEM_AHB_BRIDGE_HRESP_XCHECK : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     !$isunknown(hresp)
     ) else $error("IMEM AHB bridge Error: hresp has unknown values");
 

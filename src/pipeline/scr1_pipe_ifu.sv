@@ -558,51 +558,51 @@ end
 // X checks
 
 SCR1_SVA_IFU_XCHECK : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     !$isunknown({imem_req_ack, idu2ifu_rdy, new_pc_req})
     ) else $error("IFU Error: unknown values");
 
 SCR1_SVA_IFU_XCHECK_REQ : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     imem_req |-> !$isunknown({imem_addr, imem_cmd})
     ) else $error("IFU Error: unknown {imem_addr, imem_cmd}");
 
 // Behavior checks
 
 SCR1_SVA_IFU_DRC_UNDERFLOW : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     ~discard_resp |=> ~(discard_resp_cnt == SCR1_TXN_CNT_W'('1))
     ) else $error("IFU Error: discard_resp_cnt underflow");
 
 SCR1_SVA_IFU_DRC_RANGE : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     (discard_resp_cnt >= 0) & (discard_resp_cnt <= num_txns_pending)
     ) else $error("IFU Error: discard_resp_cnt out of range");
 
 SCR1_SVA_IFU_QUEUE_OVF : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     (q_ocpd_h >= (SCR1_IFU_Q_SIZE_HALF-1)) |->
     ((q_ocpd_h == (SCR1_IFU_Q_SIZE_HALF-1)) ? (q_we != SCR1_WE_RDATA_FULL) : (q_we == SCR1_WE_NONE))
     ) else $error("IFU Error: queue overflow");
 
 SCR1_SVA_IFU_IMEM_ERR_BEH : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     (imem_resp_er & ~discard_resp & ~new_pc_req) |=>
     (fsm == SCR1_FSM_IDLE) & (discard_resp_cnt == num_txns_pending)
     ) else $error("IFU Error: incorrect behavior after memory error");
 
 SCR1_SVA_IFU_NEW_PC_REQ_BEH : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     new_pc_req |=> q_empty
     ) else $error("IFU Error: incorrect behavior after new_pc_req");
 
 SCR1_SVA_IFU_IMEM_ADDR_ALIGNED : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     imem_req |-> ~|imem_addr[1:0]
     ) else $error("IFU Error: unaligned IMEM access");
 
 SCR1_SVA_IFU_STOP_FETCH : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     stop_fetch |=> (fsm == SCR1_FSM_IDLE)
     ) else $error("IFU Error: fetch not stopped");
 

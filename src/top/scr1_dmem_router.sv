@@ -177,7 +177,7 @@ assign port1_wdata = (port_sel) ? dmem_wdata : 'x;
 //-------------------------------------------------------------------------------
 
 SCR1_SVA_DMEM_RT_XCHECK : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     dmem_req |-> !$isunknown({port_sel, dmem_cmd, dmem_width})
     ) else $error("DMEM router Error: unknown values");
 

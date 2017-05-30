@@ -123,10 +123,12 @@ logic                                       idu2ifu_rdy;            // IDU ready
 // IDU <-> EXU
 logic                                       idu2exu_req;            // IDU request
 type_scr1_exu_cmd_s                         idu2exu_cmd;            // IDU command (see scr1_riscv_isa_decoding.svh)
+`ifndef SCR1_EXU_STAGE_BYPASS
 logic                                       idu2exu_use_rs1;        // Instruction uses rs1
 logic                                       idu2exu_use_rs2;        // Instruction uses rs2
 logic                                       idu2exu_use_rd;         // Instruction uses rd
 logic                                       idu2exu_use_imm;        // Instruction uses immediate
+`endif // SCR1_EXU_STAGE_BYPASS
 logic                                       exu2idu_rdy;            // EXU ready for new data
 
 // EXU <-> MPRF
@@ -283,10 +285,17 @@ scr1_pipe_idu i_pipe_idu (
 
     .idu2exu_req        (idu2exu_req     ),
     .idu2exu_cmd        (idu2exu_cmd     ),
+`ifndef SCR1_EXU_STAGE_BYPASS
     .idu2exu_use_rs1    (idu2exu_use_rs1 ),
     .idu2exu_use_rs2    (idu2exu_use_rs2 ),
     .idu2exu_use_rd     (idu2exu_use_rd  ),
     .idu2exu_use_imm    (idu2exu_use_imm ),
+`else // SCR1_EXU_STAGE_BYPASS
+    .idu2exu_use_rs1    (),
+    .idu2exu_use_rs2    (),
+    .idu2exu_use_rd     (),
+    .idu2exu_use_imm    (),
+`endif // SCR1_EXU_STAGE_BYPASS
     .exu2idu_rdy        (exu2idu_rdy     ),
 
     .idu_busy           (idu_busy        )
@@ -305,10 +314,12 @@ scr1_pipe_exu i_pipe_exu (
     .idu2exu_req            (idu2exu_req          ),
     .exu2idu_rdy            (exu2idu_rdy          ),
     .idu2exu_cmd            (idu2exu_cmd          ),
+`ifndef SCR1_EXU_STAGE_BYPASS
     .idu2exu_use_rs1        (idu2exu_use_rs1      ),
     .idu2exu_use_rs2        (idu2exu_use_rs2      ),
     .idu2exu_use_rd         (idu2exu_use_rd       ),
     .idu2exu_use_imm        (idu2exu_use_imm      ),
+`endif // SCR1_EXU_STAGE_BYPASS
 
     .exu2mprf_rs1_addr      (exu2mprf_rs1_addr    ),
     .mprf2exu_rs1_data      (mprf2exu_rs1_data    ),
@@ -481,8 +492,7 @@ scr1_ipic i_pipe_ipic (
 // Breakpoint module
 //-------------------------------------------------------------------------------
 `ifdef SCR1_BRKM_EN
-scr1_pipe_brkm
-i_pipe_brkm (
+scr1_pipe_brkm i_pipe_brkm (
     .rst_n                  (rst_n                  ),
     .clk                    (clk                    ),
     .clk_en                 (1'b1                   ),

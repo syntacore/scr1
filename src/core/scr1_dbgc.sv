@@ -1627,7 +1627,7 @@ assign sleep_wakeup =  dap_ch_sel | (~rst_n) | core_rst_sts | hart_rst_sts;
 
 // X checks
 SCR1_SVA_DBGC_XCHECK : assert property (
-    @(posedge clk) disable iff (~rst_n)
+    @(negedge clk) disable iff (~rst_n)
     !$isunknown({
         fuse_mhartid,
         dap_ch_sel,
