@@ -4,8 +4,8 @@ FLAGS = -O3 -funroll-loops -fpeel-loops -fgcse-sm -fgcse-las -flto
 FLAGS_STR = "$(FLAGS)"
 
 CFLAGS := $(FLAGS) \
--static -m32 -std=gnu99 -fno-common -fno-builtin-printf \
--Wa,-march=RV32$(ARCH) -march=RV32$(ARCH) \
+-static -std=gnu99 -fno-common -fno-builtin-printf \
+-Wa,-march=rv32$(ARCH) -march=rv32$(ARCH) \
 -DFLAGS_STR=\"$(FLAGS_STR)\" \
 -DSELF_TIMED=1 -DTIME=1
 LDFLAGS := -nostartfiles -nostdlib -lc -lgcc

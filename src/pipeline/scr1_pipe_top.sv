@@ -6,7 +6,7 @@
 `include "scr1_arch_description.svh"
 `include "scr1_memif.svh"
 `include "scr1_riscv_isa_decoding.svh"
-`include "scr1_csr_map.svh"
+`include "scr1_csr.svh"
 
 `ifdef SCR1_IPIC_EN
 `include "scr1_ipic.svh"
@@ -24,7 +24,6 @@ module scr1_pipe_top (
     // Common
     input   logic                                       rst_n,
     input   logic                                       clk,
-    input   logic                                       rtc_clk,
 
     // Instruction Memory Interface
     output  logic                                       imem_req,
@@ -65,6 +64,11 @@ module scr1_pipe_top (
 `else // SCR1_IPIC_EN
     input   logic                                       ext_irq,
 `endif // SCR1_IPIC_EN
+    input   logic                                       soft_irq,
+
+    // Memory-mapped external timer
+    input   logic                                       timer_irq,
+    input   logic [63:0]                                mtime_ext,
 
 `ifdef SCR1_CLKCTRL_EN
     // CLK_CTRL interface
@@ -118,6 +122,7 @@ logic                                       wfi_halted;             // WFI halte
 logic                                       ifu2idu_vd;             // IFU request
 logic [`SCR1_IMEM_DWIDTH-1:0]               ifu2idu_instr;          // IFU instruction
 logic                                       ifu2idu_imem_err;       // IFU instruction access fault
+logic                                       ifu2idu_err_rvi_hi;     // 1 - imem fault when trying to fetch second half of an unaligned RVI instruction
 logic                                       idu2ifu_rdy;            // IDU ready for new data
 
 // IDU <-> EXU
@@ -152,12 +157,14 @@ logic                                       csr2exu_rw_exc;         // CSR read/
 // EXU <-> CSR event interface
 logic                                       exu2csr_take_irq;       // Take IRQ trap
 logic                                       exu2csr_take_exc;       // Take exception trap
-logic                                       exu2csr_take_eret;      // ERET instruction
+logic                                       exu2csr_mret_update;    // MRET update CSR
+logic                                       exu2csr_mret_instr;     // MRET instruction
 type_scr1_exc_code_e                        exu2csr_exc_code;       // Exception code (see scr1_arch_types.svh)
-logic [`SCR1_XLEN-1:0]                      exu2csr_exc_badaddr;    // Exception bad address
-logic [`SCR1_XLEN-1:0]                      csr2exu_new_pc;         // Exception/IRQ/ERET new PC
+logic [`SCR1_XLEN-1:0]                      exu2csr_trap_val;       // Trap value
+logic [`SCR1_XLEN-1:0]                      csr2exu_new_pc;         // Exception/IRQ/MRET new PC
 logic                                       csr2exu_irq;            // IRQ request
-logic                                       csr2exu_irq_pen;        // IRQ pending
+logic                                       csr2exu_ip_ie;          // Some IRQ pending and locally enabled
+logic                                       csr2exu_mstatus_mie_up; // MSTATUS or MIE update in the current cycle
 
 `ifdef SCR1_IPIC_EN
 // CSR <-> IPIC
@@ -225,7 +232,7 @@ assign stop_fetch   = wfi_run2halt
 
 `ifdef SCR1_CLKCTRL_EN
 assign sleep_pipe   = wfi_halted & ~imem_txns_pending;
-assign wake_pipe    = csr2exu_irq_pen
+assign wake_pipe    = csr2exu_ip_ie
 `ifdef SCR1_DBGC_EN
                     | dbgc_hart_cmd_req
 `endif // SCR1_DBGC_EN
@@ -240,32 +247,33 @@ assign dbgc_hart_pcsample = curr_pc;
 // Instruction fetch unit
 //-------------------------------------------------------------------------------
 scr1_pipe_ifu i_pipe_ifu (
-    .rst_n              (rst_n            ),
-    .clk                (clk              ),
+    .rst_n              (rst_n              ),
+    .clk                (clk                ),
 
-    .imem_req_ack       (imem_req_ack     ),
-    .imem_req           (imem_req         ),
-    .imem_cmd           (imem_cmd         ),
-    .imem_addr          (imem_addr        ),
-    .imem_rdata         (imem_rdata       ),
-    .imem_resp          (imem_resp        ),
+    .imem_req_ack       (imem_req_ack       ),
+    .imem_req           (imem_req           ),
+    .imem_cmd           (imem_cmd           ),
+    .imem_addr          (imem_addr          ),
+    .imem_rdata         (imem_rdata         ),
+    .imem_resp          (imem_resp          ),
 
-    .new_pc             (new_pc           ),
-    .new_pc_req         (new_pc_req       ),
-    .stop_fetch         (stop_fetch       ),
+    .new_pc             (new_pc             ),
+    .new_pc_req         (new_pc_req         ),
+    .stop_fetch         (stop_fetch         ),
 `ifdef SCR1_DBGC_EN
-    .fetch_dbgc         (fetch_dbgc       ),
-    .dbgc_instr         (dbgc_instr       ),
+    .fetch_dbgc         (fetch_dbgc         ),
+    .dbgc_instr         (dbgc_instr         ),
 `endif // SCR1_DBGC_EN
 `ifdef SCR1_CLKCTRL_EN
-    .imem_txns_pending  (imem_txns_pending),
+    .imem_txns_pending  (imem_txns_pending  ),
 `endif // SCR1_CLKCTRL_EN
-    .idu2ifu_rdy        (idu2ifu_rdy      ),
-    .ifu2idu_instr      (ifu2idu_instr    ),
-    .ifu2idu_imem_err   (ifu2idu_imem_err ),
-    .ifu2idu_vd         (ifu2idu_vd       ),
+    .idu2ifu_rdy        (idu2ifu_rdy        ),
+    .ifu2idu_instr      (ifu2idu_instr      ),
+    .ifu2idu_imem_err   (ifu2idu_imem_err   ),
+    .ifu2idu_err_rvi_hi (ifu2idu_err_rvi_hi ),
+    .ifu2idu_vd         (ifu2idu_vd         ),
 
-    .ifu_busy           (ifu_busy         )
+    .ifu_busy           (ifu_busy           )
 );
 
 //-------------------------------------------------------------------------------
@@ -274,31 +282,32 @@ scr1_pipe_ifu i_pipe_ifu (
 scr1_pipe_idu i_pipe_idu (
 `ifdef SCR1_SYN_OFF_EN
 // pragma synthesis_off
-    .rst_n              (rst_n           ),
-    .clk                (clk             ),
+    .rst_n              (rst_n              ),
+    .clk                (clk                ),
 // pragma synthesis_on
 `endif // SCR1_SYN_OFF_EN
-    .idu2ifu_rdy        (idu2ifu_rdy     ),
-    .ifu2idu_instr      (ifu2idu_instr   ),
-    .ifu2idu_imem_err   (ifu2idu_imem_err),
-    .ifu2idu_vd         (ifu2idu_vd      ),
+    .idu2ifu_rdy        (idu2ifu_rdy        ),
+    .ifu2idu_instr      (ifu2idu_instr      ),
+    .ifu2idu_imem_err   (ifu2idu_imem_err   ),
+    .ifu2idu_err_rvi_hi (ifu2idu_err_rvi_hi ),
+    .ifu2idu_vd         (ifu2idu_vd         ),
 
-    .idu2exu_req        (idu2exu_req     ),
-    .idu2exu_cmd        (idu2exu_cmd     ),
+    .idu2exu_req        (idu2exu_req        ),
+    .idu2exu_cmd        (idu2exu_cmd        ),
 `ifndef SCR1_EXU_STAGE_BYPASS
-    .idu2exu_use_rs1    (idu2exu_use_rs1 ),
-    .idu2exu_use_rs2    (idu2exu_use_rs2 ),
-    .idu2exu_use_rd     (idu2exu_use_rd  ),
-    .idu2exu_use_imm    (idu2exu_use_imm ),
+    .idu2exu_use_rs1    (idu2exu_use_rs1    ),
+    .idu2exu_use_rs2    (idu2exu_use_rs2    ),
+    .idu2exu_use_rd     (idu2exu_use_rd     ),
+    .idu2exu_use_imm    (idu2exu_use_imm    ),
 `else // SCR1_EXU_STAGE_BYPASS
     .idu2exu_use_rs1    (),
     .idu2exu_use_rs2    (),
     .idu2exu_use_rd     (),
     .idu2exu_use_imm    (),
 `endif // SCR1_EXU_STAGE_BYPASS
-    .exu2idu_rdy        (exu2idu_rdy     ),
+    .exu2idu_rdy        (exu2idu_rdy        ),
 
-    .idu_busy           (idu_busy        )
+    .idu_busy           (idu_busy           )
 );
 
 //-------------------------------------------------------------------------------
@@ -338,12 +347,14 @@ scr1_pipe_exu i_pipe_exu (
     .csr2exu_rw_exc         (csr2exu_rw_exc       ),
     .exu2csr_take_irq       (exu2csr_take_irq     ),
     .exu2csr_take_exc       (exu2csr_take_exc     ),
-    .exu2csr_take_eret      (exu2csr_take_eret    ),
+    .exu2csr_mret_update    (exu2csr_mret_update  ),
+    .exu2csr_mret_instr     (exu2csr_mret_instr   ),
     .exu2csr_exc_code       (exu2csr_exc_code     ),
-    .exu2csr_exc_badaddr    (exu2csr_exc_badaddr  ),
+    .exu2csr_trap_val       (exu2csr_trap_val     ),
     .csr2exu_new_pc         (csr2exu_new_pc       ),
     .csr2exu_irq            (csr2exu_irq          ),
-    .csr2exu_irq_pen        (csr2exu_irq_pen      ),
+    .csr2exu_ip_ie          (csr2exu_ip_ie        ),
+    .csr2exu_mstatus_mie_up (csr2exu_mstatus_mie_up),
 
     .exu2dmem_req           (dmem_req             ),
     .exu2dmem_cmd           (dmem_cmd             ),
@@ -420,7 +431,6 @@ scr1_pipe_csr i_pipe_csr (
 `ifdef SCR1_CLKCTRL_EN
     .clk_alw_on             (clk_alw_on         ),
 `endif // SCR1_CLKCTRL_EN
-    .rtc_clk                (rtc_clk            ),
 
     .exu2csr_r_req          (exu2csr_r_req      ),
     .exu2csr_rw_addr        (exu2csr_rw_addr    ),
@@ -432,12 +442,14 @@ scr1_pipe_csr i_pipe_csr (
 
     .exu2csr_take_irq       (exu2csr_take_irq   ),
     .exu2csr_take_exc       (exu2csr_take_exc   ),
-    .exu2csr_take_eret      (exu2csr_take_eret  ),
+    .exu2csr_mret_update    (exu2csr_mret_update),
+    .exu2csr_mret_instr     (exu2csr_mret_instr ),
     .exu2csr_exc_code       (exu2csr_exc_code   ),
-    .exu2csr_exc_badaddr    (exu2csr_exc_badaddr),
+    .exu2csr_trap_val       (exu2csr_trap_val   ),
     .csr2exu_new_pc         (csr2exu_new_pc     ),
     .csr2exu_irq            (csr2exu_irq        ),
-    .csr2exu_irq_pen        (csr2exu_irq_pen    ),
+    .csr2exu_ip_ie          (csr2exu_ip_ie      ),
+    .csr2exu_mstatus_mie_up (csr2exu_mstatus_mie_up),
 `ifdef SCR1_IPIC_EN
     .csr2ipic_r_req         (csr2ipic_r_req     ),
     .csr2ipic_w_req         (csr2ipic_w_req     ),
@@ -451,6 +463,9 @@ scr1_pipe_csr i_pipe_csr (
     .instret_nexc           (instret_nexc       ),
 `endif // SCR1_CSR_REDUCED_CNT
     .ext_irq                (ext_irq            ),
+    .soft_irq               (soft_irq           ),
+    .timer_irq              (timer_irq          ),
+    .mtime_ext              (mtime_ext          ),
 `ifdef SCR1_DBGC_EN
     .dbga2csr_ddr           (dbga2csr_ddr       ),
     .csr2dbga_ddr           (csr2dbga_ddr       ),
@@ -582,29 +597,32 @@ scr1_pipe_dbga i_pipe_dbga (
 //-------------------------------------------------------------------------------
 
 scr1_tracelog i_tracelog (
-    .rst_n          (rst_n                          ),
-    .clk            (clk                            ),
-    .fuse_mhartid   (fuse_mhartid                   ),
+    .rst_n          (rst_n                              ),
+    .clk            (clk                                ),
+    .fuse_mhartid   (fuse_mhartid                       ),
     // MPRF
-    .mprf_int       (i_pipe_mprf.mprf_int           ),
-    .mprf_wr_en     (i_pipe_mprf.exu2mprf_w_req     ),
-    .mprf_wr_addr   (i_pipe_mprf.exu2mprf_rd_addr   ),
-    .mprf_wr_data   (i_pipe_mprf.exu2mprf_rd_data   ),
+    .mprf_int       (i_pipe_mprf.mprf_int               ),
+    .mprf_wr_en     (i_pipe_mprf.exu2mprf_w_req         ),
+    .mprf_wr_addr   (i_pipe_mprf.exu2mprf_rd_addr       ),
+    .mprf_wr_data   (i_pipe_mprf.exu2mprf_rd_data       ),
     // EXU
-    .update_pc_en   (i_pipe_exu.update_pc_en        ),
-    .update_pc      (i_pipe_exu.update_pc           ),
+    .update_pc_en   (i_pipe_exu.update_pc_en            ),
+    .update_pc      (i_pipe_exu.update_pc               ),
     // CSR
-    .mstatus_ie0    (i_pipe_csr.csr_mstatus_ie0     ),
-    .mstatus_ie1    (i_pipe_csr.csr_mstatus_ie1     ),
-    .mtvec          (SCR1_CSR_MTVEC                 ),
-    .meie           (i_pipe_csr.csr_mie_meie        ),
-    .mtie           (i_pipe_csr.csr_mie_mtie        ),
-    .meip           (i_pipe_csr.csr_mip_meip        ),
-    .mtip           (i_pipe_csr.csr_mip_mtip        ),
-    .mepc           (i_pipe_csr.csr_mepc            ),
-    .mcause_i       (i_pipe_csr.csr_mcause_i        ),
-    .mcause_ec      (i_pipe_csr.csr_mcause_ec       ),
-    .mbadaddr       (i_pipe_csr.csr_mbadaddr        )
+    .mstatus_mie    (i_pipe_csr.csr_mstatus_mie         ),
+    .mstatus_mpie   (i_pipe_csr.csr_mstatus_mpie        ),
+    .mtvec_mode     (i_pipe_csr.csr_mtvec_mode          ),
+    .mie_meie       (i_pipe_csr.csr_mie_meie            ),
+    .mie_mtie       (i_pipe_csr.csr_mie_mtie            ),
+    .mie_msie       (i_pipe_csr.csr_mie_msie            ),
+    .mip_meip       (i_pipe_csr.csr_mip_meip            ),
+    .mip_mtip       (i_pipe_csr.csr_mip_mtip            ),
+    .mip_msip       (i_pipe_csr.csr_mip_msip            ),
+    .mepc           (i_pipe_csr.csr_mepc                ),
+    .mcause_i       (i_pipe_csr.csr_mcause_i            ),
+    .mcause_ec      (i_pipe_csr.csr_mcause_ec           ),
+    .mtval          (i_pipe_csr.csr_mtval               ),
+    .mstatus_mie_up (i_pipe_csr.csr2exu_mstatus_mie_up  )
 );
 
 // pragma synthesis_on

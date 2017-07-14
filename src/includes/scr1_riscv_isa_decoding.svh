@@ -152,8 +152,10 @@ typedef enum logic [SCR1_RD_WB_WIDTH_E-1:0] {
 //-------------------------------------------------------------------------------
 // IDU to EXU full command structure
 //-------------------------------------------------------------------------------
+localparam SCR1_GPR_FIELD_WIDTH = 5;
+
 typedef struct packed {
-    logic                               instr_rvc;
+    logic                               instr_rvc;      // used with a different meaning for IFU access fault exception
     type_scr1_ialu_op_sel_e             ialu_op;
     type_scr1_ialu_cmd_sel_e            ialu_cmd;
     type_scr1_ialu_sum2_op_sel_e        sum2_op;
@@ -163,13 +165,14 @@ typedef struct packed {
     type_scr1_rd_wb_sel_e               rd_wb_sel;
     logic                               jump_req;
     logic                               branch_req;
-    logic                               eret_req;
+    logic                               mret_req;
     logic                               fencei_req;
     logic                               wfi_req;
-    logic [`SCR1_MPRF_ADDR_WIDTH-1:0]   rs1_addr;
-    logic [`SCR1_MPRF_ADDR_WIDTH-1:0]   rs2_addr;
-    logic [`SCR1_MPRF_ADDR_WIDTH-1:0]   rd_addr;
-    logic [`SCR1_XLEN-1:0]              imm;
+    logic [SCR1_GPR_FIELD_WIDTH-1:0]    rs1_addr;       // used as zimm for CSRRxI instructions
+    logic [SCR1_GPR_FIELD_WIDTH-1:0]    rs2_addr;
+    logic [SCR1_GPR_FIELD_WIDTH-1:0]    rd_addr;
+    logic [`SCR1_XLEN-1:0]              imm;            // used as {funct3, CSR address} for CSR instructions
+                                                        // used as instruction field for illegal instruction exception
     logic                               exc_req;
     type_scr1_exc_code_e                exc_code;
 } type_scr1_exu_cmd_s;

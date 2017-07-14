@@ -1,6 +1,6 @@
 includes/scr1_dbgc.svh
 includes/scr1_search_ms1.svh
-includes/scr1_csr_map.svh
+includes/scr1_csr.svh
 includes/scr1_memif.svh
 includes/scr1_riscv_isa_decoding.svh
 includes/scr1_arch_description.svh
@@ -31,6 +31,7 @@ top/scr1_imem_ahb.sv
 top/scr1_tcm.sv
 top/scr1_dp_memory.sv
 top/scr1_dmem_router.sv
+top/scr1_timer.sv
 core/scr1_core_top.sv
 core/scr1_clk_ctrl.sv
 core/primitives/scr1_cg.sv

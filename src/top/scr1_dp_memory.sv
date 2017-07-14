@@ -2,13 +2,14 @@
 /// @file       <scr1_dp_memory.sv>
 /// @brief      Dual-port synchronous memory with byte enable inputs
 ///
+
 `include "scr1_arch_description.svh"
 
 module scr1_dp_memory
 #(
-    parameter SCR1_WIDTH  = 32,
-    parameter SCR1_SIZE   = `SCR1_IMEM_AWIDTH'h00010000,
-    parameter SCR1_NBYTES = SCR1_WIDTH / 8
+    parameter SCR1_WIDTH    = 32,
+    parameter SCR1_SIZE     = `SCR1_IMEM_AWIDTH'h00010000,
+    parameter SCR1_NBYTES   = SCR1_WIDTH / 8
 )
 (
     input   logic                           clk,
@@ -25,40 +26,40 @@ module scr1_dp_memory
     output  logic [SCR1_WIDTH-1:0]          qb
 );
 
+localparam int unsigned RAM_SIZE_WORDS = SCR1_SIZE/SCR1_NBYTES;
+
 //-------------------------------------------------------------------------------
 // Local signal declaration
 //-------------------------------------------------------------------------------
-logic [SCR1_NBYTES-1:0][7:0] memory_array [0:(SCR1_SIZE/SCR1_NBYTES)-1];
-logic [3:0] wenbb;
-//-------------------------------------------------------------------------------
-// Port B memory behavioral description
-//-------------------------------------------------------------------------------
-assign wenbb = {4{wenb}} & webb;
-always_ff @(posedge clk) begin
-    if (wenb) begin
-        if (wenbb[0]) begin
-            memory_array[addrb[$clog2(SCR1_SIZE)-1:2]][0] <= datab[0+:8];
-        end
-        if (wenbb[1]) begin
-            memory_array[addrb[$clog2(SCR1_SIZE)-1:2]][1] <= datab[8+:8];
-        end
-        if (wenbb[2]) begin
-            memory_array[addrb[$clog2(SCR1_SIZE)-1:2]][2] <= datab[16+:8];
-        end
-        if (wenbb[3]) begin
-            memory_array[addrb[$clog2(SCR1_SIZE)-1:2]][3] <= datab[24+:8];
-        end
-    end
-    if (renb) begin
-        qb <= memory_array[addrb[$clog2(SCR1_SIZE)-1:2]];
-    end
-end
+reg [SCR1_WIDTH-1:0]                ram_block [RAM_SIZE_WORDS-1:0];
+integer                             i;
+reg [$clog2(RAM_SIZE_WORDS)-1:0]    addra_word;
+reg [$clog2(RAM_SIZE_WORDS)-1:0]    addrb_word;
+
 //-------------------------------------------------------------------------------
 // Port A memory behavioral description
 //-------------------------------------------------------------------------------
-always_ff @(posedge clk) begin
+assign addra_word = addra[$clog2(SCR1_SIZE)-1 : $clog2(SCR1_SIZE)-$clog2(RAM_SIZE_WORDS)];
+always @(posedge clk) begin
     if (rena) begin
-        qa <= memory_array[addra[$clog2(SCR1_SIZE)-1:2]];
+        qa <= ram_block[addra_word];
+    end
+end
+
+//-------------------------------------------------------------------------------
+// Port B memory behavioral description
+//-------------------------------------------------------------------------------
+assign addrb_word = addrb[$clog2(SCR1_SIZE)-1 : $clog2(SCR1_SIZE)-$clog2(RAM_SIZE_WORDS)];
+always @(posedge clk) begin
+    if (wenb) begin
+        for (i=0; i<SCR1_NBYTES; i=i+1) begin
+            if (webb[i]) begin
+                ram_block[addrb_word][i*8 +: 8] <= datab[i*8 +: 8];
+            end
+        end
+    end
+    if (renb) begin
+        qb <= ram_block[addrb_word];
     end
 end
 

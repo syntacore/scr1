@@ -20,15 +20,16 @@ localparam logic [`SCR1_XLEN-1:0]   SCR1_EXIT_ADDR      = 32'h000000F8;
 //-------------------------------------------------------------------------------
 // Local signal declaration
 //-------------------------------------------------------------------------------
-logic                                   rst_n            ;
-logic                                   clk = 0          ;
-logic                                   rtc_clk = 0      ;
+logic                                   rst_n;
+logic                                   clk = 0;
+logic                                   rtc_clk = 0;
 `ifdef SCR1_IPIC_EN
-logic       [SCR1_IRQ_LINES_NUM-1:0]    irq_lines        ;
+logic [SCR1_IRQ_LINES_NUM-1:0]          irq_lines;
 `else // SCR1_IPIC_EN
-logic                                   ext_irq = 0      ;
+logic                                   ext_irq = 0;
 `endif // SCR1_IPIC_EN
-logic       [31:0]                      fuse_mhartid     ;
+logic                                   soft_irq = 0;
+logic       [31:0]                      fuse_mhartid;
 integer                                 imem_req_ack_stall;
 integer                                 dmem_req_ack_stall;
 
@@ -144,88 +145,89 @@ end
 // Core instance
 //-------------------------------------------------------------------------------
 scr1_top_ahb i_top (
-    // Controll
-    .rst_n              (rst_n       ),
-    .test_mode          (test_mode   ),
-    .clk                (clk         ),
-    .rtc_clk            (rtc_clk     ),
-    .rst_n_out          (            ),
-    .fuse_mhartid       (fuse_mhartid),
+    // Control
+    .rst_n              (rst_n          ),
+    .test_mode          (test_mode      ),
+    .clk                (clk            ),
+    .rtc_clk            (rtc_clk        ),
+    .rst_n_out          (               ),
+    .fuse_mhartid       (fuse_mhartid   ),
 `ifdef SCR1_IPIC_EN
-    .irq_lines          (irq_lines   ),
+    .irq_lines          (irq_lines      ),
 `else // SCR1_IPIC_EN
-    .ext_irq            (ext_irq     ),
+    .ext_irq            (ext_irq        ),
 `endif // SCR1_IPIC_EN
+    .soft_irq           (soft_irq       ),
 `ifdef SCR1_DBGC_EN
-    .trst_n             (trst_n     ),
-    .tck                (tck        ),
-    .tms                (tms        ),
-    .tdi                (tdi        ),
-    .tdo                (tdo        ),
-    .tdo_en             (tdo_en     ),
+    .trst_n             (trst_n         ),
+    .tck                (tck            ),
+    .tms                (tms            ),
+    .tdi                (tdi            ),
+    .tdo                (tdo            ),
+    .tdo_en             (tdo_en         ),
 `endif // SCR1_DBGC_EN
 
     // Instruction Memory Interface
-    .imem_hprot         (imem_hprot ),
-    .imem_hburst        (imem_hburst),
-    .imem_hsize         (imem_hsize ),
-    .imem_htrans        (imem_htrans),
-    .imem_hmastlock     (imem_hmastlock),
-    .imem_haddr         (imem_haddr ),
-    .imem_hready        (imem_hready),
-    .imem_hrdata        (imem_hrdata),
-    .imem_hresp         (imem_hresp ),
+    .imem_hprot         (imem_hprot     ),
+    .imem_hburst        (imem_hburst    ),
+    .imem_hsize         (imem_hsize     ),
+    .imem_htrans        (imem_htrans    ),
+    .imem_hmastlock     (imem_hmastlock ),
+    .imem_haddr         (imem_haddr     ),
+    .imem_hready        (imem_hready    ),
+    .imem_hrdata        (imem_hrdata    ),
+    .imem_hresp         (imem_hresp     ),
 
     // Data Memory Interface
-    .dmem_hprot         (dmem_hprot ),
-    .dmem_hburst        (dmem_hburst),
-    .dmem_hsize         (dmem_hsize ),
-    .dmem_htrans        (dmem_htrans),
-    .dmem_hmastlock     (dmem_hmastlock),
-    .dmem_haddr         (dmem_haddr ),
-    .dmem_hwrite        (dmem_hwrite),
-    .dmem_hwdata        (dmem_hwdata),
-    .dmem_hready        (dmem_hready),
-    .dmem_hrdata        (dmem_hrdata),
-    .dmem_hresp         (dmem_hresp )
+    .dmem_hprot         (dmem_hprot     ),
+    .dmem_hburst        (dmem_hburst    ),
+    .dmem_hsize         (dmem_hsize     ),
+    .dmem_htrans        (dmem_htrans    ),
+    .dmem_hmastlock     (dmem_hmastlock ),
+    .dmem_haddr         (dmem_haddr     ),
+    .dmem_hwrite        (dmem_hwrite    ),
+    .dmem_hwdata        (dmem_hwdata    ),
+    .dmem_hready        (dmem_hready    ),
+    .dmem_hrdata        (dmem_hrdata    ),
+    .dmem_hresp         (dmem_hresp     )
 );
 
 //-------------------------------------------------------------------------------
 // Memory instance
 //-------------------------------------------------------------------------------
 scr1_memory_tb_ahb #(
-    .SCR1_MEM_POWER_SIZE    (SCR1_MEM_POWER_SIZE )
+    .SCR1_MEM_POWER_SIZE    (SCR1_MEM_POWER_SIZE)
 ) i_memory_tb (
     // Control
-    .rst_n                  (rst_n            ),
-    .clk                    (clk              ),
+    .rst_n                  (rst_n              ),
+    .clk                    (clk                ),
 `ifdef SCR1_IPIC_EN
-    .irq_lines              (irq_lines        ),
+    .irq_lines              (irq_lines          ),
 `endif // SCR1_IPIC_EN
-    .imem_req_ack_stall_in  (imem_req_ack_stall),
-    .dmem_req_ack_stall_in  (imem_req_ack_stall),
+    .imem_req_ack_stall_in  (imem_req_ack_stall ),
+    .dmem_req_ack_stall_in  (dmem_req_ack_stall ),
 
     // Instruction Memory Interface
-    // .imem_hprot             (imem_hprot ),
-    // .imem_hburst            (imem_hburst),
-    .imem_hsize             (imem_hsize ),
-    .imem_htrans            (imem_htrans),
-    .imem_haddr             (imem_haddr ),
-    .imem_hready            (imem_hready),
-    .imem_hrdata            (imem_hrdata),
-    .imem_hresp             (imem_hresp ),
+    // .imem_hprot             (imem_hprot         ),
+    // .imem_hburst            (imem_hburst        ),
+    .imem_hsize             (imem_hsize         ),
+    .imem_htrans            (imem_htrans        ),
+    .imem_haddr             (imem_haddr         ),
+    .imem_hready            (imem_hready        ),
+    .imem_hrdata            (imem_hrdata        ),
+    .imem_hresp             (imem_hresp         ),
 
-    // Memory Interface
-    // .dmem_hprot             (dmem_hprot ),
-    // .dmem_hburst            (dmem_hburst),
-    .dmem_hsize             (dmem_hsize ),
-    .dmem_htrans            (dmem_htrans),
-    .dmem_haddr             (dmem_haddr ),
-    .dmem_hwrite            (dmem_hwrite),
-    .dmem_hwdata            (dmem_hwdata),
-    .dmem_hready            (dmem_hready),
-    .dmem_hrdata            (dmem_hrdata),
-    .dmem_hresp             (dmem_hresp )
+    // Data Memory Interface
+    // .dmem_hprot             (dmem_hprot         ),
+    // .dmem_hburst            (dmem_hburst        ),
+    .dmem_hsize             (dmem_hsize         ),
+    .dmem_htrans            (dmem_htrans        ),
+    .dmem_haddr             (dmem_haddr         ),
+    .dmem_hwrite            (dmem_hwrite        ),
+    .dmem_hwdata            (dmem_hwdata        ),
+    .dmem_hready            (dmem_hready        ),
+    .dmem_hrdata            (dmem_hrdata        ),
+    .dmem_hresp             (dmem_hresp         )
 );
 
 endmodule : scr1_top_tb

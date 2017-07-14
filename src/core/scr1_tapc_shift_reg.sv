@@ -101,7 +101,6 @@ SCR1_SVA_TAPC_SHIFTREG_XCHECK : assert property (
     })
 ) else begin
     $error("TAPC Shift Reg error: unknown values");
-    //$finish();
 end
 
 // pragma synthesis_on

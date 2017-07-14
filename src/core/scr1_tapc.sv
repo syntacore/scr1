@@ -3,7 +3,6 @@
 /// @brief      TAP Controller (TAPC)
 ///
 
-
 `include "scr1_tapc.svh"
 `include "scr1_dbgc.svh"
 
@@ -504,7 +503,6 @@ SCR1_SVA_TAPC_XCHECK : assert property (
     })
 ) else begin
     $error("TAPC error: unknown values");
-    //$finish();
 end
 
 SCR1_SVA_TAPC_XCHECK_NEGCLK : assert property (
@@ -514,7 +512,6 @@ SCR1_SVA_TAPC_XCHECK_NEGCLK : assert property (
     })
 ) else begin
     $error("TAPC @negedge error: unknown values");
-    //$finish();
 end
 
 // pragma synthesis_on

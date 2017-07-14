@@ -109,7 +109,7 @@ vprintfmt(void(*putch)(int, void**), void **putdat, const char *fmt, va_list ap)
     int precision;
     int altflag;
     char padc;
-    int hex_A;
+    int hex_A = 'a';
     for ( ;; ) {
         while ( (ch = *(unsigned char *)fmt) != '%' ) {
             if ( ch == '\0' )

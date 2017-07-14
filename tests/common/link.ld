@@ -18,7 +18,7 @@ CL_SIZE = 32;
 SECTIONS {
 
   /* code segment */
-  .text 0 : {
+  .text.init 0 : { 
     FILL(0);
     . = 0x100 - 12;
     SIM_EXIT = .;
@@ -28,12 +28,16 @@ SECTIONS {
     LONG(-1);
     . = 0x100;
     PROVIDE(__TEXT_START__ = .);
+    *(.text.init) 
+  } >RAM
+
+  .text  : {
     *crt.o(.text .text.*)
     *(.text .text.*)
     *(sc_test_section)
     . = ALIGN(CL_SIZE);
      PROVIDE(__TEXT_END__ = .);
-  } >RAM
+  } >RAM 
 
   /* data segment */
   .data : {

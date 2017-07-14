@@ -6,7 +6,7 @@
 ///
 
 `include "scr1_arch_description.svh"
-`include "scr1_csr_map.svh"
+`include "scr1_csr.svh"
 
 `ifdef SCR1_BRKM_EN
  `define SCR1_BRKM_ARCH_SUPP_OPER_EXEC

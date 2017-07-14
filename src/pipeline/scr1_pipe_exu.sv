@@ -7,7 +7,7 @@
 `include "scr1_arch_types.svh"
 `include "scr1_memif.svh"
 `include "scr1_riscv_isa_decoding.svh"
-`include "scr1_csr_map.svh"
+`include "scr1_csr.svh"
 
 `ifdef SCR1_DBGC_EN
  `include "scr1_dbgc.svh"
@@ -58,12 +58,14 @@ module scr1_pipe_exu (
     // EXU <-> CSR event interface
     output  logic                               exu2csr_take_irq,       // Take IRQ trap
     output  logic                               exu2csr_take_exc,       // Take exception trap
-    output  logic                               exu2csr_take_eret,      // ERET instruction
+    output  logic                               exu2csr_mret_update,    // MRET update CSR
+    output  logic                               exu2csr_mret_instr,     // MRET instruction
     output  type_scr1_exc_code_e                exu2csr_exc_code,       // Exception code (see scr1_arch_types.svh)
-    output  logic [`SCR1_XLEN-1:0]              exu2csr_exc_badaddr,    // Exception bad address
-    input   logic [`SCR1_XLEN-1:0]              csr2exu_new_pc,         // Exception/IRQ/ERET new PC
+    output  logic [`SCR1_XLEN-1:0]              exu2csr_trap_val,       // Trap value
+    input   logic [`SCR1_XLEN-1:0]              csr2exu_new_pc,         // Exception/IRQ/MRET new PC
     input   logic                               csr2exu_irq,            // IRQ request
-    input   logic                               csr2exu_irq_pen,        // IRQ pending
+    input   logic                               csr2exu_ip_ie,          // Some IRQ pending and locally enabled
+    input   logic                               csr2exu_mstatus_mie_up, // MSTATUS or MIE update in the current cycle
 
     // EXU <-> DMEM interface
     output  logic                               exu2dmem_req,           // Data memory request
@@ -103,11 +105,11 @@ module scr1_pipe_exu (
 `ifdef SCR1_BRKM_EN
     // EXU <-> BRKM interface
     output type_scr1_brkm_instr_mon_s           exu2brkm_i_mon,         // Instruction monitor
-    input  logic [SCR1_BRKM_BRKPT_NUMBER-1:0]   brkm2exu_i_match,       // Data monitor
-    input  logic                                brkm2exu_i_x_req,       // Instruction breakpoint(s) match
-    output type_scr1_brkm_lsu_mon_s             lsu2brkm_d_mon,         // Data breakpoint(s) match
+    input  logic [SCR1_BRKM_BRKPT_NUMBER-1:0]   brkm2exu_i_match,       // Instruction breakpoint(s) match
+    input  logic                                brkm2exu_i_x_req,       // Instruction breakpoint exception
+    output type_scr1_brkm_lsu_mon_s             lsu2brkm_d_mon,         // Data monitor
     input  logic                                brkm2lsu_i_x_req,       // Instruction breakpoint exception
-    input  logic [SCR1_BRKM_BRKPT_NUMBER-1:0]   brkm2lsu_d_match,       // Instruction breakpoint exception
+    input  logic [SCR1_BRKM_BRKPT_NUMBER-1:0]   brkm2lsu_d_match,       // Data breakpoint(s) match
     input  logic                                brkm2lsu_d_x_req,       // Data breakpoint exception
     output logic [SCR1_BRKM_BRKPT_NUMBER-1:0]   exu2brkm_bp_retire,     // Instruction with breakpoint flag retire
     output logic                                exu2brkm_bp_i_recover,  // Instruction breakpoint state recover
@@ -161,15 +163,19 @@ logic [`SCR1_XLEN-1:0]          lsu_l_data;
 logic                           lsu_exc;
 type_scr1_exc_code_e            lsu_exc_code;
 
+// CSR signals
+enum logic {SCR1_CSR_INIT,
+            SCR1_CSR_RDY}       csr_access;
+
 // Exception/Interrupt signals
 logic                           exc_req;
 type_scr1_exc_code_e            exc_code;
-logic [`SCR1_XLEN-1:0]          exc_badaddr;
-logic                           eret_req;
+logic                           ifu_fault_rvi_hi;
 `ifndef SCR1_CLKCTRL_EN
 logic                           wfi_halted;      // 1 - halted after WFI retirement
 `endif // SCR1_CLKCTRL_EN
-logic                           wfi_halt2run;
+logic                           wfi_halt_cond;
+logic                           wfi_run_cond;
 logic                           wfi_run_start;
 
 // PC signals
@@ -219,7 +225,7 @@ always_ff @(posedge clk) begin
         exu_queue.rd_wb_sel      <= idu2exu_cmd.rd_wb_sel;
         exu_queue.jump_req       <= idu2exu_cmd.jump_req;
         exu_queue.branch_req     <= idu2exu_cmd.branch_req;
-        exu_queue.eret_req       <= idu2exu_cmd.eret_req;
+        exu_queue.mret_req       <= idu2exu_cmd.mret_req;
         exu_queue.fencei_req     <= idu2exu_cmd.fencei_req;
         exu_queue.wfi_req        <= idu2exu_cmd.wfi_req;
         exu_queue.exc_req        <= idu2exu_cmd.exc_req;
@@ -304,8 +310,8 @@ always_comb begin
     end
 end
 
-assign exu2mprf_rs1_addr  = exu_queue.rs1_addr;
-assign exu2mprf_rs2_addr  = exu_queue.rs2_addr;
+assign exu2mprf_rs1_addr    = `SCR1_MPRF_ADDR_WIDTH'(exu_queue.rs1_addr);
+assign exu2mprf_rs2_addr    = `SCR1_MPRF_ADDR_WIDTH'(exu_queue.rs2_addr);
 
 
 //-------------------------------------------------------------------------------
@@ -380,7 +386,7 @@ scr1_pipe_lsu i_lsu(
 
 
 //-------------------------------------------------------------------------------
-// CSR Read/Write
+// CSR logic
 //-------------------------------------------------------------------------------
 always_comb begin
     if (exu_queue.csr_op == SCR1_CSR_OP_REG) begin
@@ -396,24 +402,43 @@ always_comb begin
     if (exu_queue_vd) begin
         case (exu_queue.csr_cmd)
             SCR1_CSR_CMD_WRITE  : begin
-                exu2csr_r_req    = |exu_queue.rd_addr;
-                exu2csr_w_req    = 1'b1;
+                exu2csr_r_req   = |exu_queue.rd_addr;
+                exu2csr_w_req   = (csr_access == SCR1_CSR_INIT);
             end
             SCR1_CSR_CMD_SET,
             SCR1_CSR_CMD_CLEAR  : begin
-                exu2csr_r_req    = 1'b1;
-                exu2csr_w_req    = |exu_queue.rs1_addr;
+                exu2csr_r_req   = 1'b1;
+                exu2csr_w_req   = (|exu_queue.rs1_addr) & (csr_access == SCR1_CSR_INIT);
             end
         endcase
     end // exu_queue_vd
+`ifdef SCR1_BRKM_EN
+    if (brkpt_hw) begin
+        exu2csr_r_req   = 1'b0;
+        exu2csr_w_req   = 1'b0;
+    end
+`endif // SCR1_BRKM_EN
 end
 
 assign exu2csr_rw_addr  = exu_queue.imm[SCR1_CSR_ADDR_WIDTH-1:0];
 assign exu2csr_w_cmd    = exu_queue.csr_cmd;
 
+always_ff @(posedge clk, negedge rst_n) begin
+    if (~rst_n) begin
+        csr_access  <= SCR1_CSR_INIT;
+    end else begin
+        if (csr_access == SCR1_CSR_INIT) begin
+            if (csr2exu_mstatus_mie_up) begin
+                csr_access  <= SCR1_CSR_RDY;
+            end
+        end else begin // SCR1_CSR_RDY
+            csr_access  <= SCR1_CSR_INIT;
+        end
+    end
+end
 
 //-------------------------------------------------------------------------------
-// Exception/ERET
+// Exception/MRET
 //-------------------------------------------------------------------------------
 
 `ifndef SCR1_RVC_EXT
@@ -451,35 +476,62 @@ always_comb begin
 `ifndef SCR1_RVC_EXT
         jb_misalign         : exc_code = SCR1_EXC_CODE_INSTR_MISALIGN;
 `endif // ~SCR1_RVC_EXT
-        default             : exc_code = SCR1_EXC_CODE_ILLEGAL_INSTR;
+        default             : exc_code = SCR1_EXC_CODE_ECALL_M;
     endcase // 1'b1
 end
 
-// Exception bad address
+assign ifu_fault_rvi_hi     = exu_queue.instr_rvc;
+
+// Trap value
 always_comb begin
-    if (lsu_exc) begin
-        exc_badaddr = ialu_sum2_res;
-    end
+    case (exc_code)
 `ifndef SCR1_RVC_EXT
-    else if (jb_misalign) begin
-        exc_badaddr = tmp_new_pc;
-    end
-`endif // ~SCR1_RVC_EXT
-    else begin
-        exc_badaddr = curr_pc;
-    end
+        SCR1_EXC_CODE_INSTR_MISALIGN        : exu2csr_trap_val  = tmp_new_pc;
+`endif // SCR1_RVC_EXT
+        SCR1_EXC_CODE_INSTR_ACCESS_FAULT    : exu2csr_trap_val  = ifu_fault_rvi_hi ? inc_pc : curr_pc;
+                                                                // inc_pc is pc+2 if ifu_fault_rvi_hi==1
+                                                                // so it points to the upper half of the
+                                                                // faulty RVI instruction
+`ifdef SCR1_MTVAL_ILLEGAL_INSTR_EN
+        SCR1_EXC_CODE_ILLEGAL_INSTR         : exu2csr_trap_val  = exu_queue.exc_req ?
+                                                                exu_queue.imm :
+                                                                {   exu2csr_rw_addr,            // CSR address
+                                                                    5'(exu_queue.rs1_addr),     // rs1 / zimm
+                                                                    exu_queue.imm[14:12],       // funct3
+                                                                    5'(exu_queue.rd_addr),      // rd
+                                                                    SCR1_OPCODE_SYSTEM,
+                                                                    SCR1_INSTR_RVI
+                                                                };
+`else // SCR1_MTVAL_ILLEGAL_INSTR_EN
+        SCR1_EXC_CODE_ILLEGAL_INSTR         : exu2csr_trap_val  = '0;
+`endif // SCR1_MTVAL_ILLEGAL_INSTR_EN
+`ifdef SCR1_BRKM_EN
+        SCR1_EXC_CODE_BREAKPOINT            : begin
+            if (brkm2exu_i_x_req)           exu2csr_trap_val    = curr_pc;
+            else if (brkm2lsu_d_x_req)      exu2csr_trap_val    = ialu_sum2_res;
+            else                            exu2csr_trap_val    = '0;
+        end
+`endif // SCR1_BRKM_EN
+        SCR1_EXC_CODE_LD_ADDR_MISALIGN,
+        SCR1_EXC_CODE_LD_ACCESS_FAULT,
+        SCR1_EXC_CODE_ST_ADDR_MISALIGN,
+        SCR1_EXC_CODE_ST_ACCESS_FAULT       : exu2csr_trap_val  = ialu_sum2_res;
+        default                             : exu2csr_trap_val  = '0;
+    endcase // exc_code
 end
 
-// ERET
-assign eret_req = exu_queue_vd & exu_queue.eret_req
+// MRET
+assign exu2csr_mret_instr = exu_queue_vd & exu_queue.mret_req
 `ifdef SCR1_BRKM_EN
     & ~brkpt_hw
 `endif // SCR1_BRKM_EN
-;
+`ifdef SCR1_DBGC_EN
+    & ~exu_no_commit
+    & ~dbg_halted
+`endif // SCR1_DBGC_EN
+    ;
 
-assign exu2csr_exc_code      = exc_code;
-assign exu2csr_exc_badaddr   = exc_badaddr;
-
+assign exu2csr_exc_code     = exc_code;
 
 //-------------------------------------------------------------------------------
 // Update PC
@@ -493,7 +545,7 @@ assign inc_pc       = curr_pc + `SCR1_XLEN'd4;
 assign new_pc_req   = init_pc                                      // reset
                     | exu2csr_take_irq
                     | exu2csr_take_exc
-                    | exu2csr_take_eret
+                    | (exu2csr_mret_instr & ~csr2exu_mstatus_mie_up)
                     | (exu_queue_vd & exu_queue.fencei_req)         // FENCE.I
                     | ((wfi_run_start)                              // WFI halt exit
 `ifdef SCR1_CLKCTRL_EN
@@ -511,12 +563,7 @@ assign exu2csr_take_exc     = exc_req
                             & ~dbg_halted
 `endif // SCR1_DBGC_EN
                             ;
-assign exu2csr_take_eret    = eret_req
-`ifdef SCR1_DBGC_EN
-                            & ~exu_no_commit
-                            & ~dbg_halted
-`endif // SCR1_DBGC_EN
-                            ;
+assign exu2csr_mret_update  = exu2csr_mret_instr & (csr_access == SCR1_CSR_INIT);
 assign exu2csr_take_irq     = csr2exu_irq & ~exu_busy
 `ifdef SCR1_DBGC_EN
                             & ~exu_no_commit
@@ -534,7 +581,7 @@ always_comb begin
         init_pc                 : new_pc = SCR1_RST_VECTOR;
         exu2csr_take_exc,
         exu2csr_take_irq,
-        exu2csr_take_eret       : new_pc = csr2exu_new_pc;
+        exu2csr_mret_instr      : new_pc = csr2exu_new_pc;
 `ifdef SCR1_DBGC_EN
         (dbg_run_start & ~fetch_dbgc),
 `endif // SCR1_DBGC_EN
@@ -570,7 +617,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     end
 end
 
-// PC to be loaded on ERET from interrupt trap
+// PC to be loaded on MRET from interrupt trap
 assign next_pc  = (exu_queue_vd)
                 ? ((exu_queue.jump_req | (exu_queue.branch_req & ialu_cmp))
                     ? (ialu_sum2_res & SCR1_JUMP_MASK)
@@ -621,12 +668,12 @@ assign instret_nexc         = instret & ~exc_req;
 // Write back to MPRF
 //-------------------------------------------------------------------------------
 always_comb begin
-    exu2mprf_w_req  = (exu_queue.rd_wb_sel != SCR1_RD_WB_NONE) & exu_queue_vd & exu_rdy & ~exc_req
+    exu2mprf_w_req  = (exu_queue.rd_wb_sel != SCR1_RD_WB_NONE) & exu_queue_vd & ~exc_req
 `ifdef SCR1_DBGC_EN
                     & ~exu_no_commit
 `endif // SCR1_DBGC_EN
-                    ;
-    exu2mprf_rd_addr = exu_queue.rd_addr;
+                    & ((exu_queue.rd_wb_sel == SCR1_RD_WB_CSR) ? (csr_access == SCR1_CSR_INIT) : exu_rdy);
+    exu2mprf_rd_addr = `SCR1_MPRF_ADDR_WIDTH'(exu_queue.rd_addr);
     case (exu_queue.rd_wb_sel)
         SCR1_RD_WB_SUM2     : exu2mprf_rd_data = ialu_sum2_res;
         SCR1_RD_WB_IMM      : exu2mprf_rd_data = exu_queue.imm;
@@ -641,24 +688,30 @@ end
 //-------------------------------------------------------------------------------
 // Execution ready
 //-------------------------------------------------------------------------------
-assign exu_rdy = lsu_req ? (lsu_rdy | lsu_exc) :
+always_comb begin
+    case (1'b1)
+        lsu_req                 : exu_rdy = lsu_rdy | lsu_exc;
 `ifdef SCR1_RVM_EXT
-                (ialu_vd ? ialu_rdy : 1'b1);
-`else // SCR1_RVM_EXT
-                1'b1;
+        ialu_vd                 : exu_rdy = ialu_rdy;
 `endif // SCR1_RVM_EXT
+        csr2exu_mstatus_mie_up  : exu_rdy = 1'b0;
+        default                 : exu_rdy = 1'b1;
+    endcase
+end
 
 
 //-------------------------------------------------------------------------------
 // WFI instruction
 //-------------------------------------------------------------------------------
-assign wfi_run2halt = ~wfi_halted & ~csr2exu_irq_pen
-                    & ((exu_queue_vd & exu_queue.wfi_req) | wfi_run_start)
+assign wfi_halt_cond    = ~csr2exu_ip_ie
+                        & ((exu_queue_vd & exu_queue.wfi_req) | wfi_run_start)
 `ifdef SCR1_DBGC_EN
-                    & ~exu_no_commit & ~exu_dmode_sstep_en & ~dbg_run2halt
+                        & ~exu_no_commit & ~exu_dmode_sstep_en & ~dbg_run2halt
 `endif // SCR1_DBGC_EN
-                    ;
-assign wfi_halt2run = (wfi_halted & csr2exu_irq_pen);
+                        ;
+assign wfi_run_cond     = csr2exu_ip_ie;
+
+assign wfi_run2halt     = ~wfi_halted & wfi_halt_cond;
 
 always_ff @(
 `ifndef SCR1_CLKCTRL_EN
@@ -667,7 +720,7 @@ posedge clk
 posedge clk_alw_on
 `endif // SCR1_CLKCTRL_EN
 ) begin
-    wfi_run_start <= wfi_halt2run;
+    wfi_run_start <= (wfi_halted & wfi_run_cond);
 end
 
 always_ff @(negedge rst_n,
@@ -680,14 +733,14 @@ posedge clk_alw_on
     if (~rst_n) begin
         wfi_halted  <= 1'b0;
     end else begin
-        if (wfi_run2halt) begin
+        if (~wfi_halted & wfi_halt_cond) begin
             wfi_halted  <= 1'b1;
-        end else if (wfi_halt2run
+        end else if (wfi_halted & (wfi_run_cond
 `ifdef SCR1_DBGC_EN
-                    | dbg_halt2run
+                                    | dbg_halt2run
 `endif // SCR1_DBGC_EN
-        ) begin
-            wfi_halted   <= 1'b0;
+        )) begin
+            wfi_halted  <= 1'b0;
         end
     end
 end
@@ -718,7 +771,7 @@ assign update_pc    = new_pc_req ? new_pc : inc_pc;
 
 SCR1_SVA_EXU_XCHECK_CTRL : assert property (
     @(negedge clk) disable iff (~rst_n)
-    !$isunknown({idu2exu_req, csr2exu_irq, csr2exu_irq_pen, lsu_req, lsu_rdy, exc_req})
+    !$isunknown({idu2exu_req, csr2exu_irq, csr2exu_ip_ie, lsu_req, lsu_rdy, exc_req})
     ) else $error("EXU Error: unknown control values");
 
 SCR1_SVA_EXU_XCHECK_QUEUE : assert property (

@@ -10,12 +10,16 @@
 `include "scr1_ipic.svh"
 `endif // SCR1_IPIC_EN
 
+`ifdef SCR1_TCM_EN
+ `define SCR1_IMEM_ROUTER_EN
+`endif // SCR1_TCM_EN
+
 module scr1_top_ahb (
     // Control
     input   logic                                   rst_n,                  // Reset signal
     input   logic                                   test_mode,              // Test mode
     input   logic                                   clk,                    // System clock
-    input   logic                                   rtc_clk,                // RTC clock
+    input   logic                                   rtc_clk,                // Real-time clock
     output  logic                                   rst_n_out,              // Core reset from DBGC
 
     // Fuses
@@ -23,10 +27,11 @@ module scr1_top_ahb (
 
     // IRQ
 `ifdef SCR1_IPIC_EN
-    input   logic [SCR1_IRQ_LINES_NUM-1:0]          irq_lines,              // IRQ
+    input   logic [SCR1_IRQ_LINES_NUM-1:0]          irq_lines,              // IRQ lines to IPIC
 `else // SCR1_IPIC_EN
-    input   logic                                   ext_irq,
+    input   logic                                   ext_irq,                // External IRQ input
 `endif // SCR1_IPIC_EN
+    input   logic                                   soft_irq,               // Software IRQ input
 
 `ifdef SCR1_DBGC_EN
     // -- JTAG I/F
@@ -85,24 +90,6 @@ logic [`SCR1_DMEM_DWIDTH-1:0]                       core_dmem_wdata;
 logic [`SCR1_DMEM_DWIDTH-1:0]                       core_dmem_rdata;
 type_scr1_mem_resp_e                                core_dmem_resp;
 
-// Instruction memory interface from router to TCM
-logic                                               tcm_imem_req_ack;
-logic                                               tcm_imem_req;
-type_scr1_mem_cmd_e                                 tcm_imem_cmd;
-logic [`SCR1_IMEM_AWIDTH-1:0]                       tcm_imem_addr;
-logic [`SCR1_IMEM_DWIDTH-1:0]                       tcm_imem_rdata;
-type_scr1_mem_resp_e                                tcm_imem_resp;
-
-// Data memory interface from router to TCM
-logic                                               tcm_dmem_req_ack;
-logic                                               tcm_dmem_req;
-type_scr1_mem_cmd_e                                 tcm_dmem_cmd;
-type_scr1_mem_width_e                               tcm_dmem_width;
-logic [`SCR1_DMEM_AWIDTH-1:0]                       tcm_dmem_addr;
-logic [`SCR1_DMEM_DWIDTH-1:0]                       tcm_dmem_wdata;
-logic [`SCR1_DMEM_DWIDTH-1:0]                       tcm_dmem_rdata;
-type_scr1_mem_resp_e                                tcm_dmem_resp;
-
 // Instruction memory interface from router to AHB bridge
 logic                                               ahb_imem_req_ack;
 logic                                               ahb_imem_req;
@@ -121,6 +108,39 @@ logic [`SCR1_DMEM_DWIDTH-1:0]                       ahb_dmem_wdata;
 logic [`SCR1_DMEM_DWIDTH-1:0]                       ahb_dmem_rdata;
 type_scr1_mem_resp_e                                ahb_dmem_resp;
 
+`ifdef SCR1_TCM_EN
+// Instruction memory interface from router to TCM
+logic                                               tcm_imem_req_ack;
+logic                                               tcm_imem_req;
+type_scr1_mem_cmd_e                                 tcm_imem_cmd;
+logic [`SCR1_IMEM_AWIDTH-1:0]                       tcm_imem_addr;
+logic [`SCR1_IMEM_DWIDTH-1:0]                       tcm_imem_rdata;
+type_scr1_mem_resp_e                                tcm_imem_resp;
+
+// Data memory interface from router to TCM
+logic                                               tcm_dmem_req_ack;
+logic                                               tcm_dmem_req;
+type_scr1_mem_cmd_e                                 tcm_dmem_cmd;
+type_scr1_mem_width_e                               tcm_dmem_width;
+logic [`SCR1_DMEM_AWIDTH-1:0]                       tcm_dmem_addr;
+logic [`SCR1_DMEM_DWIDTH-1:0]                       tcm_dmem_wdata;
+logic [`SCR1_DMEM_DWIDTH-1:0]                       tcm_dmem_rdata;
+type_scr1_mem_resp_e                                tcm_dmem_resp;
+`endif // SCR1_TCM_EN
+
+// Data memory interface from router to memory-mapped timer
+logic                                               timer_dmem_req_ack;
+logic                                               timer_dmem_req;
+type_scr1_mem_cmd_e                                 timer_dmem_cmd;
+type_scr1_mem_width_e                               timer_dmem_width;
+logic [`SCR1_DMEM_AWIDTH-1:0]                       timer_dmem_addr;
+logic [`SCR1_DMEM_DWIDTH-1:0]                       timer_dmem_wdata;
+logic [`SCR1_DMEM_DWIDTH-1:0]                       timer_dmem_rdata;
+type_scr1_mem_resp_e                                timer_dmem_resp;
+
+logic                                               timer_irq;
+logic [63:0]                                        timer_val;
+
 
 //-------------------------------------------------------------------------------
 // SCR1 core instance
@@ -130,7 +150,6 @@ scr1_core_top i_core_top (
     .rst_n          (rst_n              ),
     .test_mode      (test_mode          ),
     .clk            (clk                ),
-    .rtc_clk        (rtc_clk            ),
     .rst_n_out      (rst_n_out          ),
     .fuse_mhartid   (fuse_mhartid       ),
     // IRQ
@@ -139,6 +158,9 @@ scr1_core_top i_core_top (
 `else // SCR1_IPIC_EN
     .ext_irq        (ext_irq            ),
 `endif // SCR1_IPIC_EN
+    .soft_irq       (soft_irq           ),
+    .timer_irq      (timer_irq          ),
+    .mtime_ext      (timer_val          ),
 `ifdef SCR1_DBGC_EN
     // JTAG interface
     .trst_n         (trst_n             ),
@@ -166,6 +188,8 @@ scr1_core_top i_core_top (
     .dmem_resp      (core_dmem_resp     )
 );
 
+
+`ifdef SCR1_TCM_EN
 //-------------------------------------------------------------------------------
 // TCM instance
 //-------------------------------------------------------------------------------
@@ -191,13 +215,39 @@ scr1_tcm #(
     .dmem_rdata     (tcm_dmem_rdata     ),
     .dmem_resp      (tcm_dmem_resp      )
 );
+`endif // SCR1_TCM_EN
 
+
+//-------------------------------------------------------------------------------
+// Memory-mapped timer instance
+//-------------------------------------------------------------------------------
+scr1_timer i_timer (
+    // Common
+    .rst_n          (rst_n              ),
+    .clk            (clk                ),
+    .rtc_clk        (rtc_clk            ),
+    // Memory interface
+    .dmem_req       (timer_dmem_req     ),
+    .dmem_cmd       (timer_dmem_cmd     ),
+    .dmem_width     (timer_dmem_width   ),
+    .dmem_addr      (timer_dmem_addr    ),
+    .dmem_wdata     (timer_dmem_wdata   ),
+    .dmem_req_ack   (timer_dmem_req_ack ),
+    .dmem_rdata     (timer_dmem_rdata   ),
+    .dmem_resp      (timer_dmem_resp    ),
+    // Timer interface
+    .timer_val      (timer_val          ),
+    .timer_irq      (timer_irq          )
+);
+
+
+`ifdef SCR1_IMEM_ROUTER_EN
 //-------------------------------------------------------------------------------
 // Instruction memory router
 //-------------------------------------------------------------------------------
 scr1_imem_router #(
-    .SCR1_ADDR_MASK     (`SCR1_IMEM_AWIDTH'hFFFF0000),
-    .SCR1_ADDR_PATTERN  (`SCR1_IMEM_AWIDTH'h00480000)
+    .SCR1_ADDR_MASK     (SCR1_TCM_ADDR_MASK),
+    .SCR1_ADDR_PATTERN  (SCR1_TCM_ADDR_PATTERN)
 ) i_imem_router (
     .rst_n          (rst_n_out          ),
     .clk            (clk                ),
@@ -224,12 +274,34 @@ scr1_imem_router #(
     .port1_resp     (tcm_imem_resp      )
 );
 
+`else // SCR1_IMEM_ROUTER_EN
+
+assign ahb_imem_req         = core_imem_req;
+assign ahb_imem_cmd         = core_imem_cmd;
+assign ahb_imem_addr        = core_imem_addr;
+assign core_imem_req_ack    = ahb_imem_req_ack;
+assign core_imem_resp       = ahb_imem_resp;
+assign core_imem_rdata      = ahb_imem_rdata;
+
+`endif // SCR1_IMEM_ROUTER_EN
+
+
 //-------------------------------------------------------------------------------
 // Data memory router
 //-------------------------------------------------------------------------------
 scr1_dmem_router #(
-    .SCR1_ADDR_MASK     (`SCR1_DMEM_AWIDTH'hFFFF0000),
-    .SCR1_ADDR_PATTERN  (`SCR1_DMEM_AWIDTH'h00480000)
+
+`ifdef SCR1_TCM_EN
+    .SCR1_PORT1_ADDR_MASK       (SCR1_TCM_ADDR_MASK),
+    .SCR1_PORT1_ADDR_PATTERN    (SCR1_TCM_ADDR_PATTERN),
+`else // SCR1_TCM_EN
+    .SCR1_PORT1_ADDR_MASK       (32'h00000000),
+    .SCR1_PORT1_ADDR_PATTERN    (32'hFFFFFFFF),
+`endif // SCR1_TCM_EN
+
+    .SCR1_PORT2_ADDR_MASK       (SCR1_TIMER_ADDR_MASK),
+    .SCR1_PORT2_ADDR_PATTERN    (SCR1_TIMER_ADDR_PATTERN)
+
 ) i_dmem_router (
     .rst_n          (rst_n_out          ),
     .clk            (clk                ),
@@ -242,15 +314,7 @@ scr1_dmem_router #(
     .dmem_wdata     (core_dmem_wdata    ),
     .dmem_rdata     (core_dmem_rdata    ),
     .dmem_resp      (core_dmem_resp     ),
-    // Interface to AHB bridge
-    .port0_req_ack  (ahb_dmem_req_ack   ),
-    .port0_req      (ahb_dmem_req       ),
-    .port0_cmd      (ahb_dmem_cmd       ),
-    .port0_width    (ahb_dmem_width     ),
-    .port0_addr     (ahb_dmem_addr      ),
-    .port0_wdata    (ahb_dmem_wdata     ),
-    .port0_rdata    (ahb_dmem_rdata     ),
-    .port0_resp     (ahb_dmem_resp      ),
+`ifdef SCR1_TCM_EN
     // Interface to TCM
     .port1_req_ack  (tcm_dmem_req_ack   ),
     .port1_req      (tcm_dmem_req       ),
@@ -259,8 +323,37 @@ scr1_dmem_router #(
     .port1_addr     (tcm_dmem_addr      ),
     .port1_wdata    (tcm_dmem_wdata     ),
     .port1_rdata    (tcm_dmem_rdata     ),
-    .port1_resp     (tcm_dmem_resp      )
+    .port1_resp     (tcm_dmem_resp      ),
+`else // SCR1_TCM_EN
+    .port1_req_ack  (1'b0),
+    .port1_req      (),
+    .port1_cmd      (),
+    .port1_width    (),
+    .port1_addr     (),
+    .port1_wdata    (),
+    .port1_rdata    ('0),
+    .port1_resp     (SCR1_MEM_RESP_RDY_ER),
+`endif // SCR1_TCM_EN
+    // Interface to memory-mapped timer
+    .port2_req_ack  (timer_dmem_req_ack ),
+    .port2_req      (timer_dmem_req     ),
+    .port2_cmd      (timer_dmem_cmd     ),
+    .port2_width    (timer_dmem_width   ),
+    .port2_addr     (timer_dmem_addr    ),
+    .port2_wdata    (timer_dmem_wdata   ),
+    .port2_rdata    (timer_dmem_rdata   ),
+    .port2_resp     (timer_dmem_resp    ),
+    // Interface to AHB bridge
+    .port0_req_ack  (ahb_dmem_req_ack   ),
+    .port0_req      (ahb_dmem_req       ),
+    .port0_cmd      (ahb_dmem_cmd       ),
+    .port0_width    (ahb_dmem_width     ),
+    .port0_addr     (ahb_dmem_addr      ),
+    .port0_wdata    (ahb_dmem_wdata     ),
+    .port0_rdata    (ahb_dmem_rdata     ),
+    .port0_resp     (ahb_dmem_resp      )
 );
+
 
 //-------------------------------------------------------------------------------
 // Instruction memory AHB bridge
@@ -286,6 +379,7 @@ scr1_imem_ahb i_imem_ahb (
     .hrdata         (imem_hrdata        ),
     .hresp          (imem_hresp         )
 );
+
 
 //-------------------------------------------------------------------------------
 // Data memory AHB bridge

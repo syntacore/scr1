@@ -21,7 +21,7 @@ localparam int unsigned                         SCR1_TAP_DR_BYPASS_WIDTH        
 localparam int unsigned                         SCR1_TAP_DR_SYS_CTRL_WIDTH      = 1;
 localparam int unsigned                         SCR1_TAP_DR_MTAP_SWITCH_WIDTH   = 1;
 localparam bit [SCR1_TAP_DR_IDCODE_WIDTH-1:0]   SCR1_TAP_IDCODE_RISCV_SC        = 32'hC0D1DEB1;
-localparam bit [SCR1_TAP_DR_BLD_ID_WIDTH-1:0]   SCR1_TAP_BLD_ID_VALUE           = `SCR1_BUILD_ID;
+localparam bit [SCR1_TAP_DR_BLD_ID_WIDTH-1:0]   SCR1_TAP_BLD_ID_VALUE           = `SCR1_MIMPID;
 
 //-------------------------------------------------------------------------------
 // Types

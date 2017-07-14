@@ -5,7 +5,7 @@
 
 `include "scr1_arch_description.svh"
 `include "scr1_arch_types.svh"
-`include "scr1_csr_map.svh"
+`include "scr1_csr.svh"
 
 module scr1_tracelog (
     input   logic                                   rst_n,
@@ -24,21 +24,24 @@ module scr1_tracelog (
     input   logic                                   update_pc_en,
     input   logic [`SCR1_XLEN-1:0]                  update_pc,
     // CSR
-    input   logic                                   mstatus_ie0,
-    input   logic                                   mstatus_ie1,
-    input   logic [`SCR1_XLEN-1:0]                  mtvec,
-    input   logic                                   meie,
-    input   logic                                   mtie,
-    input   logic                                   meip,
-    input   logic                                   mtip,
+    input   logic                                   mstatus_mie,
+    input   logic                                   mstatus_mpie,
+    input   logic                                   mtvec_mode,
+    input   logic                                   mie_meie,
+    input   logic                                   mie_mtie,
+    input   logic                                   mie_msie,
+    input   logic                                   mip_meip,
+    input   logic                                   mip_mtip,
+    input   logic                                   mip_msip,
  `ifdef SCR1_RVC_EXT
     input   logic [`SCR1_XLEN-1:1]                  mepc,
  `else // SCR1_RVC_EXT
     input   logic [`SCR1_XLEN-1:2]                  mepc,
  `endif // SCR1_RVC_EXT
     input   logic                                   mcause_i,
-    input   logic [SCR1_CSR_MCAUSE_EC_WIDTH-1:0]    mcause_ec,
-    input   logic [`SCR1_XLEN-1:0]                  mbadaddr
+    input   type_scr1_exc_code_e                    mcause_ec,
+    input   logic [`SCR1_XLEN-1:0]                  mtval,
+    input   logic                                   mstatus_mie_up
 );
 
 //-------------------------------------------------------------------------------
@@ -190,7 +193,7 @@ always_ff @(posedge clk) begin
     curr_pc_log <= update_pc;
 end
 
-assign trace_update = update_pc_en | mprf_wr_en;
+assign trace_update = update_pc_en | (mprf_wr_en & ~mstatus_mie_up);
 
 int unsigned temp_fhandler;
 
@@ -332,7 +335,7 @@ typedef struct packed {
     logic [`SCR1_XLEN-1:0]  mip;
     logic [`SCR1_XLEN-1:0]  mepc;
     logic [`SCR1_XLEN-1:0]  mcause;
-    logic [`SCR1_XLEN-1:0]  mbadaddr;
+    logic [`SCR1_XLEN-1:0]  mtval;
 } type_scr1_csr_trace_s;
 
 type_scr1_csr_trace_s       csr_trace1;
@@ -346,21 +349,35 @@ task trace_write_csr;
     $fwrite(trace_csr_fhandler,  "%8x ", csr_trace1.mip     );
     $fwrite(trace_csr_fhandler,  "%8x ", csr_trace1.mepc    );
     $fwrite(trace_csr_fhandler,  "%8x ", csr_trace1.mcause  );
-    $fwrite(trace_csr_fhandler,  "%8x ", csr_trace1.mbadaddr);
+    $fwrite(trace_csr_fhandler,  "%8x ", csr_trace1.mtval   );
     $fwrite(trace_csr_fhandler,  "\n");
 endtask // trace_write_csr
 
-assign csr_trace1.mstatus   = {'0, SCR1_CSR_MSTATUS_PRV_VAL, mstatus_ie1, SCR1_CSR_MSTATUS_PRV_VAL, mstatus_ie0};
-assign csr_trace1.mtvec     = mtvec;
-assign csr_trace1.mie       = {'0, meie, 3'b0, mtie, 7'b0};
-assign csr_trace1.mip       = {'0, meip, 3'b0, mtip, 7'b0};
+always_comb begin
+    csr_trace1.mtvec        = {SCR1_CSR_MTVEC_BASE, 2'(mtvec_mode)};
+    csr_trace1.mepc         =
 `ifdef SCR1_RVC_EXT
-assign csr_trace1.mepc      = {mepc, 1'b0};
+                              {mepc, 1'b0};
 `else // SCR1_RVC_EXT
-assign csr_trace1.mepc      = {mepc, 2'b00};
+                              {mepc, 2'b00};
 `endif // SCR1_RVC_EXT
-assign csr_trace1.mcause    = {mcause_i, SCR1_CSR_MCAUSE_GAP_WIDTH'(1'b0), mcause_ec};
-assign csr_trace1.mbadaddr  = mbadaddr;
+    csr_trace1.mcause       = {mcause_i, type_scr1_csr_mcause_ec_v'(mcause_ec)};
+    csr_trace1.mtval        = mtval;
+
+    csr_trace1.mstatus      = '0;
+    csr_trace1.mie          = '0;
+    csr_trace1.mip          = '0;
+
+    csr_trace1.mstatus[SCR1_CSR_MSTATUS_MIE_OFFSET]     = mstatus_mie;
+    csr_trace1.mstatus[SCR1_CSR_MSTATUS_MPIE_OFFSET]    = mstatus_mpie;
+    csr_trace1.mstatus[SCR1_CSR_MSTATUS_MPP_OFFSET+1:SCR1_CSR_MSTATUS_MPP_OFFSET]   = SCR1_CSR_MSTATUS_MPP;
+    csr_trace1.mie[SCR1_CSR_MIE_MSIE_OFFSET]            = mie_msie;
+    csr_trace1.mie[SCR1_CSR_MIE_MTIE_OFFSET]            = mie_mtie;
+    csr_trace1.mie[SCR1_CSR_MIE_MEIE_OFFSET]            = mie_meie;
+    csr_trace1.mip[SCR1_CSR_MIE_MSIE_OFFSET]            = mip_msip;
+    csr_trace1.mip[SCR1_CSR_MIE_MTIE_OFFSET]            = mip_mtip;
+    csr_trace1.mip[SCR1_CSR_MIE_MEIE_OFFSET]            = mip_meip;
+end
 
 
 always_ff @(negedge rst_n, posedge clk) begin
@@ -385,7 +402,7 @@ always_ff @(negedge rst_n, posedge clk) begin
             $fwrite(trace_csr_fhandler, "      MIP");
             $fwrite(trace_csr_fhandler, "     MEPC");
             $fwrite(trace_csr_fhandler, "   MCAUSE");
-            $fwrite(trace_csr_fhandler, " MBADADDR");
+            $fwrite(trace_csr_fhandler, " MTVAL"   );
             $fwrite(trace_csr_fhandler,  "\n");
 
             trace_write_csr();

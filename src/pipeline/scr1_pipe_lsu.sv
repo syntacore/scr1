@@ -138,7 +138,7 @@ always_comb begin
                 SCR1_LSU_CMD_LHU    : lsu2exu_exc_code = SCR1_EXC_CODE_LD_ACCESS_FAULT;
                 SCR1_LSU_CMD_SB,
                 SCR1_LSU_CMD_SH,
-                SCR1_LSU_CMD_SW     : lsu2exu_exc_code = SCR1_EXC_CODE_ST_AMO_ACCESS_FAULT;
+                SCR1_LSU_CMD_SW     : lsu2exu_exc_code = SCR1_EXC_CODE_ST_ACCESS_FAULT;
                 // Impossible
                 default             : lsu2exu_exc_code = SCR1_EXC_CODE_INSTR_MISALIGN;
             endcase
@@ -147,7 +147,7 @@ always_comb begin
         lsu_hwbrk                   : lsu2exu_exc_code = SCR1_EXC_CODE_BREAKPOINT;
 `endif // SCR1_BRKM_EN
         l_misalign                  : lsu2exu_exc_code = SCR1_EXC_CODE_LD_ADDR_MISALIGN;
-        s_misalign                  : lsu2exu_exc_code = SCR1_EXC_CODE_ST_AMO_ADDR_MISALIGN;
+        s_misalign                  : lsu2exu_exc_code = SCR1_EXC_CODE_ST_ADDR_MISALIGN;
         default                     : lsu2exu_exc_code = SCR1_EXC_CODE_INSTR_MISALIGN;
     endcase // 1'b1
 end
@@ -212,7 +212,7 @@ end
 //-------------------------------------------------------------------------------
 // BRKM
 //-------------------------------------------------------------------------------
-assign lsu2brkm_d_mon.vd        = exu2lsu_req & (fsm == SCR1_FSM_IDLE);
+assign lsu2brkm_d_mon.vd        = exu2lsu_req & (fsm == SCR1_FSM_IDLE) & ~brkm2lsu_i_x_req;
 assign lsu2brkm_d_mon.addr      = exu2lsu_addr;
 assign lsu2brkm_d_mon.load      = (lsu2dmem_cmd == SCR1_MEM_CMD_RD);
 assign lsu2brkm_d_mon.store     = (lsu2dmem_cmd == SCR1_MEM_CMD_WR);

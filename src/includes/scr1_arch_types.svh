@@ -11,24 +11,28 @@ typedef logic [`SCR1_XLEN-1:0]  type_scr1_mprf_v;
 typedef logic [`SCR1_XLEN-1:0]  type_scr1_pc_v;
 
 //-------------------------------------------------------------------------------
-// Exception codes
+// Exception and IRQ codes
 //-------------------------------------------------------------------------------
-localparam SCR1_EXC_CODE_ALL_NUM_E = 12;
-localparam SCR1_EXC_CODE_WIDTH_E   = $clog2(SCR1_EXC_CODE_ALL_NUM_E);
+parameter int unsigned SCR1_EXC_CODE_WIDTH_E    = 4;
+
+// Exceptions
 typedef enum logic [SCR1_EXC_CODE_WIDTH_E-1:0] {
-    SCR1_EXC_CODE_INSTR_MISALIGN,           // from EXU
-    SCR1_EXC_CODE_INSTR_ACCESS_FAULT,       // from IFU
-    SCR1_EXC_CODE_ILLEGAL_INSTR,            // from IDU or CSR
-    SCR1_EXC_CODE_BREAKPOINT,               // from IDU or BRKM
-    SCR1_EXC_CODE_LD_ADDR_MISALIGN,         // from LSU
-    SCR1_EXC_CODE_LD_ACCESS_FAULT,          // from LSU
-    SCR1_EXC_CODE_ST_AMO_ADDR_MISALIGN,     // from LSU
-    SCR1_EXC_CODE_ST_AMO_ACCESS_FAULT,      // from LSU
-    SCR1_EXC_CODE_ECALL_U,                  // unused
-    SCR1_EXC_CODE_ECALL_S,                  // unused
-    SCR1_EXC_CODE_ECALL_H,                  // unused
-    SCR1_EXC_CODE_ECALL_M                   // from IDU
+    SCR1_EXC_CODE_INSTR_MISALIGN        = 4'd0,     // from EXU
+    SCR1_EXC_CODE_INSTR_ACCESS_FAULT    = 4'd1,     // from IFU
+    SCR1_EXC_CODE_ILLEGAL_INSTR         = 4'd2,     // from IDU or CSR
+    SCR1_EXC_CODE_BREAKPOINT            = 4'd3,     // from IDU or BRKM
+    SCR1_EXC_CODE_LD_ADDR_MISALIGN      = 4'd4,     // from LSU
+    SCR1_EXC_CODE_LD_ACCESS_FAULT       = 4'd5,     // from LSU
+    SCR1_EXC_CODE_ST_ADDR_MISALIGN      = 4'd6,     // from LSU
+    SCR1_EXC_CODE_ST_ACCESS_FAULT       = 4'd7,     // from LSU
+    SCR1_EXC_CODE_ECALL_M               = 4'd11     // from IDU
 } type_scr1_exc_code_e;
+
+// IRQs, reset
+parameter bit [SCR1_EXC_CODE_WIDTH_E-1:0] SCR1_EXC_CODE_IRQ_M_SOFTWARE      = 4'd3;
+parameter bit [SCR1_EXC_CODE_WIDTH_E-1:0] SCR1_EXC_CODE_IRQ_M_TIMER         = 4'd7;
+parameter bit [SCR1_EXC_CODE_WIDTH_E-1:0] SCR1_EXC_CODE_IRQ_M_EXTERNAL      = 4'd11;
+parameter bit [SCR1_EXC_CODE_WIDTH_E-1:0] SCR1_EXC_CODE_RESET               = 4'd0;
 
 //-------------------------------------------------------------------------------
 // Operand width for BRKM

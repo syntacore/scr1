@@ -21,6 +21,7 @@ module scr1_pipe_idu
     output  logic                           idu2ifu_rdy,            // IDU ready for new data
     input   logic [`SCR1_IMEM_DWIDTH-1:0]   ifu2idu_instr,          // IFU instruction
     input   logic                           ifu2idu_imem_err,       // Instruction access fault exception
+    input   logic                           ifu2idu_err_rvi_hi,     // 1 - imem fault when trying to fetch second half of an unaligned RVI instruction
     input   logic                           ifu2idu_vd,             // IFU request
 
     // IDU <-> EXU interface
@@ -38,9 +39,9 @@ module scr1_pipe_idu
 //-------------------------------------------------------------------------------
 // Local parameters declaration
 //-------------------------------------------------------------------------------
-localparam [4:0]    SCR1_MPRF_ZERO_ADDR = 5'd0;
-localparam [4:0]    SCR1_MPRF_RA_ADDR   = 5'd1;
-localparam [4:0]    SCR1_MPRF_SP_ADDR   = 5'd2;
+localparam [SCR1_GPR_FIELD_WIDTH-1:0] SCR1_MPRF_ZERO_ADDR   = 5'd0;
+localparam [SCR1_GPR_FIELD_WIDTH-1:0] SCR1_MPRF_RA_ADDR     = 5'd1;
+localparam [SCR1_GPR_FIELD_WIDTH-1:0] SCR1_MPRF_SP_ADDR     = 5'd2;
 
 //-------------------------------------------------------------------------------
 // Local signals declaration
@@ -93,7 +94,7 @@ always_comb begin
     idu2exu_cmd.rd_wb_sel   = SCR1_RD_WB_NONE;
     idu2exu_cmd.jump_req    = 1'b0;
     idu2exu_cmd.branch_req  = 1'b0;
-    idu2exu_cmd.eret_req    = 1'b0;
+    idu2exu_cmd.mret_req    = 1'b0;
     idu2exu_cmd.fencei_req  = 1'b0;
     idu2exu_cmd.wfi_req     = 1'b0;
     idu2exu_cmd.rs1_addr    = '0;
@@ -120,6 +121,7 @@ always_comb begin
     if (ifu2idu_imem_err) begin
         idu2exu_cmd.exc_req     = 1'b1;
         idu2exu_cmd.exc_code    = SCR1_EXC_CODE_INSTR_ACCESS_FAULT;
+        idu2exu_cmd.instr_rvc   = ifu2idu_err_rvi_hi;
     end else begin  // no imem fault
         case (instr_type)
             SCR1_INSTR_RVI  : begin
@@ -353,7 +355,7 @@ always_comb begin
                     SCR1_OPCODE_SYSTEM      : begin
                         idu2exu_use_rd      = 1'b1;
                         idu2exu_use_imm     = 1'b1;
-                        idu2exu_cmd.imm     = `SCR1_XLEN'(instr[31:20]);        // CSR address
+                        idu2exu_cmd.imm     = `SCR1_XLEN'({funct3, instr[31:20]});      // {funct3, CSR address}
                         case (funct3)
                             3'b000  : begin
                                 idu2exu_use_rd    = 1'b0;
@@ -371,11 +373,11 @@ always_comb begin
                                                 idu2exu_cmd.exc_req     = 1'b1;
                                                 idu2exu_cmd.exc_code    = SCR1_EXC_CODE_BREAKPOINT;
                                             end
-                                            12'h100 : begin
-                                                // ERET
-                                                idu2exu_cmd.eret_req    = 1'b1;
+                                            12'h302 : begin
+                                                // MRET
+                                                idu2exu_cmd.mret_req    = 1'b1;
                                             end
-                                            12'h102 : begin
+                                            12'h105 : begin
                                                 // WFI
                                                 idu2exu_cmd.wfi_req     = 1'b1;
                                             end
@@ -807,14 +809,20 @@ always_comb begin
         idu2exu_cmd.rd_wb_sel       = SCR1_RD_WB_NONE;
         idu2exu_cmd.jump_req        = 1'b0;
         idu2exu_cmd.branch_req      = 1'b0;
-        idu2exu_cmd.eret_req        = 1'b0;
+        idu2exu_cmd.mret_req        = 1'b0;
         idu2exu_cmd.fencei_req      = 1'b0;
         idu2exu_cmd.wfi_req         = 1'b0;
 
         idu2exu_use_rs1             = 1'b0;
         idu2exu_use_rs2             = 1'b0;
         idu2exu_use_rd              = 1'b0;
+
+`ifndef SCR1_MTVAL_ILLEGAL_INSTR_EN
         idu2exu_use_imm             = 1'b0;
+`else // SCR1_MTVAL_ILLEGAL_INSTR_EN
+        idu2exu_use_imm             = 1'b1;
+        idu2exu_cmd.imm             = instr;
+`endif // SCR1_MTVAL_ILLEGAL_INSTR_EN
 
         idu2exu_cmd.exc_req         = 1'b1;
         idu2exu_cmd.exc_code        = SCR1_EXC_CODE_ILLEGAL_INSTR;

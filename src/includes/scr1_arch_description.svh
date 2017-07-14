@@ -8,7 +8,7 @@
 //-------------------------------------------------------------------------------
 // Core configurable parameters
 //-------------------------------------------------------------------------------
-`define SCR1_BUILD_ID               32'h17050800
+`define SCR1_MIMPID                 32'h17071200
 
 //`define SCR1_RVE_EXT                // enables RV32E base integer instruction set
 `define SCR1_RVM_EXT                // enables standard extension for integer mul/div
@@ -24,6 +24,17 @@
 `define SCR1_DBGC_EN                // enables debug controller
 `define SCR1_BRKM_EN                // enables breakpoint module
 `define SCR1_IPIC_EN                // enables interrupt controller
+`define SCR1_TCM_EN                 // enables tightly-coupled memory
+
+//`define SCR1_VECT_IRQ_EN            // enables vectored interrupts
+`define SCR1_CSR_MCOUNTEN_EN        // enables custom MCOUNTEN CSR
+
+`ifdef SCR1_TCM_EN
+parameter bit [31:0] SCR1_TCM_ADDR_MASK         = 'hFFFF0000;       // TCM address mask
+parameter bit [31:0] SCR1_TCM_ADDR_PATTERN      = 'h00480000;       // TCM address pattern
+`endif // SCR1_TCM_EN
+parameter bit [31:0] SCR1_TIMER_ADDR_MASK       = 'hFFFFFFE0;       // Timer address mask
+parameter bit [31:0] SCR1_TIMER_ADDR_PATTERN    = 'h00490000;       // Timer address pattern
 
 //-------------------------------------------------------------------------------
 // Core read-only parameters (do not modify)
@@ -48,10 +59,12 @@
 
 parameter int unsigned  SCR1_CSR_ADDR_WIDTH = 12;
 
+`define SCR1_MTVAL_ILLEGAL_INSTR_EN
+
 //-------------------------------------------------------------------------------
 // Parameters for simulation
 //-------------------------------------------------------------------------------
-`define SCR1_SYN_OFF_EN                 // enable not synthesizable code (asserts, covergroups, tracelog)
+`define SCR1_SYN_OFF_EN                 // enable non-synthesizable code (asserts, covergroups, tracelog)
 `define SCR1_TRACE_LOG_EN               // enable trace log
 `define SCR1_TRACE_LOG_FULL             // full trace log
 

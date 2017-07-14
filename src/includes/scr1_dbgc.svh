@@ -28,7 +28,7 @@ localparam int SCR1_DBGC_REGBLOCK_INDEX_WIDTH       = (SCR1_DBGC_DAP_OPCODE_REG_
 localparam int SCR1_DBGC_DBG_CORE_INSTR_WIDTH       = SCR1_DBGC_DAP_DATA_REG_WIDTH;
 localparam int SCR1_DBGC_WB_FIFO_INDEX_WIDTH        = 3;
 
-localparam bit [SCR1_DBGC_DAP_DBG_ID_REG_WIDTH-1:0]     SCR1_DBGC_DAP_DBG_ID_VALUE = 32'h00800004;
+localparam bit [SCR1_DBGC_DAP_DBG_ID_REG_WIDTH-1:0]     SCR1_DBGC_DAP_DBG_ID_VALUE = 32'h00810000;
 
 
 //======================================================================================================================
@@ -247,11 +247,12 @@ typedef enum logic [SCR1_DBGC_REGBLOCK_INDEX_WIDTH-1:0] {
 } type_scr1_dbgc_regblock_hart_e;
 
 typedef enum logic [SCR1_DBGC_REGBLOCK_INDEX_WIDTH-1:0] {
-    SCR1_DBGC_HART_CSRS_MCPUID       = 3'h0,
-    SCR1_DBGC_HART_CSRS_MIMPID       = 3'h1,
-    SCR1_DBGC_HART_CSRS_MHARTID      = 3'h2,
-    SCR1_DBGC_HART_CSRS_MRTLID       = 3'h3,
-    SCR1_DBGC_HART_CSRS_XXX          = 'X
+    SCR1_DBGC_HART_CSRS_MVENDORID   = 3'h0,
+    SCR1_DBGC_HART_CSRS_MARCHID     = 3'h1,
+    SCR1_DBGC_HART_CSRS_MIMPID      = 3'h2,
+    SCR1_DBGC_HART_CSRS_MHARTID     = 3'h3,
+    SCR1_DBGC_HART_CSRS_MISA        = 3'h4,
+    SCR1_DBGC_HART_CSRS_XXX         = 'X
 } type_scr1_dbgc_regblock_hart_csrro_e;
 
 

@@ -16,20 +16,7 @@
     .weak trap_entry, handle_trap, sc_exit
 
     .text
-    .align 6
-user_trap_entry:
-    j trap_entry
-
-    .global supervisor_trap_entry
-    .align 6
-supervisor_trap_entry_stub:
-#  csrrw sp, mscratch, sp
-    j /*supervisor_*/trap_entry
-
-    .align 6
-hypervisor_trap_entry:
-    j /*hypervisor_*/trap_entry
-
+    .org (64*3)
     .align 6
 machine_trap_entry:
     j trap_entry
@@ -128,7 +115,7 @@ trap_entry:
 #endif // __RVE_EXT
 
     addi sp, sp, 272
-    eret
+    mret
 
 handle_trap:
 sc_exit:

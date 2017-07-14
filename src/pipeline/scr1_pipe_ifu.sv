@@ -33,6 +33,7 @@ module scr1_pipe_ifu
     input   logic                               idu2ifu_rdy,        // IDU ready for new data
     output  logic [`SCR1_IMEM_DWIDTH-1:0]       ifu2idu_instr,      // IFU instruction
     output  logic                               ifu2idu_imem_err,   // Instruction access fault exception
+    output  logic                               ifu2idu_err_rvi_hi, // 1 - imem fault when trying to fetch second half of an unaligned RVI instruction
     output  logic                               ifu2idu_vd,         // IFU request
 
     output  logic                               ifu_busy            // IFU busy
@@ -135,6 +136,7 @@ logic                               q_head_rvi;                 // RVI instructi
 logic [`SCR1_IMEM_DWIDTH/2-1:0]     q_data_head;
 logic [`SCR1_IMEM_DWIDTH/2-1:0]     q_data_next;
 logic                               q_err_head;
+logic                               q_err_next;
 
 type_scr1_rdata_type_e              rdata_curr;
 type_scr1_rdata_type_e              rdata_next;
@@ -161,6 +163,7 @@ assign q_head_rvc       = ~q_head_rvi;
 assign q_data_head      = q_data [SCR1_IFU_QUEUE_ADR_W'(q_rptr)];
 assign q_data_next      = q_data [SCR1_IFU_QUEUE_ADR_W'(q_rptr + 1'b1)];
 assign q_err_head       = q_err  [SCR1_IFU_QUEUE_ADR_W'(q_rptr)];
+assign q_err_next       = q_err  [SCR1_IFU_QUEUE_ADR_W'(q_rptr + 1'b1)];
 
 
 always_comb begin
@@ -471,17 +474,20 @@ end
 always_comb begin
     ifu2idu_vd          = 1'b0;
     ifu2idu_imem_err    = 1'b0;
+    ifu2idu_err_rvi_hi  = 1'b0;
     if ((fsm == SCR1_FSM_FETCH) | ~q_empty) begin
         if (instr_bypass_vd) begin
             ifu2idu_vd          = 1'b1;
             ifu2idu_imem_err    = (instr_bypass == SCR1_BYPASS_RVI_RDATA_QUEUE) ? (imem_resp_er | q_err_head) : imem_resp_er;
+            ifu2idu_err_rvi_hi  = (instr_bypass == SCR1_BYPASS_RVI_RDATA_QUEUE) & imem_resp_er;
         end else if (~q_empty) begin
             if (q_ocpd_h == SCR1_IFU_Q_FREE_H_W'(1)) begin
                 ifu2idu_vd          = q_head_rvc | q_err_head;
                 ifu2idu_imem_err    = q_err_head;
-            end else begin
+            end else begin          // 2 or more halfwords occupied
                 ifu2idu_vd          = 1'b1;
-                ifu2idu_imem_err    = q_err_head;
+                ifu2idu_imem_err    = q_err_head ? 1'b1 : (q_head_rvi & q_err_next);
+                ifu2idu_err_rvi_hi  = ~q_err_head & q_head_rvi & q_err_next;
             end
         end // ~q_empty
     end
@@ -520,13 +526,15 @@ end
 always_comb begin
     ifu2idu_vd          = 1'b0;
     ifu2idu_imem_err    = 1'b0;
+    ifu2idu_err_rvi_hi  = 1'b0;
     if (~q_empty) begin
         if (q_ocpd_h == SCR1_IFU_Q_FREE_H_W'(1)) begin
             ifu2idu_vd          = q_head_rvc | q_err_head;
             ifu2idu_imem_err    = q_err_head;
-        end else begin
+        end else begin          // 2 or more halfwords occupied
             ifu2idu_vd          = 1'b1;
-            ifu2idu_imem_err    = q_err_head;
+            ifu2idu_imem_err    = q_err_head ? 1'b1 : (q_head_rvi & q_err_next);
+            ifu2idu_err_rvi_hi  = ~q_err_head & q_head_rvi & q_err_next;
         end
     end // ~q_empty
 `ifdef SCR1_DBGC_EN
@@ -605,6 +613,11 @@ SCR1_SVA_IFU_STOP_FETCH : assert property (
     @(negedge clk) disable iff (~rst_n)
     stop_fetch |=> (fsm == SCR1_FSM_IDLE)
     ) else $error("IFU Error: fetch not stopped");
+
+SCR1_SVA_IFU_IMEM_FAULT_RVI_HI : assert property (
+    @(negedge clk) disable iff (~rst_n)
+    ifu2idu_err_rvi_hi |-> ifu2idu_imem_err
+    ) else $error("IFU Error: ifu2idu_imem_err == 0");
 
 // pragma synthesis_on
 `endif // SCR1_SYN_OFF_EN

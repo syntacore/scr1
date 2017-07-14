@@ -3,7 +3,7 @@
 #------------------------------------------------------------------------------
 
 # Parameters
-export ARCH ?= IMC
+export ARCH ?= imfc
 # Testbench memory delay patterns (FFFFFFFF - no delay, 00000000 - random delay, 00000001 - max delay)
 imem_pattern ?= FFFFFFFF
 dmem_pattern ?= FFFFFFFF
@@ -37,7 +37,7 @@ tests: riscv_isa dhrystone21
 
 $(test_info): clean_hex tests
 	cd $(bld_dir); \
-	find . -name '*.hex' > $@
+	ls -tr *.hex > $@
 
 dhrystone21: | $(bld_dir)
 	$(MAKE) -C $(root_dir)/tests/benchmarks/dhrystone21

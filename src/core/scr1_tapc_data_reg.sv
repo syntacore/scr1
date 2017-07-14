@@ -111,7 +111,6 @@ SCR1_SVA_TAPC_DATAREG_XCHECK : assert property (
     })
 ) else begin
     $error("TAPC Data Reg error: unknown values");
-    //$finish();
 end
 
 SCR1_SVA_TAPC_DATAREG_XCHECK_NEGCLK : assert property (
@@ -123,7 +122,6 @@ SCR1_SVA_TAPC_DATAREG_XCHECK_NEGCLK : assert property (
     })
 ) else begin
     $error("TAPC Data Reg @negedge error: unknown values");
-    //$finish();
 end
 
 // pragma synthesis_on

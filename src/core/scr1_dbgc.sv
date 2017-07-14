@@ -5,7 +5,7 @@
 
 
 `include "scr1_arch_description.svh"
-`include "scr1_csr_map.svh"
+`include "scr1_csr.svh"
 `include "scr1_dbgc.svh"
 
 module scr1_dbgc (
@@ -599,24 +599,12 @@ always_comb begin
                                 else begin
                                     decod_hart_reg_wr.ddr   = fsm_regblock_wr;
                                     case (decod_dap_cmd_opcode_regtrans.index)
-
-                                        SCR1_DBGC_HART_CSRS_MCPUID : begin
-                                            decod_ddr_mux   = `SCR1_CSR_MCPUID;
-                                        end
-
-                                        SCR1_DBGC_HART_CSRS_MIMPID : begin
-                                            decod_ddr_mux   = SCR1_CSR_MIMPID;
-                                        end
-
-                                        SCR1_DBGC_HART_CSRS_MHARTID : begin
-                                            decod_ddr_mux   = fuse_mhartid;
-                                        end
-
-                                        SCR1_DBGC_HART_CSRS_MRTLID : begin
-                                            decod_ddr_mux   = `SCR1_BUILD_ID;
-                                        end
-
-                                        default : begin
+                                        SCR1_DBGC_HART_CSRS_MVENDORID   : decod_ddr_mux = SCR1_CSR_MVENDORID;
+                                        SCR1_DBGC_HART_CSRS_MARCHID     : decod_ddr_mux = SCR1_CSR_MARCHID;
+                                        SCR1_DBGC_HART_CSRS_MIMPID      : decod_ddr_mux = SCR1_CSR_MIMPID;
+                                        SCR1_DBGC_HART_CSRS_MHARTID     : decod_ddr_mux = fuse_mhartid;
+                                        SCR1_DBGC_HART_CSRS_MISA        : decod_ddr_mux = SCR1_CSR_MISA;
+                                        default                         : begin
                                             decod_err_invld_dap_opcode_hart = fsm_regblock_wr;
                                         end
                                     endcase
@@ -1648,7 +1636,6 @@ SCR1_SVA_DBGC_XCHECK : assert property (
     })
 ) else begin
     $error("DBGC error: unknown values");
-    //$finish();
 end
 // pragma synthesis_on
 `endif // SCR1_SYN_OFF_EN

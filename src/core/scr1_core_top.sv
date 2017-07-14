@@ -21,7 +21,6 @@ module scr1_core_top (
     input   logic                                   rst_n,
     input   logic                                   test_mode,
     input   logic                                   clk,
-    input   logic                                   rtc_clk,
     output  logic                                   rst_n_out,
 
     // Fuses
@@ -33,6 +32,11 @@ module scr1_core_top (
 `else
     input   logic                                   ext_irq,
 `endif // SCR1_IPIC_EN
+    input   logic                                   soft_irq,
+
+    // Memory-mapped external timer
+    input   logic                                   timer_irq,
+    input   logic [63:0]                            mtime_ext,
 
 `ifdef SCR1_DBGC_EN
     // Debug Interface
@@ -182,7 +186,6 @@ scr1_pipe_top i_pipe_top (
     .clk_dbgc               (clk_dbgc           ),
     .clk_pipe_en            (clk_pipe_en        ),
 `endif // SCR1_CLKCTRL_EN
-    .rtc_clk                (rtc_clk            ),
     // Instruction memory interface
     .imem_req               (imem_req           ),
     .imem_cmd               (imem_cmd           ),
@@ -219,6 +222,9 @@ scr1_pipe_top i_pipe_top (
 `else // SCR1_IPIC_EN
     .ext_irq                (ext_irq            ),
 `endif // SCR1_IPIC_EN
+    .soft_irq               (soft_irq           ),
+    .timer_irq              (timer_irq          ),
+    .mtime_ext              (mtime_ext          ),
     // Block busy interface
     .ifu_busy               (ifu_busy           ),
     .idu_busy               (idu_busy           ),

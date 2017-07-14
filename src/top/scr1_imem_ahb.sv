@@ -6,9 +6,6 @@
 `include "scr1_ahb.svh"
 `include "scr1_memif.svh"
 
-`define SCR1_IMEM_AHB_IN_BP
-`define SCR1_IMEM_AHB_OUT_BP
-
 module scr1_imem_ahb (
     // Control Signals
     input   logic                           rst_n,

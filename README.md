@@ -18,7 +18,7 @@ Folder | Description
 docs                         | SCR1 documentation
 src                          | SCR1 RTL source and testbench files
 tests/common                 | Common source files for tests
-tests/riscv_isa              | Subset of the RISC-V ISA tests from the master RISC-V repo, relevant for SCR1
+tests/riscv_isa              | Common source files for RISC-V ISA tests
 tests/benchmarks/dhrystone21 | Dhrystone 2.1 source files
 
 ## Quick start guide
@@ -27,12 +27,28 @@ tests/benchmarks/dhrystone21 | Dhrystone 2.1 source files
 
     git clone https://github.com/riscv/riscv-gnu-toolchain.git
     cd riscv-gnu-toolchain
-    git checkout 4bcd4f57af50b32efafa2088f996ede3142ec77b
-    ./configure --prefix=<YOUR_INSTALL_PATH> --with-xlen=32 --with-arch=IM
+    git checkout a71fc539850f8dacf232fc580743b946c376014b
+    git submodule update --init --recursive
+    ./configure --prefix=<YOUR_INSTALL_PATH> --with-arch=rv32im --with-abi=ilp32
     make
+    make install
 
-Add the <YOUR_INSTALL_PATH>/bin folder to the PATH environment variable.
+    More detailed instructions on how to prepare and build the toolchain can be found in
+    https://github.com/riscv/riscv-tools/blob/master/README.md.
 
+Add the <YOUR_INSTALL_PATH>/bin folder to the PATH environment variable:
+
+    export PATH=$PATH:<YOUR_INSTALL_PATH>/bin
+
+### Clone and prepare the RISC-V ISA tests
+
+    git clone https://github.com/riscv/riscv-tests
+    cd riscv-tests
+    git checkout a9433c4daa287fbe101025f2a079261a10149225
+
+Set the $RISCV_TESTS environment variable accordingly:
+
+    export RISCV_TESTS=<PATH TO RISCV-TESTS>
 
 ### Build RTL, compile and run tests
 `make run_<SIMULATOR>` will build RTL and tests, then run all tests with default parameters.
@@ -44,7 +60,7 @@ Currently supported options:
 
 Please note that RTL simulator executables should be in your PATH variable.
 
-To run an arbitrary subset of tests, edit the *tests* target in the top Makefile, or the *list.txt* in riscv_isa subfolder.
+To run an arbitrary subset of tests, edit the *tests* target in the top Makefile, or the *rv32_tests.inc* in riscv_isa subfolder.
 After all the tests have finished, the results can be found in *build/test_results.txt* (default location).
 
 * Test build and run parameters can be configured in the *Makefile*

@@ -6,22 +6,87 @@
 #include "riscv_csr_encoding.h"
 #include "sc_test.h"
 
+//-----------------------------------------------------------------------
+// Begin Macro
+//-----------------------------------------------------------------------
+
+#define RVTEST_RV64U                                                    \
+  .macro init;                                                          \
+  .endm
+
+#define RVTEST_RV64UF                                                   \
+  .macro init;                                                          \
+  RVTEST_FP_ENABLE;                                                     \
+  .endm
+
 #define RVTEST_RV32U                                                    \
   .macro init;                                                          \
   .endm
 
-#define RVTEST_RV64U RVTEST_RV32U
+#define RVTEST_RV32UF                                                   \
+  .macro init;                                                          \
+  RVTEST_FP_ENABLE;                                                     \
+  .endm
+
+#define RVTEST_RV64M                                                    \
+  .macro init;                                                          \
+  RVTEST_ENABLE_MACHINE;                                                \
+  .endm
+
+#define RVTEST_RV64S                                                    \
+  .macro init;                                                          \
+  RVTEST_ENABLE_SUPERVISOR;                                             \
+  .endm
 
 #define RVTEST_RV32M                                                    \
   .macro init;                                                          \
   RVTEST_ENABLE_MACHINE;                                                \
   .endm
 
-#define RVTEST_RV64M RVTEST_RV32M
+#define RVTEST_RV32S                                                    \
+  .macro init;                                                          \
+  RVTEST_ENABLE_SUPERVISOR;                                             \
+  .endm
+
+#if __riscv_xlen == 64
+# define CHECK_XLEN li a0, 1; slli a0, a0, 31; bgez a0, 1f; RVTEST_PASS; 1:
+#else
+# define CHECK_XLEN li a0, 1; slli a0, a0, 31; bltz a0, 1f; RVTEST_PASS; 1:
+#endif
+
+#define INIT_PMP                                                        \
+  la t0, 1f;                                                            \
+  csrw mtvec, t0;                                                       \
+  li t0, -1;        /* Set up a PMP to permit all accesses */           \
+  csrw pmpaddr0, t0;                                                    \
+  li t0, PMP_NAPOT | PMP_R | PMP_W | PMP_X;                             \
+  csrw pmpcfg0, t0;                                                     \
+  .align 2;                                                             \
+1:
+
+#define INIT_SPTBR                                                      \
+  la t0, 1f;                                                            \
+  csrw mtvec, t0;                                                       \
+  csrwi sptbr, 0;                                                       \
+  .align 2;                                                             \
+1:
+
+#define DELEGATE_NO_TRAPS
+
+#define RVTEST_ENABLE_SUPERVISOR                                        \
+  li a0, MSTATUS_MPP & (MSTATUS_MPP >> 1);                              \
+  csrs mstatus, a0;                                                     \
+  li a0, SIP_SSIP | SIP_STIP;                                           \
+  csrs mideleg, a0;                                                     \
 
 #define RVTEST_ENABLE_MACHINE                                           \
-  li a0, MSTATUS_PRV1;                                                  \
+  li a0, MSTATUS_MPP;                                                   \
   csrs mstatus, a0;                                                     \
+
+#define RVTEST_FP_ENABLE                                                \
+  li a0, MSTATUS_FS & (MSTATUS_FS >> 1);                                \
+  csrs mstatus, a0;                                                     \
+  csrwi fcsr, 0
 
 #define RISCV_MULTICORE_DISABLE                                         \
   csrr a0, mhartid;                                                     \
@@ -34,68 +99,72 @@
 #define EXTRA_INIT
 #define EXTRA_INIT_TIMER
 
+#define INTERRUPT_HANDLER j other_exception /* No interrupts should occur */
+
 #define RVTEST_CODE_BEGIN                                               \
-        .text;                                                          \
+        .section .text.init;                                            \
+        .org 0xC0, 0x00;                                                \
         .align  6;                                                      \
         .weak stvec_handler;                                            \
         .weak mtvec_handler;                                            \
-tvec_user:                                                              \
-        EXTRA_TVEC_USER;                                                \
+trap_vector:                                                            \
         /* test whether the test came from pass/fail */                 \
-        la t5, ecall;                                                   \
-        csrr t6, mepc;                                                  \
-        beq t5, t6, tvec_result;                                        \
-        /* test whether the stvec_handler target exists */              \
-        la t5, stvec_handler;                                           \
-        bnez t5, mrts_routine;                                          \
-        /* test whether the mtvec_handler target exists */              \
-        la t5, mtvec_handler;                                           \
-        bnez t5, mtvec_handler;                                         \
-        /* some other exception occurred */                             \
-        j other_exception;                                              \
-        .align  6;                                                      \
-tvec_supervisor:                                                        \
-        EXTRA_TVEC_SUPERVISOR;                                          \
         csrr t5, mcause;                                                \
-        bgez t5, tvec_user;                                             \
-  mrts_routine:                                                         \
-        mrts;                                                           \
-        .align  6;                                                      \
-tvec_hypervisor:                                                        \
-        EXTRA_TVEC_HYPERVISOR;                                          \
-        /* renting some space out here */                               \
-  other_exception:                                                      \
-  1:    ori TESTNUM, TESTNUM, 1337; /* some other exception occurred */ \
-  tvec_result:                                                          \
-        mv a1, TESTNUM;                                                 \
-        sc_fail                                                         \
-        .align  6;                                                      \
-tvec_machine:                                                           \
-        EXTRA_TVEC_MACHINE;                                             \
-        la t5, ecall;                                                   \
-        csrr t6, mepc;                                                  \
-        beq t5, t6, tvec_result;                                        \
+        li t6, CAUSE_USER_ECALL;                                        \
+        beq t5, t6, _report;                                       \
+        li t6, CAUSE_SUPERVISOR_ECALL;                                  \
+        beq t5, t6, _report;                                       \
+        li t6, CAUSE_MACHINE_ECALL;                                     \
+        beq t5, t6, _report;                                       \
+        /* if an mtvec_handler is defined, jump to it */                \
         la t5, mtvec_handler;                                           \
-        bnez t5, mtvec_handler;                                         \
-        j other_exception;                                              \
+        beqz t5, 1f;                                                    \
+        jr t5;                                                          \
+        /* was it an interrupt or an exception? */                      \
+1:      csrr t5, mcause;                                                \
+        bgez t5, handle_exception;                                      \
+        INTERRUPT_HANDLER;                                              \
+handle_exception:                                                       \
+        /* we don't know how to handle whatever the exception was */    \
+other_exception:                                                        \
+        /* some unhandlable exception occurred */                       \
+        li   a0, 0x1;                                                   \
+_report:                                                                \
+        j sc_exit;                                                      \
         .align  6;                                                      \
         .globl _start;                                                  \
 _start:                                                                 \
         RISCV_MULTICORE_DISABLE;                                        \
+        /*INIT_SPTBR;*/                                                 \
+        /*INIT_PMP;*/                                                   \
+        DELEGATE_NO_TRAPS;                                              \
         li TESTNUM, 0;                                                  \
-        la t0, mtvec_handler;                                           \
-        beqz t0, 1f;                                                    \
+        la t0, trap_vector;                                             \
         csrw mtvec, t0;                                                 \
-1:      li t0, MSTATUS_PRV1 | MSTATUS_PRV2 | MSTATUS_IE1 | MSTATUS_IE2; \
-        csrc mstatus, t0;                                               \
+        CHECK_XLEN;                                                     \
+        /* if an stvec_handler is defined, delegate exceptions to it */ \
+        la t0, stvec_handler;                                           \
+        beqz t0, 1f;                                                    \
+        csrw stvec, t0;                                                 \
+        li t0, (1 << CAUSE_LOAD_PAGE_FAULT) |                           \
+               (1 << CAUSE_STORE_PAGE_FAULT) |                          \
+               (1 << CAUSE_FETCH_PAGE_FAULT) |                          \
+               (1 << CAUSE_MISALIGNED_FETCH) |                          \
+               (1 << CAUSE_USER_ECALL) |                                \
+               (1 << CAUSE_BREAKPOINT);                                 \
+        csrw medeleg, t0;                                               \
+        csrr t1, medeleg;                                               \
+        bne t0, t1, other_exception;                                    \
+1:      csrwi mstatus, 0;                                               \
         init;                                                           \
         EXTRA_INIT;                                                     \
         EXTRA_INIT_TIMER;                                               \
-        la t0, 1f;                                                      \
+        la t0, _run_test;                                               \
         csrw mepc, t0;                                                  \
         csrr a0, mhartid;                                               \
-        eret;                                                           \
-1:
+        mret;                                                           \
+        .section .text;                                                 \
+_run_test:
 
 //-----------------------------------------------------------------------
 // End Macro
@@ -108,29 +177,44 @@ _start:                                                                 \
 //-----------------------------------------------------------------------
 
 #define RVTEST_PASS                                                     \
-        sc_pass
+        fence;                                                          \
+        mv a1, TESTNUM;                                                 \
+        li  a0, 0x0;                                                    \
+        ecall
 
 #define TESTNUM x28
 #define RVTEST_FAIL                                                     \
+        fence;                                                          \
         mv a1, TESTNUM;                                                 \
-        sc_fail
+        li  a0, 0x1;                                                    \
+        ecall
 
 //-----------------------------------------------------------------------
 // Data Section Macro
 //-----------------------------------------------------------------------
 
-#define RVTEST_DATA_BEGIN .align 4; .global begin_signature; begin_signature:
-#define RVTEST_DATA_END .align 4; .global end_signature; end_signature:
+#define EXTRA_DATA
 
+#define RVTEST_DATA_BEGIN                                               \
+        EXTRA_DATA                                                      \
+        .pushsection .tohost,"aw",@progbits;                            \
+        .align 6; .global tohost; tohost: .dword 0;                     \
+        .align 6; .global fromhost; fromhost: .dword 0;                 \
+        .popsection;                                                    \
+        .align 4; .global begin_signature; begin_signature:
+
+#define RVTEST_DATA_END .align 4; .global end_signature; end_signature:
 
 #-----------------------------------------------------------------------
 # Helper macros
 #-----------------------------------------------------------------------
 
+#define MASK_XLEN(x) ((x) & ((1 << (__riscv_xlen - 1) << 1) - 1))
+
 #define TEST_CASE( testnum, testreg, correctval, code... ) \
 test_ ## testnum: \
     code; \
-    li  x29, correctval; \
+    li  x29, MASK_XLEN(correctval); \
     li  TESTNUM, testnum; \
     bne testreg, x29, fail;
 
@@ -162,7 +246,7 @@ test_ ## testnum: \
 
 #define TEST_IMM_OP( testnum, inst, result, val1, imm ) \
     TEST_CASE( testnum, x3, result, \
-      li  x1, val1; \
+      li  x1, MASK_XLEN(val1); \
       inst x3, x1, SEXT_IMM(imm); \
     )
 
@@ -174,14 +258,14 @@ test_ ## testnum: \
 
 #define TEST_IMM_SRC1_EQ_DEST( testnum, inst, result, val1, imm ) \
     TEST_CASE( testnum, x1, result, \
-      li  x1, val1; \
+      li  x1, MASK_XLEN(val1); \
       inst x1, x1, SEXT_IMM(imm); \
     )
 
 #define TEST_IMM_DEST_BYPASS( testnum, nop_cycles, inst, result, val1, imm ) \
     TEST_CASE( testnum, x6, result, \
       li  x4, 0; \
-1:    li  x1, val1; \
+1:    li  x1, MASK_XLEN(val1); \
       inst x3, x1, SEXT_IMM(imm); \
       TEST_INSERT_NOPS_ ## nop_cycles \
       addi  x6, x3, 0; \
@@ -193,7 +277,7 @@ test_ ## testnum: \
 #define TEST_IMM_SRC1_BYPASS( testnum, nop_cycles, inst, result, val1, imm ) \
     TEST_CASE( testnum, x3, result, \
       li  x4, 0; \
-1:    li  x1, val1; \
+1:    li  x1, MASK_XLEN(val1); \
       TEST_INSERT_NOPS_ ## nop_cycles \
       inst x3, x1, SEXT_IMM(imm); \
       addi  x4, x4, 1; \
@@ -208,7 +292,7 @@ test_ ## testnum: \
 
 #define TEST_IMM_ZERODEST( testnum, inst, val1, imm ) \
     TEST_CASE( testnum, x0, 0, \
-      li  x1, val1; \
+      li  x1, MASK_XLEN(val1); \
       inst x0, x1, SEXT_IMM(imm); \
     )
 
@@ -274,36 +358,36 @@ test_ ## testnum: \
 
 #define TEST_RR_OP( testnum, inst, result, val1, val2 ) \
     TEST_CASE( testnum, x3, result, \
-      li  x1, val1; \
-      li  x2, val2; \
+      li  x1, MASK_XLEN(val1); \
+      li  x2, MASK_XLEN(val2); \
       inst x3, x1, x2; \
     )
 
 #define TEST_RR_SRC1_EQ_DEST( testnum, inst, result, val1, val2 ) \
     TEST_CASE( testnum, x1, result, \
-      li  x1, val1; \
-      li  x2, val2; \
+      li  x1, MASK_XLEN(val1); \
+      li  x2, MASK_XLEN(val2); \
       inst x1, x1, x2; \
     )
 
 #define TEST_RR_SRC2_EQ_DEST( testnum, inst, result, val1, val2 ) \
     TEST_CASE( testnum, x2, result, \
-      li  x1, val1; \
-      li  x2, val2; \
+      li  x1, MASK_XLEN(val1); \
+      li  x2, MASK_XLEN(val2); \
       inst x2, x1, x2; \
     )
 
 #define TEST_RR_SRC12_EQ_DEST( testnum, inst, result, val1 ) \
     TEST_CASE( testnum, x1, result, \
-      li  x1, val1; \
+      li  x1, MASK_XLEN(val1); \
       inst x1, x1, x1; \
     )
 
 #define TEST_RR_DEST_BYPASS( testnum, nop_cycles, inst, result, val1, val2 ) \
     TEST_CASE( testnum, x6, result, \
       li  x4, 0; \
-1:    li  x1, val1; \
-      li  x2, val2; \
+1:    li  x1, MASK_XLEN(val1); \
+      li  x2, MASK_XLEN(val2); \
       inst x3, x1, x2; \
       TEST_INSERT_NOPS_ ## nop_cycles \
       addi  x6, x3, 0; \
@@ -315,9 +399,9 @@ test_ ## testnum: \
 #define TEST_RR_SRC12_BYPASS( testnum, src1_nops, src2_nops, inst, result, val1, val2 ) \
     TEST_CASE( testnum, x3, result, \
       li  x4, 0; \
-1:    li  x1, val1; \
+1:    li  x1, MASK_XLEN(val1); \
       TEST_INSERT_NOPS_ ## src1_nops \
-      li  x2, val2; \
+      li  x2, MASK_XLEN(val2); \
       TEST_INSERT_NOPS_ ## src2_nops \
       inst x3, x1, x2; \
       addi  x4, x4, 1; \
@@ -328,9 +412,9 @@ test_ ## testnum: \
 #define TEST_RR_SRC21_BYPASS( testnum, src1_nops, src2_nops, inst, result, val1, val2 ) \
     TEST_CASE( testnum, x3, result, \
       li  x4, 0; \
-1:    li  x2, val2; \
+1:    li  x2, MASK_XLEN(val2); \
       TEST_INSERT_NOPS_ ## src1_nops \
-      li  x1, val1; \
+      li  x1, MASK_XLEN(val1); \
       TEST_INSERT_NOPS_ ## src2_nops \
       inst x3, x1, x2; \
       addi  x4, x4, 1; \
@@ -340,13 +424,13 @@ test_ ## testnum: \
 
 #define TEST_RR_ZEROSRC1( testnum, inst, result, val ) \
     TEST_CASE( testnum, x2, result, \
-      li x1, val; \
+      li x1, MASK_XLEN(val); \
       inst x2, x0, x1; \
     )
 
 #define TEST_RR_ZEROSRC2( testnum, inst, result, val ) \
     TEST_CASE( testnum, x2, result, \
-      li x1, val; \
+      li x1, MASK_XLEN(val); \
       inst x2, x1, x0; \
     )
 
@@ -357,8 +441,8 @@ test_ ## testnum: \
 
 #define TEST_RR_ZERODEST( testnum, inst, val1, val2 ) \
     TEST_CASE( testnum, x0, 0, \
-      li x1, val1; \
-      li x2, val2; \
+      li x1, MASK_XLEN(val1); \
+      li x2, MASK_XLEN(val2); \
       inst x0, x1, x2; \
     )
 
@@ -561,6 +645,11 @@ test_ ## testnum: \
 # Tests floating-point instructions
 #-----------------------------------------------------------------------
 
+#define qNaNf 0f:7fc00000
+#define sNaNf 0f:7f800001
+#define qNaN 0d:7ff8000000000000
+#define sNaN 0d:7ff0000000000001
+
 #define TEST_FP_OP_S_INTERNAL( testnum, flags, result, val1, val2, val3, code... ) \
 test_ ## testnum: \
   li  TESTNUM, testnum; \
@@ -629,6 +718,10 @@ test_ ## testnum: \
   TEST_FP_OP_S_INTERNAL( testnum, flags, dword result, val1, 0.0, 0.0, \
                     inst f3, f0; fmv.x.s a0, f3)
 
+#define TEST_FP_OP1_D_DWORD_RESULT( testnum, inst, flags, result, val1 ) \
+  TEST_FP_OP_D_INTERNAL( testnum, flags, dword result, val1, 0.0, 0.0, \
+                    inst f3, f0; fmv.x.d a0, f3)
+
 #define TEST_FP_OP2_S( testnum, inst, flags, result, val1, val2 ) \
   TEST_FP_OP_S_INTERNAL( testnum, flags, float result, val1, val2, 0.0, \
                     inst f3, f0, f1; fmv.x.s a0, f3)
@@ -653,12 +746,12 @@ test_ ## testnum: \
   TEST_FP_OP_D_INTERNAL( testnum, flags, dword result, val1, 0.0, 0.0, \
                     inst a0, f0, rm)
 
-#define TEST_FP_CMP_OP_S( testnum, inst, result, val1, val2 ) \
-  TEST_FP_OP_S_INTERNAL( testnum, 0, word result, val1, val2, 0.0, \
+#define TEST_FP_CMP_OP_S( testnum, inst, flags, result, val1, val2 ) \
+  TEST_FP_OP_S_INTERNAL( testnum, flags, word result, val1, val2, 0.0, \
                     inst a0, f0, f1)
 
-#define TEST_FP_CMP_OP_D( testnum, inst, result, val1, val2 ) \
-  TEST_FP_OP_D_INTERNAL( testnum, 0, dword result, val1, val2, 0.0, \
+#define TEST_FP_CMP_OP_D( testnum, inst, flags, result, val1, val2 ) \
+  TEST_FP_OP_D_INTERNAL( testnum, flags, dword result, val1, val2, 0.0, \
                     inst a0, f0, f1)
 
 #define TEST_FCLASS_S(testnum, correct, input) \
@@ -720,3 +813,4 @@ pass: \
 #define TEST_DATA
 
 #endif
+
