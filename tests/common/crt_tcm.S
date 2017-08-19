@@ -15,28 +15,60 @@
     .globl sc_exit
     .weak trap_entry, handle_trap, sc_exit
 
-    .text
+    .section .text.init
     .org (64*3)
-    .align 6
+    .align 6;
 machine_trap_entry:
     j trap_entry
 
     .align 6
-
 _start:
-    # clear bss
-    la    a1, __BSS_START__
-    la    a2, __BSS_END__
-    j     4f
-3:  sw    zero, 0(a1)
-    add   a1, a1, 4
-4:  bne   a1, a2, 3b
     auipc gp, %hi(_gp)
     addi  gp, gp, %lo(_gp)
+    la    a0, __reloc_start
+    la    a1, __TEXT_START__
+    la    a2, __DATA_START__
+    beq   a0, a1, 21f
+    j     2f
+1:  lw    a3, 0(a0)
+    sw    a3, 0(a1)
+    add   a0, a0, 4
+    add   a1, a1, 4
+2:  bne   a1, a2, 1b
+    # clear bss
+    la    a2, __BSS_START__
+21: la    a1, __BSS_END__
+    j     4f
+3:  sw    zero, 0(a2)
+    add   a2, a2, 4
+4:  bne   a1, a2, 3b
+    // init stack
     la    sp, __C_STACK_TOP__
+    // init hart0 TLS
+    la    a0, _tdata_begin
+    la    a2, _tbss_end
+    sub   a1, a2, a0
+    la    a4, __STACK_START__
+    sub   tp, a4, a1
+    // init tdata
+    mv    a1, tp
+    la    a2, _tdata_end
+    j     6f
+5:  lw    a3, 0(a0)
+    sw    a3, 0(a1)
+    add   a0, a0, 4
+    add   a1, a1, 4
+6:  bne   a0, a2, 5b
+    // clear tbss
+    j     8f
+7:  sw    zero, 0(a1)
+    add   a1, a1, 4
+8:  bne   a1, a4, 7b
+
     li    a0, 0
     li    a1, 0
-    jal   main
+9:  auipc t0, %pcrel_hi(main)
+    jalr  t0, %pcrel_lo(9b)
     j     sc_exit
 
 trap_entry:

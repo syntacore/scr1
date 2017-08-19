@@ -12,8 +12,16 @@ LDFLAGS := -nostartfiles -nostdlib -lc -lgcc
 VPATH += $(src_dir) $(inc_dir)
 incs += -I$(src_dir) -I$(inc_dir)
 
-c_src := sc_print.c dhry_1.c dhry_2.c
+ifdef TCM
+ld_script := $(inc_dir)/link_tcm.ld
+asm_src := crt_tcm.S
+else
+ld_script := $(inc_dir)/link.ld
 asm_src := crt.S
+endif
+
+c_src := sc_print.c dhry_1.c dhry_2.c
+
 c_objs := $(addprefix $(bld_dir)/,$(patsubst %.c, %.o, $(c_src)))
 asm_objs := $(addprefix $(bld_dir)/,$(patsubst %.S, %.o, $(asm_src)))
 
@@ -25,7 +33,7 @@ $(bld_dir)/%.o: %.S
 $(bld_dir)/%.o: %.c
 	$(RISCV_GCC) $(CFLAGS) -c $(incs) $< -o $@
 
-$(bld_dir)/dhrystone21.elf: $(inc_dir)/link.ld $(c_objs) $(asm_objs)
+$(bld_dir)/dhrystone21.elf: $(ld_script) $(c_objs) $(asm_objs)
 	$(RISCV_GCC) -o $@ -T $^ $(LDFLAGS)
 
 $(bld_dir)/dhrystone21.hex: $(bld_dir)/dhrystone21.elf
