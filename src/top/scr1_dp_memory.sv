@@ -15,52 +15,91 @@ module scr1_dp_memory
     input   logic                           clk,
     // Port A
     input   logic                           rena,
-    input   logic [$clog2(SCR1_SIZE)-1:0]   addra,
+    input   logic [$clog2(SCR1_SIZE)-1:2]   addra,
     output  logic [SCR1_WIDTH-1:0]          qa,
     // Port B
     input   logic                           renb,
     input   logic                           wenb,
     input   logic [SCR1_NBYTES-1:0]         webb,
-    input   logic [$clog2(SCR1_SIZE)-1:0]   addrb,
+    input   logic [$clog2(SCR1_SIZE)-1:2]   addrb,
     input   logic [SCR1_WIDTH-1:0]          datab,
     output  logic [SCR1_WIDTH-1:0]          qb
 );
+
+`ifdef SCR1_TARGET_FPGA_INTEL
+//-------------------------------------------------------------------------------
+// Local signal declaration
+//-------------------------------------------------------------------------------
+logic [SCR1_NBYTES-1:0][7:0] memory_array [0:(SCR1_SIZE/SCR1_NBYTES)-1];
+logic [3:0] wenbb;
+//-------------------------------------------------------------------------------
+// Port B memory behavioral description
+//-------------------------------------------------------------------------------
+assign wenbb = {4{wenb}} & webb;
+always_ff @(posedge clk) begin
+    if (wenb) begin
+        if (wenbb[0]) begin
+            memory_array[addrb][0] <= datab[0+:8];
+        end
+        if (wenbb[1]) begin
+            memory_array[addrb][1] <= datab[8+:8];
+        end
+        if (wenbb[2]) begin
+            memory_array[addrb][2] <= datab[16+:8];
+        end
+        if (wenbb[3]) begin
+            memory_array[addrb][3] <= datab[24+:8];
+        end
+    end
+    if (renb) begin
+        qb <= memory_array[addrb];
+    end
+end
+//-------------------------------------------------------------------------------
+// Port A memory behavioral description
+//-------------------------------------------------------------------------------
+always_ff @(posedge clk) begin
+    if (rena) begin
+        qa <= memory_array[addra];
+    end
+end
+
+`else // SCR1_TARGET_FPGA_INTEL
+
+// CASE: OTHERS - SCR1_TARGET_FPGA_XILINX, SIMULATION, ASIC etc
 
 localparam int unsigned RAM_SIZE_WORDS = SCR1_SIZE/SCR1_NBYTES;
 
 //-------------------------------------------------------------------------------
 // Local signal declaration
 //-------------------------------------------------------------------------------
-reg [SCR1_WIDTH-1:0]                ram_block [RAM_SIZE_WORDS-1:0];
-integer                             i;
-reg [$clog2(RAM_SIZE_WORDS)-1:0]    addra_word;
-reg [$clog2(RAM_SIZE_WORDS)-1:0]    addrb_word;
+logic [SCR1_WIDTH-1:0]                  ram_block [RAM_SIZE_WORDS-1:0];
 
 //-------------------------------------------------------------------------------
 // Port A memory behavioral description
 //-------------------------------------------------------------------------------
-assign addra_word = addra[$clog2(SCR1_SIZE)-1 : $clog2(SCR1_SIZE)-$clog2(RAM_SIZE_WORDS)];
-always @(posedge clk) begin
+always_ff @(posedge clk) begin
     if (rena) begin
-        qa <= ram_block[addra_word];
+        qa <= ram_block[addra];
     end
 end
 
 //-------------------------------------------------------------------------------
 // Port B memory behavioral description
 //-------------------------------------------------------------------------------
-assign addrb_word = addrb[$clog2(SCR1_SIZE)-1 : $clog2(SCR1_SIZE)-$clog2(RAM_SIZE_WORDS)];
-always @(posedge clk) begin
+always_ff @(posedge clk) begin
     if (wenb) begin
-        for (i=0; i<SCR1_NBYTES; i=i+1) begin
+        for (int i=0; i<SCR1_NBYTES; i++) begin
             if (webb[i]) begin
-                ram_block[addrb_word][i*8 +: 8] <= datab[i*8 +: 8];
+                ram_block[addrb][i*8 +: 8] <= datab[i*8 +: 8];
             end
         end
     end
     if (renb) begin
-        qb <= ram_block[addrb_word];
+        qb <= ram_block[addrb];
     end
 end
+
+`endif // SCR1_TARGET_FPGA_INTEL
 
 endmodule : scr1_dp_memory
