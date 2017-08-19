@@ -324,6 +324,11 @@ always_comb begin
             dap_ch_id               = SCR1_DAP_CHAIN_ID_DBG_PIPE_STS;
             dr_out                  = dap_ch_tdo;
         end
+        SCR1_TAP_INSTR_TARGET_ID : begin
+            dap_ch_sel              = 1'b1;
+            dap_ch_id               = SCR1_DAP_CHAIN_ID_TARGET_ID;
+            dr_out                  = dap_ch_tdo;
+        end
         default : begin
             dr_bypass_sel           = 1'b1;
             dr_out                  = dr_bypass_tdo;

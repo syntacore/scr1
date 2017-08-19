@@ -103,14 +103,14 @@ scr1_dp_memory #(
     // Instruction port
     // Port A
     .rena   ( imem_rd                               ),
-    .addra  ( imem_addr[$clog2(SCR1_TCM_SIZE)-1:0]  ),
+    .addra  ( imem_addr[$clog2(SCR1_TCM_SIZE)-1:2]  ),
     .qa     ( imem_rdata                            ),
     // Data port
     // Port B
     .renb   ( dmem_rd                               ),
     .wenb   ( dmem_wr                               ),
     .webb   ( dmem_byteen                           ),
-    .addrb  ( dmem_addr[$clog2(SCR1_TCM_SIZE)-1:0]  ),
+    .addrb  ( dmem_addr[$clog2(SCR1_TCM_SIZE)-1:2]  ),
     .qb     ( dmem_rdata_local                      ),
     .datab  ( dmem_writedata                        )
 );

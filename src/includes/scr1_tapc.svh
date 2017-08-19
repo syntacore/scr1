@@ -20,7 +20,7 @@ localparam int unsigned                         SCR1_TAP_DR_BLD_ID_WIDTH        
 localparam int unsigned                         SCR1_TAP_DR_BYPASS_WIDTH        = 1;
 localparam int unsigned                         SCR1_TAP_DR_SYS_CTRL_WIDTH      = 1;
 localparam int unsigned                         SCR1_TAP_DR_MTAP_SWITCH_WIDTH   = 1;
-localparam bit [SCR1_TAP_DR_IDCODE_WIDTH-1:0]   SCR1_TAP_IDCODE_RISCV_SC        = 32'hC0D1DEB1;
+localparam bit [SCR1_TAP_DR_IDCODE_WIDTH-1:0]   SCR1_TAP_IDCODE_RISCV_SC        = 32'hDEB01001;
 localparam bit [SCR1_TAP_DR_BLD_ID_WIDTH-1:0]   SCR1_TAP_BLD_ID_VALUE           = `SCR1_MIMPID;
 
 //-------------------------------------------------------------------------------
@@ -55,6 +55,7 @@ typedef enum logic [SCR1_TAP_INSTRUCTION_WIDTH-1:0] {
     SCR1_TAP_INSTR_DAP_CMD           = 4'h8,
     SCR1_TAP_INSTR_SYS_CTRL          = 4'h9,
     SCR1_TAP_INSTR_PIPELN_STS        = 4'hA,
+    SCR1_TAP_INSTR_TARGET_ID         = 4'hB,
     SCR1_TAP_INSTR_MTAP_SWITCH       = 4'hD,
     SCR1_TAP_INSTR_IDCODE            = 4'hE,
     SCR1_TAP_INSTR_BYPASS            = 4'hF,

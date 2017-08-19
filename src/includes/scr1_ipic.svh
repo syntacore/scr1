@@ -8,8 +8,6 @@
 //-------------------------------------------------------------------------------
 // Parameters declaration
 //-------------------------------------------------------------------------------
-`define     SCR1_IPIC_SYNC_EN
-
 parameter                                   SCR1_IRQ_VECT_NUM       = 16;   // must be power of 2 in the current implementation
 parameter                                   SCR1_IRQ_VECT_WIDTH     = $clog2(SCR1_IRQ_VECT_NUM+1);
 parameter                                   SCR1_IRQ_LINES_NUM      = SCR1_IRQ_VECT_NUM;

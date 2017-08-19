@@ -42,7 +42,6 @@ module scr1_pipe_dbga (
     input   logic                                           instret,                // Instruction retired (with or without exception)
     input   logic                                           exu_exc_req,            // Exception request
     input   logic                                           brkpt,                  // Breakpoint (sw/hw) on current instruction
-    input   logic                                           exu_commit,             // Last instruction has been committed to arch. state
     input   logic                                           exu_init_pc,            // Reset exit
     output  logic                                           exu_no_commit,          // Forbid instruction commitment
     output  logic                                           exu_irq_dsbl,           // Disable IRQ
@@ -212,13 +211,13 @@ end
 //-------------------------------------------------------------------------------
 
 assign dbgc_hart_state.halted   = dbg_halted;
-assign dbgc_hart_state.error    = 1'b0;         // unused
 assign dbgc_hart_state.timeout  = dbgc_timeout_flag;
+assign dbgc_hart_state.error    = 1'b0;         // unused
+assign dbgc_hart_state.commit   = 1'b0;         // unused
 
 always_ff @(posedge clk, negedge rst_n) begin
     if (~rst_n) begin
         dbgc_hart_state.except                  <= 1'b0;
-        dbgc_hart_state.commit                  <= 1'b0;
         dbgc_hart_state.dmode_cause.enforce     <= 1'b0;
         dbgc_hart_state.dmode_cause.rst_brk     <= 1'b0;
         dbgc_hart_state.dmode_cause.sstep       <= 1'b0;
@@ -227,7 +226,6 @@ always_ff @(posedge clk, negedge rst_n) begin
     end else begin
         if (dbg_run2halt) begin
             dbgc_hart_state.except                  <= exu_exc_req;
-            dbgc_hart_state.commit                  <= exu_commit;
             // Debug mode entry cause
             dbgc_hart_state.dmode_cause.enforce     <= enforce_dbg_mode;
             dbgc_hart_state.dmode_cause.rst_brk     <= dmode_cause_rst;

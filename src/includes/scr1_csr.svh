@@ -59,7 +59,7 @@ parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_INSTRETH      = 'hC82;
 `endif // SCR1_CSR_REDUCED_CNT
 
 `ifdef SCR1_DBGC_EN
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_DBGC_SCRATCH  = 'h7B2;
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_DBGC_SCRATCH  = 'h7C8;
 `endif // SCR1_DBGC_EN
 
 //-------------------------------------------------------------------------------
@@ -92,7 +92,7 @@ parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_IPIC_ICSR     = (SCR1_CSR_
 //-------------------------------------------------------------------------------
 
 // General
-parameter bit [`SCR1_XLEN-1:0] SCR1_RST_VECTOR      = 'h200;
+parameter bit [`SCR1_XLEN-1:0] SCR1_RST_VECTOR      = SCR1_ARCH_RST_VECTOR;
 
 // Reset values TBD
 parameter bit SCR1_CSR_MIE_MSIE_RST_VAL             = 1'b0;
@@ -142,7 +142,9 @@ parameter int unsigned SCR1_CSR_MSTATUS_MPIE_OFFSET = 7;
 parameter int unsigned SCR1_CSR_MSTATUS_MPP_OFFSET  = 11;
 
 // MTVEC
-parameter bit [`SCR1_XLEN-1:2] SCR1_CSR_MTVEC_BASE  = 32'h1C0 >> 2;
+// actual length is 30 bits, the two lower bits are always zero
+parameter bit [`SCR1_XLEN-1:2] SCR1_CSR_MTVEC_BASE  = SCR1_ARCH_CSR_MTVEC_BASE;
+
 parameter bit SCR1_CSR_MTVEC_MODE_DIRECT            = 1'b0;
 `ifdef SCR1_VECT_IRQ_EN
 parameter bit [`SCR1_XLEN-1:2] SCR1_CSR_MTVEC_IRQ_M_SOFTWARE    = SCR1_CSR_MTVEC_BASE + SCR1_EXC_CODE_IRQ_M_SOFTWARE;

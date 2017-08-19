@@ -255,6 +255,10 @@ always_comb begin
                 dap_data_shift_reg_sel      = 1'b1;
             end
 
+            SCR1_DAP_CHAIN_ID_TARGET_ID : begin
+                dap_data_shift_reg_sel      = 1'b1;
+            end
+
             default : begin
                 dap_head_shift_reg_sel      = 1'b0;
                 dap_data_shift_reg_sel      = 1'b0;
@@ -296,6 +300,10 @@ always_comb begin
 
         SCR1_DAP_CHAIN_ID_DBG_PIPE_STS : begin
             dap_data_shift_reg_pdin = core_dpsr_out;
+        end
+
+        SCR1_DAP_CHAIN_ID_TARGET_ID : begin
+            dap_data_shift_reg_pdin = SCR1_DBGC_DAP_TARGET_ID_VALUE;
         end
 
         default : begin
@@ -650,6 +658,10 @@ always_comb begin
 
                                 SCR1_DBGC_CORE_REGS_DBG_PIPE_STS : begin
                                     decod_ddr_mux   = core_dpsr_out;
+                                end
+
+                                SCR1_DBGC_CORE_REGS_DBG_TGT_ID : begin
+                                    decod_ddr_mux   = SCR1_DBGC_DAP_TARGET_ID_VALUE;
                                 end
 
                                 default : begin
@@ -1262,6 +1274,7 @@ always_comb begin
     core_dsr_out.hart[0].rst_sticky    = core_dsr_rst_stky_reg;
     core_dsr_out.hart[0].err           = state_hart_err;
     core_dsr_out.hart[0].err_sticky    = core_dsr_hart0_err_stky_reg;
+    core_dsr_out.hart[0].plvl          = 2'b11;
 end
 
 always_ff @(negedge rst_n, posedge clk) begin
@@ -1364,6 +1377,7 @@ always_comb begin
     hart_dsr_out.rst                    = hart_rst_sts;
     hart_dsr_out.rst_sticky             = hart_dsr_rst_stky_reg;
     hart_dsr_out.except                 = state_hart_except;
+    hart_dsr_out.plvl                   = 2'b11;
     hart_dsr_out.err                    = state_hart_err;
     hart_dsr_out.err_hwthread           = state_hart_err_hwthread;
     hart_dsr_out.err_dap_opcode         = decod_err_invld_dap_opcode_hart_reg;

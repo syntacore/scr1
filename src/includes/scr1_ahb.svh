@@ -5,13 +5,9 @@
 /// @brief      AHB include file
 ///
 
-parameter SCR1_AHB_WIDTH  = 32;
+`include "scr1_arch_description.svh"
 
-// Bypasses
-`define SCR1_IMEM_AHB_IN_BP
-`define SCR1_IMEM_AHB_OUT_BP
-`define SCR1_DMEM_AHB_IN_BP
-`define SCR1_DMEM_AHB_OUT_BP
+parameter SCR1_AHB_WIDTH  = 32;
 
 // Encoding for HTRANS signal
 parameter logic [1:0] SCR1_HTRANS_IDLE   = 2'b00;

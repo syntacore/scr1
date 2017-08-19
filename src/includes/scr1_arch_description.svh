@@ -6,9 +6,24 @@
 ///
 
 //-------------------------------------------------------------------------------
-// Core configurable parameters
+// Core fundamental parameters (READ-ONLY, do not modify)
 //-------------------------------------------------------------------------------
-`define SCR1_MIMPID                 32'h17071200
+`define SCR1_MIMPID             32'h17081800
+`define SCR1_XLEN               32
+`define SCR1_FLEN               `SCR1_XLEN      // for test compatibility
+`define SCR1_IMEM_AWIDTH        `SCR1_XLEN
+`define SCR1_IMEM_DWIDTH        `SCR1_XLEN
+`define SCR1_DMEM_AWIDTH        `SCR1_XLEN
+`define SCR1_DMEM_DWIDTH        `SCR1_XLEN
+
+//-------------------------------------------------------------------------------
+// Core configurable parameters (modifyable)
+//-------------------------------------------------------------------------------
+`ifndef SCR1_ARCH_CUSTOM
+
+//------------------------------------------------
+// Default parameter set:
+//------------------------------------------------
 
 //`define SCR1_RVE_EXT                // enables RV32E base integer instruction set
 `define SCR1_RVM_EXT                // enables standard extension for integer mul/div
@@ -24,27 +39,42 @@
 `define SCR1_DBGC_EN                // enables debug controller
 `define SCR1_BRKM_EN                // enables breakpoint module
 `define SCR1_IPIC_EN                // enables interrupt controller
+`define SCR1_IPIC_SYNC_EN           // enables IPIC synchronizer
 `define SCR1_TCM_EN                 // enables tightly-coupled memory
 
 //`define SCR1_VECT_IRQ_EN            // enables vectored interrupts
 `define SCR1_CSR_MCOUNTEN_EN        // enables custom MCOUNTEN CSR
 
+`define SCR1_IMEM_AHB_IN_BP         // bypass instruction memory AHB bridge input register
+`define SCR1_IMEM_AHB_OUT_BP        // bypass instruction memory AHB bridge output register
+`define SCR1_DMEM_AHB_IN_BP         // bypass data memory AHB bridge input register
+`define SCR1_DMEM_AHB_OUT_BP        // bypass data memory AHB bridge output register
+
 `ifdef SCR1_TCM_EN
-parameter bit [31:0] SCR1_TCM_ADDR_MASK         = 'hFFFF0000;       // TCM address mask
-parameter bit [31:0] SCR1_TCM_ADDR_PATTERN      = 'h00480000;       // TCM address pattern
+parameter bit [`SCR1_DMEM_AWIDTH-1:0]   SCR1_TCM_ADDR_MASK          = 'hFFFF0000;
+parameter bit [`SCR1_DMEM_AWIDTH-1:0]   SCR1_TCM_ADDR_PATTERN       = 'h00480000;
 `endif // SCR1_TCM_EN
-parameter bit [31:0] SCR1_TIMER_ADDR_MASK       = 'hFFFFFFE0;       // Timer address mask
-parameter bit [31:0] SCR1_TIMER_ADDR_PATTERN    = 'h00490000;       // Timer address pattern
+
+parameter bit [`SCR1_DMEM_AWIDTH-1:0]   SCR1_TIMER_ADDR_MASK        = 'hFFFFFFE0;
+parameter bit [`SCR1_DMEM_AWIDTH-1:0]   SCR1_TIMER_ADDR_PATTERN     = 'h00490000;
+
+// CSR parameters:
+parameter bit [`SCR1_XLEN-1:0]          SCR1_ARCH_RST_VECTOR        = 32'h200;
+parameter bit [`SCR1_XLEN-1:2]          SCR1_ARCH_CSR_MTVEC_BASE    = 32'h1C0 >> 2;
+
+`else // SCR1_ARCH_CUSTOM
+
+//------------------------------------------------
+// Customized parameter set:
+//------------------------------------------------
+ `include "scr1_arch_custom.svh"
+
+`endif // SCR1_ARCH_CUSTOM
+
 
 //-------------------------------------------------------------------------------
 // Core read-only parameters (do not modify)
 //-------------------------------------------------------------------------------
-`define SCR1_XLEN               32
-`define SCR1_FLEN               `SCR1_XLEN      // for test compatibility
-`define SCR1_IMEM_AWIDTH        `SCR1_XLEN
-`define SCR1_IMEM_DWIDTH        `SCR1_XLEN
-`define SCR1_DMEM_AWIDTH        `SCR1_XLEN
-`define SCR1_DMEM_DWIDTH        `SCR1_XLEN
 `define SCR1_SHAMT_WIDTH        5
 
 `ifndef SCR1_RVE_EXT

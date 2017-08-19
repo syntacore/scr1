@@ -19,7 +19,7 @@ localparam int SCR1_DBGC_DAP_CTRL_REG_WIDTH         = SCR1_DBGC_DAP_HEADER_REG_W
 localparam int SCR1_DBGC_DAP_OPCODE_REG_WIDTH       = SCR1_DBGC_DAP_HEADER_REG_WIDTH;
 localparam int SCR1_DBGC_DAP_OPSTAT_REG_WIDTH       = SCR1_DBGC_DAP_HEADER_REG_WIDTH;
 localparam int SCR1_DBGC_DAP_OPCODE_EXT_REG_WIDTH   = SCR1_DBGC_DAP_DATA_REG_WIDTH;
-localparam int SCR1_DBGC_DAP_DBG_ID_REG_WIDTH       = SCR1_DBGC_DAP_DATA_REG_WIDTH;
+//localparam int SCR1_DBGC_DAP_DBG_ID_REG_WIDTH       = SCR1_DBGC_DAP_DATA_REG_WIDTH;
 localparam int SCR1_DBGC_DBG_DATA_REG_WIDTH         = SCR1_DBGC_DAP_DATA_REG_WIDTH;
 localparam int SCR1_DBGC_FSM_OPCODE_WIDTH           = 2;
 localparam int SCR1_DBGC_FSM_STATE_WIDTH            = 2;
@@ -28,7 +28,12 @@ localparam int SCR1_DBGC_REGBLOCK_INDEX_WIDTH       = (SCR1_DBGC_DAP_OPCODE_REG_
 localparam int SCR1_DBGC_DBG_CORE_INSTR_WIDTH       = SCR1_DBGC_DAP_DATA_REG_WIDTH;
 localparam int SCR1_DBGC_WB_FIFO_INDEX_WIDTH        = 3;
 
-localparam bit [SCR1_DBGC_DAP_DBG_ID_REG_WIDTH-1:0]     SCR1_DBGC_DAP_DBG_ID_VALUE = 32'h00810000;
+localparam bit [SCR1_DBGC_DAP_DATA_REG_WIDTH-1:0]   SCR1_DBGC_DAP_DBG_ID_VALUE      = 32'h00820000;
+`ifdef SCR1_BRKM_EN
+localparam bit [SCR1_DBGC_DAP_DATA_REG_WIDTH-1:0]   SCR1_DBGC_DAP_TARGET_ID_VALUE   = 32'h01801000;
+`else // SCR1_BRKM_EN
+localparam bit [SCR1_DBGC_DAP_DATA_REG_WIDTH-1:0]   SCR1_DBGC_DAP_TARGET_ID_VALUE   = 32'h01001000;
+`endif // SCR1_BRKM_EN
 
 
 //======================================================================================================================
@@ -41,6 +46,7 @@ typedef enum logic [SCR1_DBGC_DAP_CH_ID_WIDTH-1 : 0] {
     SCR1_DAP_CHAIN_ID_DAP_CTRL_RD,
     SCR1_DAP_CHAIN_ID_DAP_CMD,
     SCR1_DAP_CHAIN_ID_DBG_PIPE_STS,
+    SCR1_DAP_CHAIN_ID_TARGET_ID,
     SCR1_DAP_CHAIN_ID_XXX        = 'X
 } type_scr1_dap_chain_id_e;
 
@@ -232,6 +238,7 @@ typedef enum logic [SCR1_DBGC_REGBLOCK_INDEX_WIDTH-1:0] {
     SCR1_DBGC_CORE_REGS_DBG_STS      = 3'h2,
     //SCR1_DBGC_CORE_REGS_DBG_CMD      = 3'h3,// Not implemented yet
     SCR1_DBGC_CORE_REGS_DBG_PIPE_STS = 3'h4,
+    SCR1_DBGC_CORE_REGS_DBG_TGT_ID   = 3'h5,
     SCR1_DBGC_CORE_REGS_XXX          = 'X
 } type_scr1_dbgc_regblock_core_e;
 
@@ -296,15 +303,17 @@ typedef enum int {
     SCR1_DBGC_CORE_CDSR_HART0_RST_STKY_BIT   = 2,
     SCR1_DBGC_CORE_CDSR_HART0_ERR_BIT        = 3,
     SCR1_DBGC_CORE_CDSR_HART0_ERR_STKY_BIT   = 4,
-    SCR1_DBGC_CORE_CDSR_RSRV0_BIT_R          = 5,
-    SCR1_DBGC_CORE_CDSR_RSRV0_BIT_L          = 7,
+    SCR1_DBGC_CORE_CDSR_RSRV0_BIT            = 5,
+    SCR1_DBGC_CORE_CDSR_HART0_PLVL_BIT_R     = 6,
+    SCR1_DBGC_CORE_CDSR_HART0_PLVL_BIT_L     = 7,
     SCR1_DBGC_CORE_CDSR_HART1_DMODE_BIT      = 8,
     SCR1_DBGC_CORE_CDSR_HART1_RST_BIT        = 9,
     SCR1_DBGC_CORE_CDSR_HART1_RST_STKY_BIT   = 10,
     SCR1_DBGC_CORE_CDSR_HART1_ERR_BIT        = 11,
     SCR1_DBGC_CORE_CDSR_HART1_ERR_STKY_BIT   = 12,
-    SCR1_DBGC_CORE_CDSR_RSRV1_BIT_R          = 13,
-    SCR1_DBGC_CORE_CDSR_RSRV1_BIT_L          = 15,
+    SCR1_DBGC_CORE_CDSR_RSRV1_BIT            = 13,
+    SCR1_DBGC_CORE_CDSR_HART1_PLVL_BIT_R     = 14,
+    SCR1_DBGC_CORE_CDSR_HART1_PLVL_BIT_L     = 15,
     SCR1_DBGC_CORE_CDSR_ERR_BIT              = 16,
     SCR1_DBGC_CORE_CDSR_ERR_STKY_BIT         = 17,
     SCR1_DBGC_CORE_CDSR_ERR_HWCORE_BIT       = 18,
@@ -319,7 +328,8 @@ typedef enum int {
 } type_scr1_dbgc_core_dbg_sts_reg_bits_e;
 
 typedef struct packed {
-    logic [SCR1_DBGC_CORE_CDSR_RSRV0_BIT_L-SCR1_DBGC_CORE_CDSR_RSRV0_BIT_R:0] rsrv;
+    logic [1:0] plvl;
+    logic       rsrv;
     logic       err_sticky;
     logic       err;
     logic       rst_sticky;
@@ -390,6 +400,9 @@ typedef struct packed {
     type_scr1_dbgc_core_dbg_pipe_sts_busy_reg_s                                 busy;
 } type_scr1_dbgc_core_dbg_pipe_sts_reg_s;
 
+// Core Debug Target ID Register (CORE_DBG_TARGET_ID, CDTIR)
+// TBD.
+
 //-------------------------------------------------------------------------------
 // Hart Debug Registers
 //-------------------------------------------------------------------------------
@@ -417,7 +430,9 @@ typedef enum int {
     SCR1_DBGC_HART_HDSR_RST_BIT              = 1,
     SCR1_DBGC_HART_HDSR_RST_STKY_BIT         = 2,
     SCR1_DBGC_HART_HDSR_EXCEPT_BIT           = 3,
-    SCR1_DBGC_HART_HDSR_RSRV0_BIT_R          = 4,
+    SCR1_DBGC_HART_HDSR_PLVL_BIT_R           = 4,
+    SCR1_DBGC_HART_HDSR_PLVL_BIT_L           = 5,
+    SCR1_DBGC_HART_HDSR_RSRV0_BIT_R          = 6,
     SCR1_DBGC_HART_HDSR_RSRV0_BIT_L          = 15,
     SCR1_DBGC_HART_HDSR_ERR_BIT              = 16,
     SCR1_DBGC_HART_HDSR_ERR_HWTHREAD_BIT     = 17,
@@ -442,6 +457,7 @@ typedef struct packed {
     logic       err_hwthread;
     logic       err;
     logic [SCR1_DBGC_HART_HDSR_RSRV0_BIT_L-SCR1_DBGC_HART_HDSR_RSRV0_BIT_R:0] rsrv0;
+    logic [1:0] plvl;
     logic       except;
     logic       rst_sticky;
     logic       rst;

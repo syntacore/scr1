@@ -208,7 +208,6 @@ logic                                       csr2dbga_ddr_we;        // DBGA writ
 logic                                       hwbrk_dsbl;             // Disables BRKM
 logic                                       brkm2dbga_dmode_req;    // BRKM requests transition to debug mode
 
-logic                                       exu_commit;             // Last instruction has been committed to arch. state
 logic                                       exu_no_commit;          // Forbid instruction commitment
 logic                                       exu_irq_dsbl;           // Disable IRQ
 logic                                       exu_pc_advmt_dsbl;      // Forbid PC advancement
@@ -365,7 +364,6 @@ scr1_pipe_exu i_pipe_exu (
     .dmem2exu_rdata         (dmem_rdata           ),
     .dmem2exu_resp          (dmem_resp            ),
 `ifdef SCR1_DBGC_EN
-    .exu_commit             (exu_commit           ),
     .exu_no_commit          (exu_no_commit        ),
     .exu_irq_dsbl           (exu_irq_dsbl         ),
     .exu_pc_advmt_dsbl      (exu_pc_advmt_dsbl    ),
@@ -574,7 +572,6 @@ scr1_pipe_dbga i_pipe_dbga (
     .instret            (instret                ),
     .exu_exc_req        (exu_exc_req            ),
     .brkpt              (brkpt                  ),
-    .exu_commit         (exu_commit             ),
     .exu_init_pc        (exu_init_pc            ),
     .exu_no_commit      (exu_no_commit          ),
     .exu_irq_dsbl       (exu_irq_dsbl           ),

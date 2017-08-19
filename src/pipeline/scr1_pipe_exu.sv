@@ -90,7 +90,6 @@ module scr1_pipe_exu (
 
 `ifdef SCR1_DBGC_EN
     // EXU <-> DBGC interface
-    output  logic                               exu_commit,             // Last instruction has been committed to arch. state
     input   logic                               exu_no_commit,          // Forbid instruction commitment
     input   logic                               exu_irq_dsbl,           // Disable IRQ
     input   logic                               exu_pc_advmt_dsbl,      // Forbid PC advancement
@@ -184,7 +183,6 @@ logic                           init_pc;
 logic [`SCR1_XLEN-1:0]          inc_pc;
 
 `ifdef SCR1_DBGC_EN
-logic                           exu_commit_r;
 logic                           exu_exc_req_r;
 `endif // SCR1_DBGC_EN
 
@@ -630,18 +628,13 @@ assign next_pc  = (exu_queue_vd)
 //-------------------------------------------------------------------------------
 // Debug, misc control logic
 //-------------------------------------------------------------------------------
-assign exu_commit           = exu_queue_vd ? ~exu_no_commit : exu_commit_r;
-
 always_ff @(posedge clk, negedge rst_n) begin
     if (~rst_n) begin
-        exu_commit_r    <= 1'b0;
         exu_exc_req_r   <= 1'b0;
     end else begin
         if (dbg_halt2run) begin
-            exu_commit_r    <= 1'b0;
             exu_exc_req_r   <= 1'b0;
         end else if (instret) begin
-            exu_commit_r    <= ~exu_no_commit;
             exu_exc_req_r   <= exc_req;
         end
     end
@@ -778,11 +771,6 @@ SCR1_SVA_EXU_XCHECK_QUEUE : assert property (
     @(negedge clk) disable iff (~rst_n)
     idu2exu_req |-> !$isunknown(idu2exu_cmd)
     ) else $error("EXU Error: unknown values in queue");
-
-SCR1_SVA_EXU_XCHECK_MPRF_WDATA : assert property (
-    @(negedge clk) disable iff (~rst_n)
-    exu2mprf_w_req |-> !$isunknown({exu2mprf_rd_addr, exu2mprf_rd_data})
-    ) else $error("EXU Error: unknown values for write to MPRF");
 
 SCR1_SVA_EXU_XCHECK_CSR_RDATA : assert property (
     @(negedge clk) disable iff (~rst_n)

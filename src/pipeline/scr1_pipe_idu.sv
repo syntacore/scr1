@@ -852,15 +852,16 @@ SCR1_SVA_IDU_XCHECK2 : assert property (
 
 SCR1_SVA_IDU_IALU_CMD_RANGE : assert property (
     @(negedge clk) disable iff (~rst_n)
-    (idu2exu_cmd.ialu_cmd >= SCR1_IALU_CMD_NONE) &
-    (idu2exu_cmd.ialu_cmd <=
+    ((idu2exu_cmd.ialu_cmd >= SCR1_IALU_CMD_NONE) &
+     (idu2exu_cmd.ialu_cmd <=
 `ifdef SCR1_RVM_EXT
                             SCR1_IALU_CMD_REMU
 `else
                             SCR1_IALU_CMD_SRA
 `endif // SCR1_RVM_EXT
-        )
-    ) else $error("IDU Error: IALU_CMD out of range");
+     )
+    )
+   ) else $error("IDU Error: IALU_CMD out of range");
 
 // pragma synthesis_on
 `endif // SCR1_SYN_OFF_EN
