@@ -25,19 +25,32 @@ machine_trap_entry:
 
 _start:
     # clear bss
-    la    a1, __BSS_START__
-    la    a2, __BSS_END__
-    j     4f
-3:  sw    zero, 0(a1)
-    add   a1, a1, 4
-4:  bne   a1, a2, 3b
-    auipc gp, %hi(_gp)
-    addi  gp, gp, %lo(_gp)
-    la    sp, __C_STACK_TOP__
-    li    a0, 0
-    li    a1, 0
-    jal   main
-    j     sc_exit
+    la      a1, __BSS_START__
+    la      a2, __BSS_END__
+    j       4f
+3:  sw      zero, 0(a1)
+    add     a1, a1, 4
+4:  bne     a1, a2, 3b
+    auipc   gp, %hi(_gp)
+    addi    gp, gp, %lo(_gp)
+    la      sp, __C_STACK_TOP__
+
+    // Timer init
+    li      t0, mtime_ctrl
+    li      t1, (1 << SCR1_MTIME_CTRL_EN)   // enable, use internal clock
+    sw      t1, (t0)
+    li      t0, mtime_div
+    li      t1, (100-1)                     // divide by 100
+    sw      t1, (t0)
+    li      t0, mtimecmp
+    li      t1, -1
+    sw      t1, (t0)                        // max value for mtimecmp
+    sw      t1, 4(t0)
+
+    li      a0, 0
+    li      a1, 0
+    jal     main
+    j       sc_exit
 
 trap_entry:
     addi sp, sp, -272

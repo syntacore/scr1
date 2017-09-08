@@ -1,5 +1,5 @@
 /// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
-/// @file       <crt.S>
+/// @file       <crt_tcm.S>
 ///
 
 #include "riscv_csr_encoding.h"
@@ -64,6 +64,18 @@ _start:
 7:  sw    zero, 0(a1)
     add   a1, a1, 4
 8:  bne   a1, a4, 7b
+
+    // Timer init
+    li    t0, mtime_ctrl
+    li    t1, (1 << SCR1_MTIME_CTRL_EN)   // enable, use internal clock
+    sw    t1, (t0)
+    li    t0, mtime_div
+    li    t1, (100-1)                     // divide by 100
+    sw    t1, (t0)
+    li    t0, mtimecmp
+    li    t1, -1
+    sw    t1, (t0)                        // max value for mtimecmp
+    sw    t1, 4(t0)
 
     li    a0, 0
     li    a1, 0

@@ -458,7 +458,7 @@ always_comb begin
                     endcase
                 end
 
-                SCR1_DBGC_FGRP_HART_CSR_RO : begin
+                SCR1_DBGC_FGRP_HART_CSR_CAP : begin
                     decod_dap_cmd_req                   = dap_cmd_req;
                     decod_fsm_opcode                    = SCR1_DBGC_FSM_OPCODE_REGTRANS;
                 end
@@ -600,7 +600,7 @@ always_comb begin
                                 end
                             end
 
-                            SCR1_DBGC_FGRP_HART_CSR_RO : begin
+                            SCR1_DBGC_FGRP_HART_CSR_CAP : begin
                                 if (decod_dap_cmd_opcode_regtrans.write) begin
                                     decod_err_invld_dap_opcode_hart = fsm_regblock_wr;
                                 end

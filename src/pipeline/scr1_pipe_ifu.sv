@@ -333,6 +333,7 @@ always_comb begin
                 SCR1_RDATA_RVI_HI_RVI_LO    : begin
                     instr_bypass    = SCR1_BYPASS_RVI_RDATA;
                 end
+                default : begin end
             endcase // rdata_ident
         end else if ((q_ocpd_h == SCR1_IFU_Q_FREE_H_W'(1)) & q_head_rvi) begin
             if (rdata_curr == SCR1_RVI_PART2) begin

@@ -142,7 +142,9 @@ logic                                   csr_mscratch_up;
 logic                                   csr_mepc_up;
 logic                                   csr_mcause_up;
 logic                                   csr_mtval_up;
+`ifdef SCR1_VECT_IRQ_EN
 logic                                   csr_mtvec_up;
+`endif // SCR1_VECT_IRQ_EN
 `ifndef SCR1_CSR_REDUCED_CNT
 logic [1:0]                             csr_cycle_up;
 logic [1:0]                             csr_instret_up;
@@ -366,7 +368,9 @@ always_comb begin
     csr_mepc_up         = 1'b0;
     csr_mcause_up       = 1'b0;
     csr_mtval_up        = 1'b0;
+`ifdef SCR1_VECT_IRQ_EN
     csr_mtvec_up        = 1'b0;
+`endif // SCR1_VECT_IRQ_EN
 
 `ifndef SCR1_CSR_REDUCED_CNT
     csr_cycle_up        = 2'b00;
@@ -391,7 +395,11 @@ always_comb begin
             SCR1_CSR_ADDR_MSTATUS   : csr_mstatus_up    = 1'b1;
             SCR1_CSR_ADDR_MISA      : begin end
             SCR1_CSR_ADDR_MIE       : csr_mie_up        = 1'b1;
-            SCR1_CSR_ADDR_MTVEC     : csr_mtvec_up      = 1'b1;
+            SCR1_CSR_ADDR_MTVEC     : begin
+`ifdef SCR1_VECT_IRQ_EN
+                csr_mtvec_up      = 1'b1;
+`endif // SCR1_VECT_IRQ_EN
+            end
 
             // Machine Trap Handling (read-write)
             SCR1_CSR_ADDR_MSCRATCH  : csr_mscratch_up   = 1'b1;
@@ -532,6 +540,7 @@ always_ff @(negedge rst_n, posedge clk) begin
                 csr_mstatus_mie     <= csr_w_data[SCR1_CSR_MSTATUS_MIE_OFFSET];
                 csr_mstatus_mpie    <= csr_w_data[SCR1_CSR_MSTATUS_MPIE_OFFSET];
             end
+            default : begin end
         endcase
     end
 end
@@ -563,6 +572,7 @@ always_ff @(negedge rst_n, posedge clk) begin
                 csr_mepc    <= csr_w_data[`SCR1_XLEN-1:2];
 `endif // SCR1_RVC_EXT
             end
+            default : begin end
         endcase
     end
 end
@@ -586,6 +596,7 @@ always_ff @(negedge rst_n, posedge clk) begin
                 csr_mcause_i    <= csr_w_data[`SCR1_XLEN-1];
                 csr_mcause_ec   <= type_scr1_exc_code_e'(csr_w_data[SCR1_EXC_CODE_WIDTH_E-1:0]);
             end
+            default : begin end
         endcase
     end
 end
@@ -605,6 +616,7 @@ always_ff @(negedge rst_n, posedge clk) begin
             csr_mtval_up    : begin
                 csr_mtval   <= csr_w_data;
             end
+            default : begin end
         endcase
     end
 end

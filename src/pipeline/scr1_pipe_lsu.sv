@@ -110,6 +110,7 @@ always_comb begin
             SCR1_LSU_CMD_LW     : l_misalign = |exu2lsu_addr[1:0];
             SCR1_LSU_CMD_SH     : s_misalign = exu2lsu_addr[0];
             SCR1_LSU_CMD_SW     : s_misalign = |exu2lsu_addr[1:0];
+            default : begin end
         endcase // exu2lsu_cmd
     end
 end

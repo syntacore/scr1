@@ -408,6 +408,7 @@ always_comb begin
                 exu2csr_r_req   = 1'b1;
                 exu2csr_w_req   = (|exu_queue.rs1_addr) & (csr_access == SCR1_CSR_INIT);
             end
+            default : begin end
         endcase
     end // exu_queue_vd
 `ifdef SCR1_BRKM_EN

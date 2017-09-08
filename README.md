@@ -67,3 +67,6 @@ After all the tests have finished, the results can be found in *build/test_resul
 * SCR1 core parameters can be configured in *src/includes/scr1_arch_description.svh*
 
 Please make sure that architectural config selected for the SCR1 RTL matches the one used for tests compilation.
+
+## Contacts
+<scr1@syntacore.com>

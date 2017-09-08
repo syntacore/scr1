@@ -79,7 +79,7 @@ typedef enum logic [SCR1_DBGC_DAP_FGROUP_WIDTH-1 : 0] {
 typedef enum logic [SCR1_DBGC_DAP_FGROUP_WIDTH-1 : 0] {
     SCR1_DBGC_FGRP_HART_REGTRANS,
     SCR1_DBGC_FGRP_HART_DBGCMD,
-    SCR1_DBGC_FGRP_HART_CSR_RO,
+    SCR1_DBGC_FGRP_HART_CSR_CAP,
     SCR1_DBGC_FGRP_HART_XXX  = 'X
 } type_scr1_dbgc_hart_fgroup_e;
 

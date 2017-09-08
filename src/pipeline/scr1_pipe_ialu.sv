@@ -97,7 +97,7 @@ logic signed [(32+SCR1_IALU_MUL_WIDTH)-1:0] sum2_res;       // SUM2 result
  `endif // ~SCR1_FAST_MUL
 `endif // SCR1_RVM_EXT
 
-logic [31:0]                                shft_op1;       // SHIFT operand 1
+logic signed [31:0]                         shft_op1;       // SHIFT operand 1
 logic [4:0]                                 shft_op2;       // SHIFT operand 2
 logic [1:0]                                 shft_cmd;       // SHIFT command: 00 - logical left, 10 - logical right, 11 - arithmetical right
 logic [31:0]                                shft_res;       // SHIFT result
@@ -296,11 +296,11 @@ assign ialu_sum2_res = ialu_sum2_op1 + ialu_sum2_op2;  // Addition
 always_comb begin
     shft_op1    = ialu_op1;
     shft_op2    = ialu_op2[4:0];
-    shft_res    = (shft_cmd[1])
-                    ? ((shft_cmd[0])
-                        ? (signed'(signed'(shft_op1) >>> shft_op2)) // Arithmetical right
-                        : (shft_op1 >> shft_op2))                   // Logical right
-                    : (shft_op1 << shft_op2);                       // Left
+    case (shft_cmd)
+        2'b10   : shft_res = shft_op1  >> shft_op2;
+        2'b11   : shft_res = shft_op1 >>> shft_op2;
+        default : shft_res = shft_op1  << shft_op2;
+    endcase
 end
 
 
@@ -355,6 +355,7 @@ always_comb begin
                                 : ({res32_2_reg[32-2:0], quo});     // Quotient
 
             end
+            default : begin end
         endcase
     end
 `ifndef SCR1_FAST_MUL
@@ -494,9 +495,11 @@ always_comb begin
                     ialu_res     = (div_cmd[1]) ? sum2_res[31:0] : sum1_res[31:0];
                     ialu_rdy     = 1'b1;
                 end
+                default : begin end
             endcase
         end
 `endif // SCR1_RVM_EXT
+        default : begin end
     endcase
 end
 

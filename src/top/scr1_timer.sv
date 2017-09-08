@@ -30,17 +30,17 @@ module scr1_timer (
 //-------------------------------------------------------------------------------
 // Local parameters declaration
 //-------------------------------------------------------------------------------
-localparam int unsigned SCR1_TIMER_MTIMECLKSET_DIV_WIDTH                    = 16;
-localparam int unsigned SCR1_TIMER_MTIMECLKSET_CLKSEL_OFFSET                = 16;
-localparam int unsigned SCR1_TIMER_MTIMECLKSET_EN_OFFSET                    = 17;
-localparam logic [SCR1_TIMER_MTIMECLKSET_EN_OFFSET:0] SCR1_TIMER_MTIMECLKSET_RST_VAL    = 'h30064;
-
 localparam int unsigned SCR1_TIMER_ADDR_WIDTH                               = 5;
-localparam logic [SCR1_TIMER_ADDR_WIDTH-1:0] SCR1_TIMER_MTIME_ADDR          = 5'h0;
-localparam logic [SCR1_TIMER_ADDR_WIDTH-1:0] SCR1_TIMER_MTIMEH_ADDR         = 5'h4;
-localparam logic [SCR1_TIMER_ADDR_WIDTH-1:0] SCR1_TIMER_MTIMECMP_ADDR       = 5'h8;
-localparam logic [SCR1_TIMER_ADDR_WIDTH-1:0] SCR1_TIMER_MTIMECMPH_ADDR      = 5'hC;
-localparam logic [SCR1_TIMER_ADDR_WIDTH-1:0] SCR1_TIMER_MTIMECLKSET_ADDR    = 5'h10;
+localparam logic [SCR1_TIMER_ADDR_WIDTH-1:0] SCR1_TIMER_CONTROL             = 5'h0;
+localparam logic [SCR1_TIMER_ADDR_WIDTH-1:0] SCR1_TIMER_DIVIDER             = 5'h4;
+localparam logic [SCR1_TIMER_ADDR_WIDTH-1:0] SCR1_TIMER_MTIMELO             = 5'h8;
+localparam logic [SCR1_TIMER_ADDR_WIDTH-1:0] SCR1_TIMER_MTIMEHI             = 5'hC;
+localparam logic [SCR1_TIMER_ADDR_WIDTH-1:0] SCR1_TIMER_MTIMECMPLO          = 5'h10;
+localparam logic [SCR1_TIMER_ADDR_WIDTH-1:0] SCR1_TIMER_MTIMECMPHI          = 5'h14;
+
+localparam int unsigned SCR1_TIMER_CONTROL_EN_OFFSET                        = 0;
+localparam int unsigned SCR1_TIMER_CONTROL_CLKSRC_OFFSET                    = 1;
+localparam int unsigned SCR1_TIMER_DIVIDER_WIDTH                            = 10;
 
 //-------------------------------------------------------------------------------
 // Local signals declaration
@@ -49,21 +49,22 @@ logic [63:0]                                        mtime_reg;
 logic [63:0]                                        mtime_new;
 logic [63:0]                                        mtimecmp_reg;
 logic [63:0]                                        mtimecmp_new;
-logic [SCR1_TIMER_MTIMECLKSET_EN_OFFSET:0]          mtimeclkset_reg;
+logic                                               timer_en;
+logic                                               timer_clksrc_rtc;
+logic [SCR1_TIMER_DIVIDER_WIDTH-1:0]                timer_div;
 
-logic                                               mtime_up;
-logic                                               mtimeh_up;
-logic                                               mtimecmp_up;
-logic                                               mtimecmph_up;
-logic                                               mtimeclkset_up;
+logic                                               control_up;
+logic                                               divider_up;
+logic                                               mtimelo_up;
+logic                                               mtimehi_up;
+logic                                               mtimecmplo_up;
+logic                                               mtimecmphi_up;
 
 logic                                               dmem_req_valid;
-logic                                               timer_en;
-logic [SCR1_TIMER_MTIMECLKSET_DIV_WIDTH-1:0]        timer_div;
-logic                                               rtc_internal;
+
 logic [3:0]                                         rtc_sync;
 logic                                               rtc_ext_pulse;
-logic [SCR1_TIMER_MTIMECLKSET_DIV_WIDTH-1:0]        timeclk_cnt;
+logic [SCR1_TIMER_DIVIDER_WIDTH-1:0]                timeclk_cnt;
 logic                                               timeclk_cnt_en;
 logic                                               time_posedge;
 logic                                               time_cmp_flag;
@@ -72,18 +73,42 @@ logic                                               time_cmp_flag;
 // Registers
 //-------------------------------------------------------------------------------
 
-// MTIME[H] registers
-assign time_posedge = (timeclk_cnt_en & ~|timeclk_cnt[SCR1_TIMER_MTIMECLKSET_DIV_WIDTH-1:1]);
+// CONTROL
+always_ff @(posedge clk, negedge rst_n) begin
+    if (~rst_n) begin
+        timer_en            <= 1'b1;
+        timer_clksrc_rtc    <= 1'b0;
+    end else begin
+        if (control_up) begin
+            timer_en            <= dmem_wdata[SCR1_TIMER_CONTROL_EN_OFFSET];
+            timer_clksrc_rtc    <= dmem_wdata[SCR1_TIMER_CONTROL_CLKSRC_OFFSET];
+        end
+    end
+end
+
+// DIVIDER
+always_ff @(posedge clk, negedge rst_n) begin
+    if (~rst_n) begin
+        timer_div   <= '0;
+    end else begin
+        if (divider_up) begin
+            timer_div   <= dmem_wdata[SCR1_TIMER_DIVIDER_WIDTH-1:0];
+        end
+    end
+end
+
+// MTIME
+assign time_posedge = (timeclk_cnt_en & (timeclk_cnt == 0));
 
 always_comb begin
     mtime_new   = mtime_reg;
     if (time_posedge) begin
         mtime_new   = mtime_reg + 1'b1;
     end
-    if (mtime_up) begin
+    if (mtimelo_up) begin
         mtime_new[31:0]     = dmem_wdata;
     end
-    if (mtimeh_up) begin
+    if (mtimehi_up) begin
         mtime_new[63:32]    = dmem_wdata;
     end
 end
@@ -92,52 +117,37 @@ always_ff @(posedge clk, negedge rst_n) begin
     if (~rst_n) begin
         mtime_reg   <= '0;
     end else begin
-        if (time_posedge | mtime_up | mtimeh_up) begin
+        if (time_posedge | mtimelo_up | mtimehi_up) begin
             mtime_reg   <= mtime_new;
         end
     end
 end
 
-// MTIMECMP[H] registers
+// MTIMECMP
 always_comb begin
     mtimecmp_new    = mtimecmp_reg;
-    if (mtimecmp_up) begin
+    if (mtimecmplo_up) begin
         mtimecmp_new[31:0]  = dmem_wdata;
     end
-    if (mtimecmph_up) begin
+    if (mtimecmphi_up) begin
         mtimecmp_new[63:32] = dmem_wdata;
     end
 end
 
 always_ff @(posedge clk, negedge rst_n) begin
     if (~rst_n) begin
-        mtimecmp_reg    <= '1;
+        mtimecmp_reg    <= '0;
     end else begin
-        if (mtimecmp_up | mtimecmph_up) begin
+        if (mtimecmplo_up | mtimecmphi_up) begin
             mtimecmp_reg    <= mtimecmp_new;
         end
     end
 end
 
-// MTIMECLKSET register
-always_ff @(posedge clk, negedge rst_n) begin
-    if (~rst_n) begin
-        mtimeclkset_reg <= SCR1_TIMER_MTIMECLKSET_RST_VAL;
-    end else begin
-        if (mtimeclkset_up) begin
-            mtimeclkset_reg     <= dmem_wdata[SCR1_TIMER_MTIMECLKSET_EN_OFFSET:0];
-        end
-    end
-end
-
-assign timer_div    = mtimeclkset_reg[SCR1_TIMER_MTIMECLKSET_DIV_WIDTH-1:0];
-assign timer_en     = mtimeclkset_reg[SCR1_TIMER_MTIMECLKSET_EN_OFFSET];
-assign rtc_internal = mtimeclkset_reg[SCR1_TIMER_MTIMECLKSET_CLKSEL_OFFSET];
-
 //-------------------------------------------------------------------------------
 // Interrupt pending
 //-------------------------------------------------------------------------------
-assign time_cmp_flag = (mtime_reg >= ((mtimecmp_up | mtimecmph_up) ? mtimecmp_new : mtimecmp_reg));
+assign time_cmp_flag = (mtime_reg >= ((mtimecmplo_up | mtimecmphi_up) ? mtimecmp_new : mtimecmp_reg));
 
 always_ff @(posedge clk, negedge rst_n) begin
     if (~rst_n) begin
@@ -146,7 +156,7 @@ always_ff @(posedge clk, negedge rst_n) begin
         if (~timer_irq) begin
             timer_irq   <= time_cmp_flag;
         end else begin // 1'b1
-            if (mtimecmp_up | mtimecmph_up) begin
+            if (mtimecmplo_up | mtimecmphi_up) begin
                 timer_irq   <= time_cmp_flag;
             end
         end
@@ -156,17 +166,17 @@ end
 //-------------------------------------------------------------------------------
 // Timer divider
 //-------------------------------------------------------------------------------
-assign timeclk_cnt_en   = (rtc_internal ? 1'b1 : rtc_ext_pulse) & timer_en;
+assign timeclk_cnt_en   = (~timer_clksrc_rtc ? 1'b1 : rtc_ext_pulse) & timer_en;
 
 always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         timeclk_cnt <= '0;
     end else begin
         case (1'b1)
-            mtimeclkset_up      : timeclk_cnt   <= dmem_wdata[SCR1_TIMER_MTIMECLKSET_DIV_WIDTH-1:0];
-            time_posedge        : timeclk_cnt   <= timer_div;
-            timeclk_cnt_en      : timeclk_cnt   <= timeclk_cnt - 1'b1;
-            default             : begin end
+            divider_up      : timeclk_cnt   <= dmem_wdata[SCR1_TIMER_DIVIDER_WIDTH-1:0];
+            time_posedge    : timeclk_cnt   <= timer_div;
+            timeclk_cnt_en  : timeclk_cnt   <= timeclk_cnt - 1'b1;
+            default         : begin end
         endcase
     end
 end
@@ -180,7 +190,7 @@ always_ff @(negedge rst_n, posedge rtc_clk) begin
     if (~rst_n) begin
         rtc_sync[0] <= 1'b0;
     end else begin
-        if (~rtc_internal) begin
+        if (timer_clksrc_rtc) begin
             rtc_sync[0] <= ~rtc_sync[0];
         end
     end
@@ -190,7 +200,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         rtc_sync[3:1]   <= '0;
     end else begin
-        if (~rtc_internal) begin
+        if (timer_clksrc_rtc) begin
             rtc_sync[3:1]   <= rtc_sync[2:0];
         end
     end
@@ -200,7 +210,7 @@ end
 // Memory interface
 //-------------------------------------------------------------------------------
 assign dmem_req_valid   =   (dmem_width == SCR1_MEM_WIDTH_WORD) & (~|dmem_addr[1:0]) &
-                            (dmem_addr[SCR1_TIMER_ADDR_WIDTH-1:2] <= (SCR1_TIMER_MTIMECLKSET_ADDR >> 2));
+                            (dmem_addr[SCR1_TIMER_ADDR_WIDTH-1:2] <= (SCR1_TIMER_MTIMECMPHI >> 2));
 
 assign dmem_req_ack     = 1'b1;
 
@@ -214,12 +224,13 @@ always_ff @(negedge rst_n, posedge clk) begin
                 dmem_resp   <= SCR1_MEM_RESP_RDY_OK;
                 if (dmem_cmd == SCR1_MEM_CMD_RD) begin
                     case (dmem_addr[SCR1_TIMER_ADDR_WIDTH-1:0])
-                        SCR1_TIMER_MTIME_ADDR       : dmem_rdata    <= mtime_reg[31:0];
-                        SCR1_TIMER_MTIMEH_ADDR      : dmem_rdata    <= mtime_reg[63:32];
-                        SCR1_TIMER_MTIMECMP_ADDR    : dmem_rdata    <= mtimecmp_reg[31:0];
-                        SCR1_TIMER_MTIMECMPH_ADDR   : dmem_rdata    <= mtimecmp_reg[63:32];
-                        SCR1_TIMER_MTIMECLKSET_ADDR : dmem_rdata    <= `SCR1_DMEM_DWIDTH'(mtimeclkset_reg);
-                        default                     : begin end
+                        SCR1_TIMER_CONTROL      : dmem_rdata    <= `SCR1_DMEM_DWIDTH'({timer_clksrc_rtc, timer_en});
+                        SCR1_TIMER_DIVIDER      : dmem_rdata    <= `SCR1_DMEM_DWIDTH'(timer_div);
+                        SCR1_TIMER_MTIMELO      : dmem_rdata    <= mtime_reg[31:0];
+                        SCR1_TIMER_MTIMEHI      : dmem_rdata    <= mtime_reg[63:32];
+                        SCR1_TIMER_MTIMECMPLO   : dmem_rdata    <= mtimecmp_reg[31:0];
+                        SCR1_TIMER_MTIMECMPHI   : dmem_rdata    <= mtimecmp_reg[63:32];
+                        default                 : begin end
                     endcase
                 end
             end else begin
@@ -233,19 +244,21 @@ always_ff @(negedge rst_n, posedge clk) begin
 end
 
 always_comb begin
-    mtime_up        = 1'b0;
-    mtimeh_up       = 1'b0;
-    mtimecmp_up     = 1'b0;
-    mtimecmph_up    = 1'b0;
-    mtimeclkset_up  = 1'b0;
+    control_up      = 1'b0;
+    divider_up      = 1'b0;
+    mtimelo_up      = 1'b0;
+    mtimehi_up      = 1'b0;
+    mtimecmplo_up   = 1'b0;
+    mtimecmphi_up   = 1'b0;
     if (dmem_req & dmem_req_valid & (dmem_cmd == SCR1_MEM_CMD_WR)) begin
         case (dmem_addr[SCR1_TIMER_ADDR_WIDTH-1:0])
-            SCR1_TIMER_MTIME_ADDR       : mtime_up          = 1'b1;
-            SCR1_TIMER_MTIMEH_ADDR      : mtimeh_up         = 1'b1;
-            SCR1_TIMER_MTIMECMP_ADDR    : mtimecmp_up       = 1'b1;
-            SCR1_TIMER_MTIMECMPH_ADDR   : mtimecmph_up      = 1'b1;
-            SCR1_TIMER_MTIMECLKSET_ADDR : mtimeclkset_up    = 1'b1;
-            default                     : begin end
+            SCR1_TIMER_CONTROL      : control_up    = 1'b1;
+            SCR1_TIMER_DIVIDER      : divider_up    = 1'b1;
+            SCR1_TIMER_MTIMELO      : mtimelo_up    = 1'b1;
+            SCR1_TIMER_MTIMEHI      : mtimehi_up    = 1'b1;
+            SCR1_TIMER_MTIMECMPLO   : mtimecmplo_up = 1'b1;
+            SCR1_TIMER_MTIMECMPHI   : mtimecmphi_up = 1'b1;
+            default                 : begin end
         endcase
     end
 end
