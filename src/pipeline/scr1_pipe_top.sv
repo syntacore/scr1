@@ -279,12 +279,10 @@ scr1_pipe_ifu i_pipe_ifu (
 // Instruction decode unit
 //-------------------------------------------------------------------------------
 scr1_pipe_idu i_pipe_idu (
-`ifdef SCR1_SYN_OFF_EN
-// pragma synthesis_off
+`ifdef SCR1_SIM_ENV
     .rst_n              (rst_n              ),
     .clk                (clk                ),
-// pragma synthesis_on
-`endif // SCR1_SYN_OFF_EN
+`endif // SCR1_SIM_ENV
     .idu2ifu_rdy        (idu2ifu_rdy        ),
     .ifu2idu_instr      (ifu2idu_instr      ),
     .ifu2idu_imem_err   (ifu2idu_imem_err   ),
@@ -587,8 +585,7 @@ scr1_pipe_dbga i_pipe_dbga (
 );
 `endif // SCR1_DBGC_EN
 
-`ifdef SCR1_SYN_OFF_EN
-// pragma synthesis_off
+`ifdef SCR1_SIM_ENV
 //-------------------------------------------------------------------------------
 // Tracelog
 //-------------------------------------------------------------------------------
@@ -608,6 +605,7 @@ scr1_tracelog i_tracelog (
     // CSR
     .mstatus_mie    (i_pipe_csr.csr_mstatus_mie         ),
     .mstatus_mpie   (i_pipe_csr.csr_mstatus_mpie        ),
+    .mtvec_base     (i_pipe_csr.csr_mtvec_base          ),
     .mtvec_mode     (i_pipe_csr.csr_mtvec_mode          ),
     .mie_meie       (i_pipe_csr.csr_mie_meie            ),
     .mie_mtie       (i_pipe_csr.csr_mie_mtie            ),
@@ -622,7 +620,6 @@ scr1_tracelog i_tracelog (
     .mstatus_mie_up (i_pipe_csr.csr2exu_mstatus_mie_up  )
 );
 
-// pragma synthesis_on
-`endif // SCR1_SYN_OFF_EN
+`endif // SCR1_SIM_ENV
 
 endmodule : scr1_pipe_top

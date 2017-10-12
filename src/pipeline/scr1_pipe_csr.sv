@@ -96,76 +96,75 @@ module scr1_pipe_csr (
 //-------------------------------------------------------------------------------
 
 // Registers
-logic [`SCR1_XLEN-1:0]                  csr_mstatus;        // Aggregated MSTATUS
-logic [`SCR1_XLEN-1:0]                  csr_mie;            // Aggregated MIE
-logic [`SCR1_XLEN-1:0]                  csr_mip;            // Aggregated MIP
-logic                                   csr_mstatus_mie;    // MSTATUS: Global interrupt enable
-logic                                   csr_mstatus_mpie;   // MSTATUS: Global interrupt enable prior to the trap
-logic                                   csr_mie_mtie;       // MIE: Machine timer interrupt enable
-logic                                   csr_mie_meie;       // MIE: Machine external interrupt enable
-logic                                   csr_mie_msie;       // MIE: Machine software interrupt enable
-logic [`SCR1_XLEN-1:0]                  csr_mscratch;       // MSCRATCH
+logic [`SCR1_XLEN-1:0]                              csr_mstatus;        // Aggregated MSTATUS
+logic [`SCR1_XLEN-1:0]                              csr_mie;            // Aggregated MIE
+logic [`SCR1_XLEN-1:0]                              csr_mip;            // Aggregated MIP
+logic                                               csr_mstatus_mie;    // MSTATUS: Global interrupt enable
+logic                                               csr_mstatus_mpie;   // MSTATUS: Global interrupt enable prior to the trap
+logic                                               csr_mie_mtie;       // MIE: Machine timer interrupt enable
+logic                                               csr_mie_meie;       // MIE: Machine external interrupt enable
+logic                                               csr_mie_msie;       // MIE: Machine software interrupt enable
+logic [`SCR1_XLEN-1:0]                              csr_mscratch;       // MSCRATCH
 `ifdef SCR1_RVC_EXT
-logic [`SCR1_XLEN-1:1]                  csr_mepc;           // MEPC (RVC)
+logic [`SCR1_XLEN-1:1]                              csr_mepc;           // MEPC (RVC)
 `else // ~SCR1_RVC_EXT
-logic [`SCR1_XLEN-1:2]                  csr_mepc;           // MEPC
+logic [`SCR1_XLEN-1:2]                              csr_mepc;           // MEPC
 `endif // ~SCR1_RVC_EXT
-logic                                   csr_mcause_i;       // MCAUSE: Interrupt
-type_scr1_exc_code_e                    csr_mcause_ec;      // MCAUSE: Exception code
-type_scr1_exc_code_e                    csr_mcause_ec_new;
-logic [`SCR1_XLEN-1:0]                  csr_mtval;          // MTVAL
-logic                                   csr_mtvec_mode;     // MTVEC: Mode (0-direct, 1-vectored)
-logic                                   csr_mip_mtip;       // MIP: Machine timer interrupt pending
-logic                                   csr_mip_meip;       // MIP: Machine external interrupt pending
-logic                                   csr_mip_msip;       // MIP: Machine software interrupt pending
+logic                                               csr_mcause_i;       // MCAUSE: Interrupt
+type_scr1_exc_code_e                                csr_mcause_ec;      // MCAUSE: Exception code
+type_scr1_exc_code_e                                csr_mcause_ec_new;
+logic [`SCR1_XLEN-1:0]                              csr_mtval;          // MTVAL
+logic [`SCR1_XLEN-1:SCR1_CSR_MTVEC_BASE_ZERO_BITS]  csr_mtvec_base;     // MTVEC: Base (upper 26 bits)
+logic                                               csr_mtvec_mode;     // MTVEC: Mode (0-direct, 1-vectored)
+logic                                               csr_mip_mtip;       // MIP: Machine timer interrupt pending
+logic                                               csr_mip_meip;       // MIP: Machine external interrupt pending
+logic                                               csr_mip_msip;       // MIP: Machine software interrupt pending
 `ifndef SCR1_CSR_REDUCED_CNT
-logic [SCR1_CSR_COUNTERS_WIDTH-1:0]     csr_instret;        // INSTRET
-logic [SCR1_CSR_COUNTERS_WIDTH-1:0]     csr_instret_new;
-logic [SCR1_CSR_COUNTERS_WIDTH-1:0]     csr_cycle;          // CYCLE
-logic [SCR1_CSR_COUNTERS_WIDTH-1:0]     csr_cycle_new;
+logic [SCR1_CSR_COUNTERS_WIDTH-1:0]                 csr_instret;        // INSTRET
+logic [SCR1_CSR_COUNTERS_WIDTH-1:0]                 csr_instret_new;
+logic [SCR1_CSR_COUNTERS_WIDTH-1:0]                 csr_cycle;          // CYCLE
+logic [SCR1_CSR_COUNTERS_WIDTH-1:0]                 csr_cycle_new;
 `endif // ~SCR1_CSR_REDUCED_CNT
 
 `ifdef SCR1_CSR_MCOUNTEN_EN
-logic [`SCR1_XLEN-1:0]                  csr_mcounten;       // Aggregated MCOUNTEN
-logic                                   csr_mcounten_cy;    // Cycle count enable
-logic                                   csr_mcounten_ir;    // Instret count enable
+logic [`SCR1_XLEN-1:0]                              csr_mcounten;       // Aggregated MCOUNTEN
+logic                                               csr_mcounten_cy;    // Cycle count enable
+logic                                               csr_mcounten_ir;    // Instret count enable
 `endif // SCR1_CSR_MCOUNTEN_EN
 
 // Read signals
-logic [`SCR1_XLEN-1:0]                  csr_r_data;
-logic                                   csr_r_exc;
+logic [`SCR1_XLEN-1:0]                              csr_r_data;
+logic                                               csr_r_exc;
 
 // Write signals
-logic                                   csr_mstatus_up;
-logic                                   csr_mie_up;
-logic                                   csr_mscratch_up;
-logic                                   csr_mepc_up;
-logic                                   csr_mcause_up;
-logic                                   csr_mtval_up;
-`ifdef SCR1_VECT_IRQ_EN
-logic                                   csr_mtvec_up;
-`endif // SCR1_VECT_IRQ_EN
+logic                                               csr_mstatus_up;
+logic                                               csr_mie_up;
+logic                                               csr_mscratch_up;
+logic                                               csr_mepc_up;
+logic                                               csr_mcause_up;
+logic                                               csr_mtval_up;
+logic                                               csr_mtvec_up;
 `ifndef SCR1_CSR_REDUCED_CNT
-logic [1:0]                             csr_cycle_up;
-logic [1:0]                             csr_instret_up;
-logic                                   csr_cycle_inc;
-logic                                   csr_instret_inc;
+logic [1:0]                                         csr_cycle_up;
+logic [1:0]                                         csr_instret_up;
+logic                                               csr_cycle_inc;
+logic                                               csr_instret_inc;
 `endif // SCR1_CSR_REDUCED_CNT
 
 `ifdef SCR1_CSR_MCOUNTEN_EN
-logic                                   csr_mcounten_up;
+logic                                               csr_mcounten_up;
 `endif // SCR1_CSR_MCOUNTEN_EN
 
-logic [`SCR1_XLEN-1:0]                  csr_w_data;
-logic                                   csr_w_exc;
+logic [`SCR1_XLEN-1:0]                              csr_w_data;
+logic                                               csr_w_exc;
 
 // Events
-logic                                   e_exc;              // Successful exception trap
-logic                                   e_irq;              // Successful IRQ trap
-logic                                   e_mret;             // MRET instruction
+logic                                               e_exc;              // Successful exception trap
+logic                                               e_irq;              // Successful IRQ trap
+logic                                               e_mret;             // MRET instruction
 
 `ifdef SCR1_BRKM_EN
-logic                                   csr_brkm_req;
+logic                                               csr_brkm_req;
 `endif // SCR1_BRKM_EN
 
 
@@ -220,7 +219,7 @@ always_comb begin
         SCR1_CSR_ADDR_MSTATUS   : csr_r_data    = csr_mstatus;
         SCR1_CSR_ADDR_MISA      : csr_r_data    = SCR1_CSR_MISA;
         SCR1_CSR_ADDR_MIE       : csr_r_data    = csr_mie;
-        SCR1_CSR_ADDR_MTVEC     : csr_r_data    = {SCR1_CSR_MTVEC_BASE, 2'(csr_mtvec_mode)};
+        SCR1_CSR_ADDR_MTVEC     : csr_r_data    = {csr_mtvec_base, 4'd0, 2'(csr_mtvec_mode)};
 
         // Machine Trap Handling (read-write)
         SCR1_CSR_ADDR_MSCRATCH  : csr_r_data    = csr_mscratch;
@@ -368,9 +367,7 @@ always_comb begin
     csr_mepc_up         = 1'b0;
     csr_mcause_up       = 1'b0;
     csr_mtval_up        = 1'b0;
-`ifdef SCR1_VECT_IRQ_EN
     csr_mtvec_up        = 1'b0;
-`endif // SCR1_VECT_IRQ_EN
 
 `ifndef SCR1_CSR_REDUCED_CNT
     csr_cycle_up        = 2'b00;
@@ -395,11 +392,7 @@ always_comb begin
             SCR1_CSR_ADDR_MSTATUS   : csr_mstatus_up    = 1'b1;
             SCR1_CSR_ADDR_MISA      : begin end
             SCR1_CSR_ADDR_MIE       : csr_mie_up        = 1'b1;
-            SCR1_CSR_ADDR_MTVEC     : begin
-`ifdef SCR1_VECT_IRQ_EN
-                csr_mtvec_up      = 1'b1;
-`endif // SCR1_VECT_IRQ_EN
-            end
+            SCR1_CSR_ADDR_MTVEC     : csr_mtvec_up      = 1'b1;
 
             // Machine Trap Handling (read-write)
             SCR1_CSR_ADDR_MSCRATCH  : csr_mscratch_up   = 1'b1;
@@ -631,18 +624,18 @@ assign csr2exu_irq      = csr2exu_ip_ie & csr_mstatus_mie;
 
 always_comb begin
 `ifndef SCR1_VECT_IRQ_EN
-    csr2exu_new_pc      = {SCR1_CSR_MTVEC_BASE, 2'b00};
+    csr2exu_new_pc      = {csr_mtvec_base, SCR1_CSR_MTVEC_BASE_ZERO_BITS'(0)};
 `else // SCR1_VECT_IRQ_EN
     if (csr_mtvec_mode == SCR1_CSR_MTVEC_MODE_VECTORED) begin
         case (1'b1)
-            e_exc                           : csr2exu_new_pc    = {SCR1_CSR_MTVEC_BASE, 2'b00};
-            (csr_mip_meip & csr_mie_meie)   : csr2exu_new_pc    = {SCR1_CSR_MTVEC_IRQ_M_EXTERNAL, 2'b00};
-            (csr_mip_msip & csr_mie_msie)   : csr2exu_new_pc    = {SCR1_CSR_MTVEC_IRQ_M_SOFTWARE, 2'b00};
-            (csr_mip_mtip & csr_mie_mtie)   : csr2exu_new_pc    = {SCR1_CSR_MTVEC_IRQ_M_TIMER, 2'b00};
-            default                         : csr2exu_new_pc    = {SCR1_CSR_MTVEC_BASE, 2'b00};
+            e_exc                           : csr2exu_new_pc    = {csr_mtvec_base, SCR1_CSR_MTVEC_BASE_ZERO_BITS'(0)};
+            (csr_mip_meip & csr_mie_meie)   : csr2exu_new_pc    = {csr_mtvec_base, SCR1_EXC_CODE_IRQ_M_EXTERNAL, 2'd0};
+            (csr_mip_msip & csr_mie_msie)   : csr2exu_new_pc    = {csr_mtvec_base, SCR1_EXC_CODE_IRQ_M_SOFTWARE, 2'd0};
+            (csr_mip_mtip & csr_mie_mtie)   : csr2exu_new_pc    = {csr_mtvec_base, SCR1_EXC_CODE_IRQ_M_TIMER, 2'd0};
+            default                         : csr2exu_new_pc    = {csr_mtvec_base, SCR1_CSR_MTVEC_BASE_ZERO_BITS'(0)};
         endcase // 1'b1
     end else begin // direct mode
-        csr2exu_new_pc  = {SCR1_CSR_MTVEC_BASE, 2'b00};
+        csr2exu_new_pc  = {csr_mtvec_base, SCR1_CSR_MTVEC_BASE_ZERO_BITS'(0)};
     end
 `endif // SCR1_VECT_IRQ_EN
     if (exu2csr_mret_instr & ~e_irq) begin
@@ -657,6 +650,8 @@ end
 //-------------------------------------------------------------------------------
 // Update CSR
 //-------------------------------------------------------------------------------
+
+// MIE
 always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         csr_mie_mtie <= SCR1_CSR_MIE_MTIE_RST_VAL;
@@ -672,6 +667,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     end
 end
 
+// MCOUNTEN
 `ifdef SCR1_CSR_MCOUNTEN_EN
 always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
@@ -686,6 +682,7 @@ always_ff @(negedge rst_n, posedge clk) begin
 end
 `endif // SCR1_CSR_MCOUNTEN_EN
 
+// MSCRATCH
 always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         csr_mscratch    <= '0;
@@ -696,6 +693,34 @@ always_ff @(negedge rst_n, posedge clk) begin
         end
     end
 end
+
+// MTVEC
+generate
+    if (SCR1_CSR_MTVEC_BASE_RW_BITS == 0) begin
+        assign csr_mtvec_base   = SCR1_CSR_MTVEC_BASE_RST_VAL;
+    end else if (SCR1_CSR_MTVEC_BASE_RW_BITS == SCR1_CSR_MTVEC_BASE_VAL_BITS) begin
+        always_ff @(negedge rst_n, posedge clk) begin
+            if (~rst_n) begin
+                csr_mtvec_base  <= SCR1_CSR_MTVEC_BASE_RST_VAL;
+            end else begin
+                if (csr_mtvec_up) begin
+                    csr_mtvec_base  <= csr_w_data[`SCR1_XLEN-1:SCR1_CSR_MTVEC_BASE_ZERO_BITS];
+                end
+            end
+        end
+    end else begin
+        assign csr_mtvec_base[SCR1_CSR_MTVEC_BASE_ZERO_BITS+:SCR1_CSR_MTVEC_BASE_RO_BITS]   = SCR1_CSR_MTVEC_BASE_RST_VAL[SCR1_CSR_MTVEC_BASE_ZERO_BITS+:SCR1_CSR_MTVEC_BASE_RO_BITS];
+        always_ff @(negedge rst_n, posedge clk) begin
+            if (~rst_n) begin
+                csr_mtvec_base[(`SCR1_XLEN-1)-:SCR1_CSR_MTVEC_BASE_RW_BITS] <= SCR1_CSR_MTVEC_BASE_RST_VAL[(`SCR1_XLEN-1)-:SCR1_CSR_MTVEC_BASE_RW_BITS];
+            end else begin
+                if (csr_mtvec_up) begin
+                    csr_mtvec_base[(`SCR1_XLEN-1)-:SCR1_CSR_MTVEC_BASE_RW_BITS] <= csr_w_data[(`SCR1_XLEN-1)-:SCR1_CSR_MTVEC_BASE_RW_BITS];
+                end
+            end
+        end
+    end
+endgenerate
 
 `ifdef SCR1_VECT_IRQ_EN
 always_ff @(negedge rst_n, posedge clk) begin
@@ -799,8 +824,7 @@ assign csr2brkm_wdata   = exu2csr_w_data;
 `endif // SCR1_BRKM_EN
 
 
-`ifdef SCR1_SYN_OFF_EN
-// pragma synthesis_off
+`ifdef SCR1_SIM_ENV
 //-------------------------------------------------------------------------------
 // Assertions
 //-------------------------------------------------------------------------------
@@ -859,7 +883,7 @@ SCR1_SVA_CSR_MRET_IRQ : assert property (
 SCR1_SVA_CSR_EXC_IRQ : assert property (
     @(negedge clk) disable iff (~rst_n)
     (exu2csr_take_exc & exu2csr_take_irq) |=>
-    (~csr_mstatus_mie & ~($stable(csr_mepc)) & (~csr_mcause_i) & (curr_pc=={SCR1_CSR_MTVEC_BASE, 2'b00}))
+    (~csr_mstatus_mie & ~($stable(csr_mepc)) & (~csr_mcause_i) & (curr_pc=={csr_mtvec_base, SCR1_CSR_MTVEC_BASE_ZERO_BITS'(0)}))
     ) else $error("CSR Error: wrong EXC+IRQ");
 
 SCR1_SVA_CSR_EVENTS : assert property (
@@ -913,7 +937,6 @@ SCR1_SVA_CSR_CYCLE_INSTRET_UP : assert property (
 
 `endif // SCR1_CSR_REDUCED_CNT
 
-// pragma synthesis_on
-`endif // SCR1_SYN_OFF_EN
+`endif // SCR1_SIM_ENV
 
 endmodule : scr1_pipe_csr

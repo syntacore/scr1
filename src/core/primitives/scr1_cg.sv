@@ -10,9 +10,10 @@ module scr1_cg (
     output  logic   clk_out
 );
 
-`ifdef SYNTHESIS
-    // Instantiate library clock gate primitive here
-`else   // SYNTHESIS
+// The code below is a clock gate model for simulation.
+// For synthesis, it should be replaced by implementation-specific
+// clock gate code.
+
 logic latch_en;
 
 always_latch begin
@@ -22,6 +23,5 @@ always_latch begin
 end
 
 assign clk_out  = latch_en & clk;
-`endif  // SYNTHESIS
 
 endmodule : scr1_cg

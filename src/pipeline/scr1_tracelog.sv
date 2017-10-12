@@ -26,6 +26,7 @@ module scr1_tracelog (
     // CSR
     input   logic                                   mstatus_mie,
     input   logic                                   mstatus_mpie,
+    input   logic [`SCR1_XLEN-1:6]                  mtvec_base,
     input   logic                                   mtvec_mode,
     input   logic                                   mie_meie,
     input   logic                                   mie_mtie,
@@ -354,7 +355,7 @@ task trace_write_csr;
 endtask // trace_write_csr
 
 always_comb begin
-    csr_trace1.mtvec        = {SCR1_CSR_MTVEC_BASE, 2'(mtvec_mode)};
+    csr_trace1.mtvec        = {mtvec_base, 4'd0, 2'(mtvec_mode)};
     csr_trace1.mepc         =
 `ifdef SCR1_RVC_EXT
                               {mepc, 1'b0};

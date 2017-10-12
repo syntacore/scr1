@@ -142,14 +142,11 @@ parameter int unsigned SCR1_CSR_MSTATUS_MPIE_OFFSET = 7;
 parameter int unsigned SCR1_CSR_MSTATUS_MPP_OFFSET  = 11;
 
 // MTVEC
-// actual length is 30 bits, the two lower bits are always zero
-parameter bit [`SCR1_XLEN-1:2] SCR1_CSR_MTVEC_BASE  = SCR1_ARCH_CSR_MTVEC_BASE;
+// bits [5:0] are always zero
+parameter bit [`SCR1_XLEN-1:SCR1_CSR_MTVEC_BASE_ZERO_BITS] SCR1_CSR_MTVEC_BASE_RST_VAL  = SCR1_ARCH_CSR_MTVEC_BASE_RST_VAL;
 
 parameter bit SCR1_CSR_MTVEC_MODE_DIRECT            = 1'b0;
 `ifdef SCR1_VECT_IRQ_EN
-parameter bit [`SCR1_XLEN-1:2] SCR1_CSR_MTVEC_IRQ_M_SOFTWARE    = SCR1_CSR_MTVEC_BASE + SCR1_EXC_CODE_IRQ_M_SOFTWARE;
-parameter bit [`SCR1_XLEN-1:2] SCR1_CSR_MTVEC_IRQ_M_TIMER       = SCR1_CSR_MTVEC_BASE + SCR1_EXC_CODE_IRQ_M_TIMER;
-parameter bit [`SCR1_XLEN-1:2] SCR1_CSR_MTVEC_IRQ_M_EXTERNAL    = SCR1_CSR_MTVEC_BASE + SCR1_EXC_CODE_IRQ_M_EXTERNAL;
 parameter bit SCR1_CSR_MTVEC_MODE_VECTORED          = 1'b1;
 `endif // SCR1_VECT_IRQ_EN
 
