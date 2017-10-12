@@ -1,7 +1,8 @@
 src_dir := $(dir $(lastword $(MAKEFILE_LIST)))
 rtl_dir := $(root_dir)/src/
+rtl_files ?= rtl_ahb.files
 
-rtl_list := $(addprefix $(rtl_dir),$(shell cat $(rtl_dir)rtl.files))
+rtl_list := $(addprefix $(rtl_dir),$(shell cat $(rtl_dir)$(rtl_files)))
 sv_list := $(filter %.sv,$(rtl_list))
 
 .PHONY: build_modelsim build_vcs build_ncsim
@@ -13,6 +14,7 @@ build_modelsim: $(rtl_list)
 	vlib work; \
 	vmap work work; \
 	vlog -work work -O1 -mfcu -sv +incdir+$(rtl_dir)includes +nowarnSVCHK  \
+	+define+SCR1_SIM_ENV \
 	$(sv_list)
 
 build_vcs: $(rtl_list)
@@ -25,6 +27,7 @@ build_vcs: $(rtl_list)
 	+lint=all,noVCDE \
 	-timescale=1ns/1ps \
 	+incdir+$(rtl_dir)includes \
+	+define+SCR1_SIM_ENV \
 	-nc \
 	-debug_all \
 	$(sv_list)
@@ -39,5 +42,6 @@ build_ncsim: $(rtl_list)
 	-timescale 1ns/1ps \
 	-incdir $(rtl_dir)includes \
 	-debug \
+	+define+SCR1_SIM_ENV \
 	$(sv_list) \
-	-top scr1_top_tb
+	-top $(top_module)

@@ -27,6 +27,16 @@ export RISCV_OBJDUMP ?= $(CROSS_PREFIX)objdump -D
 export RISCV_OBJCOPY ?= $(CROSS_PREFIX)objcopy -O verilog
 export RISCV_READELF ?= $(CROSS_PREFIX)readelf -s
 
+ifeq ($(BUS),AHB)
+export rtl_files  := rtl_ahb.files
+export top_module := scr1_top_tb_ahb
+endif
+
+ifeq ($(BUS),AXI)
+export rtl_files  := rtl_axi.files
+export top_module := scr1_top_tb_axi
+endif
+
 
 # Targets
 .PHONY: tests run_modelsim run_vcs run_ncsim
@@ -71,7 +81,7 @@ run_modelsim: $(test_info)
 	+test_results=$(test_results) \
 	+imem_pattern=$(imem_pattern) \
 	+dmem_pattern=$(dmem_pattern) \
-	work.scr1_top_tb \
+	work.$(top_module) \
 	$(MODELSIM_OPTS)
 
 run_ncsim: $(test_info)

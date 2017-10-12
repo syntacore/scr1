@@ -4,7 +4,7 @@ SCR1 is an open-source RISC-V compatible MCU core, designed by Syntacore.
 * RV32I|E[MC] ISA
 * Machine privilege mode
 * 2 to 4 stage pipeline
-* 32-bit AHB-Lite external interface
+* 32-bit AXI4/AHB-Lite external interface
 * Integrated IRQ controller and advanced debug
 * Optimized for area and power
 * Written in SystemVerilog
@@ -51,7 +51,7 @@ Set the $RISCV_TESTS environment variable accordingly:
     export RISCV_TESTS=<PATH TO RISCV-TESTS>
 
 ### Build RTL, compile and run tests
-`make run_<SIMULATOR>` will build RTL and tests, then run all tests with default parameters.
+`make run_<SIMULATOR> BUS=<AHB, AXI>` will build RTL and tests, then run all tests with default parameters.
 
 Currently supported options:
 * run_modelsim

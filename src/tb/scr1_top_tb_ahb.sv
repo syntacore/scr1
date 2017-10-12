@@ -1,5 +1,5 @@
 /// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
-/// @file       <scr1_top_tb.sv>
+/// @file       <scr1_top_tb_ahb.sv>
 /// @brief      SCR1 top testbench AHB
 ///
 
@@ -9,7 +9,7 @@
 `include "scr1_ipic.svh"
 `endif // SCR1_IPIC_EN
 
-module scr1_top_tb ();
+module scr1_top_tb_ahb ();
 
 //-------------------------------------------------------------------------------
 // Local parameters
@@ -230,4 +230,4 @@ scr1_memory_tb_ahb #(
     .dmem_hresp             (dmem_hresp         )
 );
 
-endmodule : scr1_top_tb
+endmodule : scr1_top_tb_ahb

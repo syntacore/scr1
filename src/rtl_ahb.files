@@ -10,7 +10,7 @@ includes/scr1_brkm.svh
 includes/scr1_ahb.svh
 includes/scr1_ipic.svh
 tb/scr1_memory_tb_ahb.sv
-tb/scr1_top_tb.sv
+tb/scr1_top_tb_ahb.sv
 pipeline/scr1_pipe_top.sv
 pipeline/scr1_pipe_csr.sv
 pipeline/scr1_brkm_matcher.sv
