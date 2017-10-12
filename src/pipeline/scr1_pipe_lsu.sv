@@ -242,8 +242,7 @@ assign lsu_hwbrk    = (exu2lsu_req & brkm2lsu_i_x_req) | brkm2lsu_d_x_req;
 
 `endif // SCR1_BRKM_EN
 
-`ifdef SCR1_SYN_OFF_EN
-// pragma synthesis_off
+`ifdef SCR1_SIM_ENV
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -298,7 +297,6 @@ SCR1_COV_LSU_MISALIGN_BRKPT : cover property (
 );
 `endif // SCR1_BRKM_EN
 
-// pragma synthesis_on
-`endif // SCR1_SYN_OFF_EN
+`endif // SCR1_SIM_ENV
 
 endmodule : scr1_pipe_lsu

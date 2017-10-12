@@ -558,8 +558,7 @@ end
 `endif  // SCR1_IFU_QUEUE_BYPASS
 
 
-`ifdef SCR1_SYN_OFF_EN
-// pragma synthesis_off
+`ifdef SCR1_SIM_ENV
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -620,7 +619,6 @@ SCR1_SVA_IFU_IMEM_FAULT_RVI_HI : assert property (
     ifu2idu_err_rvi_hi |-> ifu2idu_imem_err
     ) else $error("IFU Error: ifu2idu_imem_err == 0");
 
-// pragma synthesis_on
-`endif // SCR1_SYN_OFF_EN
+`endif // SCR1_SIM_ENV
 
 endmodule : scr1_pipe_ifu

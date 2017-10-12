@@ -53,8 +53,7 @@ always_ff @(negedge rst_n, posedge clk) begin
 end
 
 
-`ifdef SCR1_SYN_OFF_EN
-// pragma synthesis_off
+`ifdef SCR1_SIM_ENV
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -64,7 +63,6 @@ SCR1_SVA_MPRF_WRITEX : assert property (
     exu2mprf_w_req |-> !$isunknown({exu2mprf_rd_addr, (|exu2mprf_rd_addr ? exu2mprf_rd_data : `SCR1_XLEN'd0)})
     ) else $error("MPRF error: unknown values");
 
-// pragma synthesis_on
-`endif // SCR1_SYN_OFF_EN
+`endif // SCR1_SIM_ENV
 
 endmodule : scr1_pipe_mprf

@@ -250,8 +250,7 @@ assign dbga2csr_ddr         = dbgc_hart_dreg_out;
 assign dbgc_hart_dreg_in    = csr2dbga_ddr;
 assign dbgc_hart_dreg_wr    = csr2dbga_ddr_we;
 
-`ifdef SCR1_SYN_OFF_EN
-// pragma synthesis_off
+`ifdef SCR1_SIM_ENV
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -286,7 +285,6 @@ SCR1_SVA_DBGA_HALT : assert property (
     (dbg_run2halt & ~dbgc_timeout_flag) |-> ~exu_busy
 ) else $error("DBGA Error: core not ready to halt");
 
-// pragma synthesis_on
-`endif // SCR1_SYN_OFF_EN
+`endif // SCR1_SIM_ENV
 
 endmodule : scr1_pipe_dbga

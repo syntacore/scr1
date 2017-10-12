@@ -82,8 +82,7 @@ assign dout_parallel = shift_reg;
 //-------------------------------------------------------------------------------
 assign dout_serial = shift_reg[0];
 
-`ifdef SCR1_SYN_OFF_EN
-// pragma synthesis_off
+`ifdef SCR1_SIM_ENV
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -103,7 +102,6 @@ SCR1_SVA_TAPC_SHIFTREG_XCHECK : assert property (
     $error("TAPC Shift Reg error: unknown values");
 end
 
-// pragma synthesis_on
-`endif // SCR1_SYN_OFF_EN
+`endif // SCR1_SIM_ENV
 
 endmodule : scr1_tapc_shift_reg

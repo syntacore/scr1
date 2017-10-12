@@ -529,8 +529,7 @@ end
 `endif // SCR1_RVM_EXT
 
 
-`ifdef SCR1_SYN_OFF_EN
-// pragma synthesis_off
+`ifdef SCR1_SIM_ENV
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -595,8 +594,7 @@ SCR1_SVA_IALU_ITER_TO_CORR : assert property (
 
 `endif // SCR1_RVM_EXT
 
-// pragma synthesis_on
-`endif // SCR1_SYN_OFF_EN
+`endif // SCR1_SIM_ENV
 
 endmodule : scr1_pipe_ialu
 

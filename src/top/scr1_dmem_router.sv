@@ -242,8 +242,7 @@ assign port2_width  = (port_sel == SCR1_SEL_PORT2) ? dmem_width : SCR1_MEM_WIDTH
 assign port2_addr   = (port_sel == SCR1_SEL_PORT2) ? dmem_addr  : 'x;
 assign port2_wdata  = (port_sel == SCR1_SEL_PORT2) ? dmem_wdata : 'x;
 
-`ifdef SCR1_SYN_OFF_EN
-// pragma synthesis_off
+`ifdef SCR1_SIM_ENV
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -253,7 +252,6 @@ SCR1_SVA_DMEM_RT_XCHECK : assert property (
     dmem_req |-> !$isunknown({port_sel, dmem_cmd, dmem_width})
     ) else $error("DMEM router Error: unknown values");
 
-// pragma synthesis_on
-`endif // SCR1_SYN_OFF_EN
+`endif // SCR1_SIM_ENV
 
 endmodule : scr1_dmem_router

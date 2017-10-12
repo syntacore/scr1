@@ -1621,8 +1621,7 @@ assign sleep_rdy    = ~dap_ch_sel & (fsm_state_reg == SCR1_DBGC_FSM_STATE_IDLE);
 assign sleep_wakeup =  dap_ch_sel | (~rst_n) | core_rst_sts | hart_rst_sts;
 `endif // SCR1_CLKCTRL_EN
 
-`ifdef SCR1_SYN_OFF_EN
-// pragma synthesis_off
+`ifdef SCR1_SIM_ENV
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -1651,7 +1650,6 @@ SCR1_SVA_DBGC_XCHECK : assert property (
 ) else begin
     $error("DBGC error: unknown values");
 end
-// pragma synthesis_on
-`endif // SCR1_SYN_OFF_EN
+`endif // SCR1_SIM_ENV
 
 endmodule : scr1_dbgc

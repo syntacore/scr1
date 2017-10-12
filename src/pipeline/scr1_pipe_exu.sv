@@ -740,10 +740,7 @@ posedge clk_alw_on
 end
 
 
-`ifdef SCR1_SYN_OFF_EN
-//-------------------------------------------------------------------------------
-// pragma synthesis_off
-
+`ifdef SCR1_SIM_ENV
 //-------------------------------------------------------------------------------
 // Tracelog signals
 //-------------------------------------------------------------------------------
@@ -802,7 +799,6 @@ SCR1_SVA_EXU_BRKPT : assert property (
     ) else $error("EXU Error: brkpt is 0");
 `endif // SCR1_BRKM_EN
 
-// pragma synthesis_on
-`endif // SCR1_SYN_OFF_EN
+`endif // SCR1_SIM_ENV
 
 endmodule : scr1_pipe_exu

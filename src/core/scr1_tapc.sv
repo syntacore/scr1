@@ -492,8 +492,7 @@ assign dap_ch_update    = tap_fsm_dr_update;
 // Misc
 
 
-`ifdef SCR1_SYN_OFF_EN
-// pragma synthesis_off
+`ifdef SCR1_SIM_ENV
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -519,7 +518,6 @@ SCR1_SVA_TAPC_XCHECK_NEGCLK : assert property (
     $error("TAPC @negedge error: unknown values");
 end
 
-// pragma synthesis_on
-`endif // SCR1_SYN_OFF_EN
+`endif // SCR1_SIM_ENV
 
 endmodule : scr1_tapc

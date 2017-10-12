@@ -1027,8 +1027,7 @@ always_comb begin
     end
 end
 
-`ifdef SCR1_SYN_OFF_EN
-// pragma synthesis_off
+`ifdef SCR1_SIM_ENV
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -1048,7 +1047,6 @@ SCR1_SVA_BRKM_XCHECK : assert property (
 ) else
     $error("BRKM error: unknown values");
 
-// pragma synthesis_on
-`endif // SCR1_SYN_OFF_EN
+`endif // SCR1_SIM_ENV
 
 endmodule : scr1_pipe_brkm

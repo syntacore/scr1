@@ -160,8 +160,7 @@ end
 assign port1_cmd   = (port_sel) ? imem_cmd  : SCR1_MEM_CMD_ERROR;
 assign port1_addr  = (port_sel) ? imem_addr : 'x;
 
-`ifdef SCR1_SYN_OFF_EN
-// pragma synthesis_off
+`ifdef SCR1_SIM_ENV
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -171,7 +170,6 @@ SCR1_SVA_IMEM_RT_XCHECK : assert property (
     imem_req |-> !$isunknown({port_sel, imem_cmd})
     ) else $error("IMEM router Error: unknown values");
 
-// pragma synthesis_on
-`endif // SCR1_SYN_OFF_EN
+`endif // SCR1_SIM_ENV
 
 endmodule : scr1_imem_router

@@ -10,12 +10,10 @@
 
 module scr1_pipe_idu
 (
-`ifdef SCR1_SYN_OFF_EN
-// pragma synthesis_off
+`ifdef SCR1_SIM_ENV
     input   logic                           rst_n,
     input   logic                           clk,
-// pragma synthesis_on
-`endif // SCR1_SYN_OFF_EN
+`endif // SCR1_SIM_ENV
 
     // IFU <-> IDU interface
     output  logic                           idu2ifu_rdy,            // IDU ready for new data
@@ -830,8 +828,7 @@ always_comb begin
 
 end // RV32I(MC) decode
 
-`ifdef SCR1_SYN_OFF_EN
-// pragma synthesis_off
+`ifdef SCR1_SIM_ENV
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -863,7 +860,6 @@ SCR1_SVA_IDU_IALU_CMD_RANGE : assert property (
         ))
     ) else $error("IDU Error: IALU_CMD out of range");
 
-// pragma synthesis_on
-`endif // SCR1_SYN_OFF_EN
+`endif // SCR1_SIM_ENV
 
 endmodule : scr1_pipe_idu
