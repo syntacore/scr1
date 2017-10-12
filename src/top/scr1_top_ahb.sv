@@ -223,7 +223,7 @@ scr1_tcm #(
 //-------------------------------------------------------------------------------
 scr1_timer i_timer (
     // Common
-    .rst_n          (rst_n              ),
+    .rst_n          (rst_n_out          ),
     .clk            (clk                ),
     .rtc_clk        (rtc_clk            ),
     // Memory interface
