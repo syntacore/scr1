@@ -23,18 +23,31 @@ tests/benchmarks/dhrystone21 | Dhrystone 2.1 source files
 
 ## Quick start guide
 
-### Clone and build the RISC-V toolchain
+### Prerequisites
 
+RISC-V GCC toolchain is required to compile the software. You can use pre-built binaries or build the toolchain from scratch.
+
+#### Using pre-built binary tools
+
+Pre-built RISC-V GCC toolchain and OpenOCD binaries are available to download from http://syntacore.com/page/products/sw-tools. Download the archive (*.tar.gz* for Linux, *.zip* for Windows) for your platform, extract the archive to your preferred directory and update the PATH environment variable as described in **Set environment variables** section.
+
+#### Building tools from source
+
+You can build the RISC-V toolchain from sources.
+
+Build procedure is verified at the Ubuntu 14.04 LTS and Ubuntu 16.04 LTS distributions.
+
+    sudo apt-get install autoconf automake libmpc-dev libmpfr-dev libgmp-dev gawk bison flex texinfo libtool make g++ pkg-config libexpat1-dev zlib1g-dev
     git clone https://github.com/riscv/riscv-gnu-toolchain.git
     cd riscv-gnu-toolchain
     git checkout a71fc539850f8dacf232fc580743b946c376014b
     git submodule update --init --recursive
-    ./configure --prefix=<YOUR_INSTALL_PATH> --with-arch=rv32im --with-abi=ilp32
+    ./configure --prefix=<YOUR_INSTALL_PATH> --enable-multilib
     make
-    make install
 
-    More detailed instructions on how to prepare and build the toolchain can be found in
-    https://github.com/riscv/riscv-tools/blob/master/README.md.
+More detailed instructions on how to prepare and build the toolchain can be found in https://github.com/riscv/riscv-tools/blob/master/README.md.
+
+#### Set environment variables
 
 Add the <YOUR_INSTALL_PATH>/bin folder to the PATH environment variable:
 
