@@ -1,3 +1,5 @@
+ARCH := imfc
+
 include rv32_tests.inc
 
 src_dir := $(CURDIR)
@@ -8,8 +10,8 @@ test_elf  := $(addprefix $(bld_dir)/,$(test_list:%=%.elf))
 test_hex  := $(addprefix $(bld_dir)/,$(test_list:%=%.hex))
 test_dump := $(addprefix $(bld_dir)/,$(test_list:%=%.dump))
 
-CFLAGS := -I$(inc_dir) -I$(src_dir) -DASM -Wa,-march=rv32$(ARCH) -D__riscv_xlen=32 
-LDFLAGS := -static -fvisibility=hidden -nostdlib -nostartfiles -T$(inc_dir)/link.ld
+CFLAGS := -I$(inc_dir) -I$(src_dir) -DASM -Wa,-march=rv32$(ARCH) -march=rv32$(ARCH) -mabi=ilp32f -D__riscv_xlen=32 
+LDFLAGS := -static -fvisibility=hidden -nostdlib -nostartfiles -T$(inc_dir)/link.ld -march=rv32$(ARCH) -mabi=ilp32f
 
 VPATH += $(src_dir) $(bld_dir) $(obj_dir) $(RISCV_TESTS)
 

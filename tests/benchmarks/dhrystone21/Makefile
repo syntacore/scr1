@@ -5,10 +5,10 @@ FLAGS_STR = "$(FLAGS)"
 
 CFLAGS := $(FLAGS) \
 -static -std=gnu99 -fno-common -fno-builtin-printf \
--Wa,-march=rv32$(ARCH) -march=rv32$(ARCH) \
+-Wa,-march=rv32$(ARCH) -march=rv32$(ARCH) -mabi=$(ABI) \
 -DFLAGS_STR=\"$(FLAGS_STR)\" \
 -DSELF_TIMED=1 -DTIME=1
-LDFLAGS := -nostartfiles -nostdlib -lc -lgcc
+LDFLAGS := -nostartfiles -nostdlib -lc -lgcc -march=rv32$(ARCH) -mabi=$(ABI)
 VPATH += $(src_dir) $(inc_dir)
 incs += -I$(src_dir) -I$(inc_dir)
 

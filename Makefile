@@ -3,7 +3,8 @@
 #------------------------------------------------------------------------------
 
 # Parameters
-export ARCH ?= imfc
+export ARCH ?= im
+export ABI  ?= ilp32
 # Testbench memory delay patterns (FFFFFFFF - no delay, 00000000 - random delay, 00000001 - max delay)
 imem_pattern ?= FFFFFFFF
 dmem_pattern ?= FFFFFFFF
@@ -21,7 +22,7 @@ test_results := $(bld_dir)/test_results.txt
 test_info := $(bld_dir)/test_info
 
 # Environment
-export CROSS_PREFIX ?= riscv32-unknown-elf-
+export CROSS_PREFIX ?= riscv64-unknown-elf-
 export RISCV_GCC ?= $(CROSS_PREFIX)gcc
 export RISCV_OBJDUMP ?= $(CROSS_PREFIX)objdump -D
 export RISCV_OBJCOPY ?= $(CROSS_PREFIX)objcopy -O verilog

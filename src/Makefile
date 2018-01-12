@@ -1,6 +1,7 @@
 src_dir := $(dir $(lastword $(MAKEFILE_LIST)))
 rtl_dir := $(root_dir)/src/
 rtl_files ?= rtl_ahb.files
+top_module ?= scr1_top_tb_ahb
 
 rtl_list := $(addprefix $(rtl_dir),$(shell cat $(rtl_dir)$(rtl_files)))
 sv_list := $(filter %.sv,$(rtl_list))
