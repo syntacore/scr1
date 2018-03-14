@@ -8,7 +8,7 @@
 //-------------------------------------------------------------------------------
 // Core fundamental parameters (READ-ONLY, do not modify)
 //-------------------------------------------------------------------------------
-`define SCR1_MIMPID             32'h17101000
+`define SCR1_MIMPID             32'h18031400
 `define SCR1_XLEN               32
 `define SCR1_FLEN               `SCR1_XLEN      // for test compatibility
 `define SCR1_IMEM_AWIDTH        `SCR1_XLEN
@@ -28,7 +28,7 @@ parameter int unsigned          SCR1_CSR_MTVEC_BASE_VAL_BITS    = `SCR1_XLEN-SCR
 // Default parameter set:
 //------------------------------------------------
 
-//`define SCR1_RVE_EXT                // enables RV32E base integer instruction set
+// `define SCR1_RVE_EXT                // enables RV32E base integer instruction set
 `define SCR1_RVM_EXT                // enables standard extension for integer mul/div
 `define SCR1_RVC_EXT                // enables standard extension for compressed instructions
 
@@ -45,7 +45,7 @@ parameter int unsigned          SCR1_CSR_MTVEC_BASE_VAL_BITS    = `SCR1_XLEN-SCR
 `define SCR1_IPIC_SYNC_EN           // enables IPIC synchronizer
 `define SCR1_TCM_EN                 // enables tightly-coupled memory
 
-//`define SCR1_VECT_IRQ_EN            // enables vectored interrupts
+`define SCR1_VECT_IRQ_EN            // enables vectored interrupts
 `define SCR1_CSR_MCOUNTEN_EN        // enables custom MCOUNTEN CSR
 parameter int unsigned SCR1_CSR_MTVEC_BASE_RW_BITS = 26;    // number of writable high-order bits in MTVEC BASE field
                                                             // legal values are 0 to 26
