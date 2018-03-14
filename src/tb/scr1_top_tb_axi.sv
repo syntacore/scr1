@@ -24,6 +24,12 @@ logic                                   rtc_clk = 0;
 logic   [31:0]                          fuse_mhartid;
 integer                                 imem_req_ack_stall;
 integer                                 dmem_req_ack_stall;
+`ifdef SCR1_IPIC_EN
+logic [SCR1_IRQ_LINES_NUM-1:0]          irq_lines;
+`else // SCR1_IPIC_EN
+logic                                   ext_irq = 0;
+`endif // SCR1_IPIC_EN
+logic                                   soft_irq = 0;
 
 `ifdef SCR1_DBGC_EN
 logic                                   trst_n;
@@ -219,11 +225,11 @@ scr1_top_axi i_top (
     .rst_n_out              (               ),
     .fuse_mhartid           (fuse_mhartid   ),
 `ifdef SCR1_IPIC_EN
-    .irq_lines              ('0             ),
+    .irq_lines              (irq_lines      ),
 `else // SCR1_IPIC_EN
-    .ext_irq                ('0             ),
+    .ext_irq                (ext_irq        ),
 `endif // SCR1_IPIC_EN
-    .soft_irq               ('0             ),
+    .soft_irq               (soft_irq       ),
 `ifdef SCR1_DBGC_EN
     .trst_n                 (trst_n         ),
     .tck                    (tck            ),
@@ -340,6 +346,9 @@ scr1_memory_tb_axi #(
     // System
     .rst_n          (rst_n),
     .clk            (clk),
+`ifdef SCR1_IPIC_EN
+    .irq_lines      (irq_lines),
+`endif // SCR1_IPIC_EN
 
     // Write address channel
     .awid           ( {io_axi_imem_awid,   io_axi_dmem_awid}      ),

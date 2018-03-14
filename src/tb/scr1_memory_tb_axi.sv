@@ -3,6 +3,8 @@
 /// @brief      AXI memory testbench
 ///
 
+`include "scr1_ipic.svh"
+
 module scr1_memory_tb_axi #(
     parameter SIZE   = 1*1024*1024,
     parameter N_IF   = 2,
@@ -14,6 +16,7 @@ module scr1_memory_tb_axi #(
     // System
     input   logic                          rst_n,
     input   logic                          clk,
+    output  logic [SCR1_IRQ_LINES_NUM-1:0] irq_lines,
 
     // Write address channel
     input  logic [N_IF-1:0]                awvalid,
@@ -57,17 +60,18 @@ module scr1_memory_tb_axi #(
 //-------------------------------------------------------------------------------
 // Local parameters
 //-------------------------------------------------------------------------------
-localparam [W_ADR-1:0]                       PRINT_ADDR   = 32'hF000_0000;
+localparam [W_ADR-1:0]                      PRINT_ADDR     = 32'hF000_0000;
+localparam [W_ADR-1:0]                      IRQ_ADDR       = 32'hF000_0100;
 
 //-------------------------------------------------------------------------------
 // Local signal declaration
 //-------------------------------------------------------------------------------
-logic  [7:0]                                 memory [0:SIZE-1];
-logic  [N_IF-1:0] [W_ADR-1:0]                awaddr_hold;
-logic  [N_IF-1:0] [2:0]                      awsize_hold;
-string                                       stuff_file;
-genvar                                       gi;
-genvar                                       gj;
+logic  [7:0]                                memory [0:SIZE-1];
+logic  [N_IF-1:0] [W_ADR-1:0]               awaddr_hold;
+logic  [N_IF-1:0] [2:0]                     awsize_hold;
+string                                      stuff_file;
+genvar                                      gi;
+genvar                                      gj;
 
 //-------------------------------------------------------------------------------
 // Local functions
@@ -89,7 +93,11 @@ function automatic logic [W_DATA-1:0] mem_read (
     end
 
     for(int i=byte_lane; i<bytes_max & bytes_num!=0; ++i) begin
-        mem_read[(i*8)+:8] = memory[adr];
+        if (adr[W_ADR-1:1]==IRQ_ADDR[W_ADR-1:1]) begin
+            mem_read[(i*8)+:8] = irq_lines[(i*8)+:8];
+        end else begin
+            mem_read[(i*8)+:8] = memory[adr];
+        end
         adr = adr+1'b1;
         bytes_num = bytes_num - 1'b1;
     end
@@ -114,6 +122,8 @@ function automatic void mem_write (
     for(int i=byte_lane; i<bytes_max & bytes_num!=0; ++i) begin
         if(bytes_en[i] & adr==PRINT_ADDR) begin
             $write("%c",data[(i*8)+:8]);
+        end else if(bytes_en[i] & adr[W_ADR-1:1]==IRQ_ADDR[W_ADR-1:1]) begin
+            irq_lines[(i*8)+:8] = data[(i*8)+:8];
         end else if(bytes_en[i]) begin
             memory[adr] = data[(i*8)+:8];
         end
