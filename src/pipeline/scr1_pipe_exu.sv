@@ -318,7 +318,7 @@ assign exu2mprf_rs2_addr    = `SCR1_MPRF_ADDR_WIDTH'(exu_queue.rs2_addr);
 `ifdef SCR1_RVM_EXT
 assign ialu_vd  = exu_queue_vd & (exu_queue.ialu_cmd != SCR1_IALU_CMD_NONE)
 `ifdef SCR1_BRKM_EN
-                & ~brkpt_hw
+                & ~brkm2exu_i_x_req
 `endif // SCR1_BRKM_EN
                 ;
 `endif // SCR1_RVM_EXT
@@ -412,7 +412,7 @@ always_comb begin
         endcase
     end // exu_queue_vd
 `ifdef SCR1_BRKM_EN
-    if (brkpt_hw) begin
+    if (brkm2exu_i_x_req) begin
         exu2csr_r_req   = 1'b0;
         exu2csr_w_req   = 1'b0;
     end
@@ -522,10 +522,9 @@ end
 // MRET
 assign exu2csr_mret_instr = exu_queue_vd & exu_queue.mret_req
 `ifdef SCR1_BRKM_EN
-    & ~brkpt_hw
+    & ~brkm2exu_i_x_req
 `endif // SCR1_BRKM_EN
 `ifdef SCR1_DBGC_EN
-    & ~exu_no_commit
     & ~dbg_halted
 `endif // SCR1_DBGC_EN
     ;
@@ -558,14 +557,12 @@ assign new_pc_req   = init_pc                                      // reset
 
 assign exu2csr_take_exc     = exc_req
 `ifdef SCR1_DBGC_EN
-                            & ~exu_no_commit
                             & ~dbg_halted
 `endif // SCR1_DBGC_EN
                             ;
 assign exu2csr_mret_update  = exu2csr_mret_instr & (csr_access == SCR1_CSR_INIT);
 assign exu2csr_take_irq     = csr2exu_irq & ~exu_busy
 `ifdef SCR1_DBGC_EN
-                            & ~exu_no_commit
                             & ~exu_irq_dsbl
                             & ~dbg_halted
 `endif // SCR1_DBGC_EN

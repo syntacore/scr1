@@ -61,6 +61,12 @@ typedef enum logic [1:0] {
     SCR1_IALU_FSM_ITER,
     SCR1_IALU_FSM_CORR
 } type_scr1_ialu_fsm_state;
+
+typedef enum logic [1:0] {
+   SCR1_IALU_MDU_NONE,
+   SCR1_IALU_MDU_MUL,
+   SCR1_IALU_MDU_DIV
+} type_scr1_ialu_mdu_cmd;
  `endif // SCR1_RVM_EXT
 
 //-------------------------------------------------------------------------------
@@ -72,8 +78,7 @@ type_scr1_ialu_fsm_state                    curr_state;     // Current FSM state
 type_scr1_ialu_fsm_state                    next_state;     // Next FSM state
 logic                                       iter_req;       // Request iterative stage
 logic                                       iter_rdy;       // Request iterative stage
-logic                                       mul_vd;         // MUL valid
-logic                                       div_vd;         // DIV valid
+type_scr1_ialu_mdu_cmd                      mdu_cmd;        // MDU command: 00 - NONE, 01 - MUL, 10 - DIV
 logic [1:0]                                 mul_cmd;        // MUL command: 00 - MUL, 01 - MULH, 10 - MULHSU, 11 - MULHU
 logic [1:0]                                 div_cmd;        // DIV command: 00 - DIV, 01 - DIVU, 10 - REM,    11 - REMU
 logic                                       corr_req;       // DIV correction request
@@ -185,34 +190,37 @@ always_comb begin
     sum1_op1    = ialu_op1;
     sum1_op2    = ialu_op2;
 `ifdef SCR1_RVM_EXT
-    if (div_vd) begin
-        case (curr_state)
-            SCR1_IALU_FSM_IDLE,
-            SCR1_IALU_FSM_ITER : begin
-                sum1_sub    = 1'b1;
-                sum1_op1    = (curr_state == SCR1_IALU_FSM_IDLE)
-                                ? (signed'(SCR1_DIV_INIT_CNT))
-                                : (signed'({'0, cnt_res_reg}));
-                sum1_op2    = 32'sb1;
-            end
-            SCR1_IALU_FSM_CORR : begin
-                sum1_sub    = 1'b1;
-                sum1_op1    = '0;
-                sum1_op2    = signed'(res32_2_reg);
-            end
-        endcase
-    end
- `ifndef SCR1_FAST_MUL
-    if (mul_vd) begin
-        sum1_sub    = 1'b1;
-        if (curr_state == SCR1_IALU_FSM_IDLE) begin
-            sum1_op1    = (signed'(SCR1_MUL_INIT_CNT));
-        end else begin
-            sum1_op1    = signed'({'0, cnt_res_reg});
+    case (mdu_cmd)
+        SCR1_IALU_MDU_DIV : begin
+            case (curr_state)
+                SCR1_IALU_FSM_IDLE,
+                SCR1_IALU_FSM_ITER : begin
+                    sum1_sub    = 1'b1;
+                    sum1_op1    = (curr_state == SCR1_IALU_FSM_IDLE)
+                                    ? (signed'(SCR1_DIV_INIT_CNT))
+                                    : (signed'({'0, cnt_res_reg}));
+                    sum1_op2    = 32'sb1;
+                end
+                SCR1_IALU_FSM_CORR : begin
+                    sum1_sub    = 1'b1;
+                    sum1_op1    = '0;
+                    sum1_op2    = signed'(res32_2_reg);
+                end
+            endcase
         end
-        sum1_op2    = 32'sb1;
-    end
+ `ifndef SCR1_FAST_MUL
+        SCR1_IALU_MDU_MUL : begin
+            sum1_sub    = 1'b1;
+            if (curr_state == SCR1_IALU_FSM_IDLE) begin
+                sum1_op1    = (signed'(SCR1_MUL_INIT_CNT));
+            end else begin
+                sum1_op1    = signed'({'0, cnt_res_reg});
+            end
+            sum1_op2    = 32'sb1;
+        end
  `endif // ~SCR1_FAST_MUL
+        default : begin end
+    endcase
 `endif // SCR1_RVM_EXT
 
     // SUM1
@@ -244,42 +252,45 @@ always_comb begin
     sum2_sub    = 1'b0;
     sum2_op1    = signed'(ialu_sum2_op1);
     sum2_op2    = signed'(ialu_sum2_op2);
-    if (div_vd) begin
-        case (curr_state)
-            SCR1_IALU_FSM_IDLE,
-            SCR1_IALU_FSM_ITER : begin
-                logic           sgn;
-                logic           inv;
-                sgn         = (curr_state == SCR1_IALU_FSM_IDLE)
-                                ? (1'b0)
-                                : (~res32_2_reg[0]);
-                inv         = (~div_cmd[0] & (ialu_op1[31] ^ ialu_op2[31]));
-                sum2_sub    = ~inv ^ sgn;
-                sum2_op1    = (curr_state == SCR1_IALU_FSM_IDLE)
-                                ? signed'({(~div_cmd[0] & ialu_op1[31]), ialu_op1[31]})
-                                : signed'({res32_1_reg[31:0], res32_3_reg[31]});
-                sum2_op2    = signed'({(~div_cmd[0] & ialu_op2[31]), ialu_op2});
-            end
-            SCR1_IALU_FSM_CORR : begin
-                logic           sgn;
-                logic           inv;
-                sgn         = (~div_cmd[0] & ialu_op1[31]) ^ res32_1_c_reg;
-                inv         = (~div_cmd[0] & (ialu_op1[31] ^ ialu_op2[31]));
-                sum2_sub    = ~inv ^ sgn;
-                sum2_op1    = signed'({1'b0, res32_1_reg});
-                sum2_op2    = signed'({(~div_cmd[0] & ialu_op2[31]), ialu_op2});
-            end
-        endcase
-    end
+    case (mdu_cmd)
+        SCR1_IALU_MDU_DIV : begin
+            case (curr_state)
+                SCR1_IALU_FSM_IDLE,
+                SCR1_IALU_FSM_ITER : begin
+                    logic           sgn;
+                    logic           inv;
+                    sgn         = (curr_state == SCR1_IALU_FSM_IDLE)
+                                    ? (1'b0)
+                                    : (~res32_2_reg[0]);
+                    inv         = (~div_cmd[0] & (ialu_op1[31] ^ ialu_op2[31]));
+                    sum2_sub    = ~inv ^ sgn;
+                    sum2_op1    = (curr_state == SCR1_IALU_FSM_IDLE)
+                                    ? signed'({(~div_cmd[0] & ialu_op1[31]), ialu_op1[31]})
+                                    : signed'({res32_1_reg[31:0], res32_3_reg[31]});
+                    sum2_op2    = signed'({(~div_cmd[0] & ialu_op2[31]), ialu_op2});
+                end
+                SCR1_IALU_FSM_CORR : begin
+                    logic           sgn;
+                    logic           inv;
+                    sgn         = (~div_cmd[0] & ialu_op1[31]) ^ res32_1_c_reg;
+                    inv         = (~div_cmd[0] & (ialu_op1[31] ^ ialu_op2[31]));
+                    sum2_sub    = ~inv ^ sgn;
+                    sum2_op1    = signed'({1'b0, res32_1_reg});
+                    sum2_op2    = signed'({(~div_cmd[0] & ialu_op2[31]), ialu_op2});
+                end
+            endcase
+        end
 `ifndef SCR1_FAST_MUL
-    else if (mul_vd) begin
-        sum2_sub    = 1'b0;
-        sum2_op1    = (curr_state == SCR1_IALU_FSM_IDLE)
-                        ? ('0)
-                        : (signed'({(~&mul_cmd & res32_1_reg[31]), res32_1_reg}));
-        sum2_op2    = signed'(mul_res);
-    end
+        SCR1_IALU_MDU_MUL : begin
+            sum2_sub    = ~mul_cmd[1] & ialu_op2[31] & sum1_res[32];
+            sum2_op1    = (curr_state == SCR1_IALU_FSM_IDLE)
+                            ? ('0)
+                            : (signed'({(~&mul_cmd & res32_1_reg[31]), res32_1_reg}));
+            sum2_op2    = signed'(mul_res);
+        end
 `endif // SCR1_FAST_MUL
+       default : begin end
+   endcase
     sum2_res     = (sum2_sub)
                     ? (sum2_op1 - sum2_op2)   // Subtraction
                     : (sum2_op1 + sum2_op2);  // Addition
@@ -312,14 +323,14 @@ always_comb begin
     mul_op1 = '0;
     mul_op2 = '0;
     mul_res = '0;
-    if (mul_vd) begin
+    if (mdu_cmd == SCR1_IALU_MDU_MUL) begin
         mul_op1 = signed'({(~&mul_cmd   & ialu_op1[31]), ialu_op1});
 `ifdef SCR1_FAST_MUL
         mul_op2 = signed'({(~mul_cmd[1] & ialu_op2[31]), ialu_op2});
 `else // ~SCR1_FAST_MUL
         mul_op2 = (curr_state == SCR1_IALU_FSM_IDLE)
-                        ? (signed'({(~mul_cmd[1] & ialu_op2[31] & sum1_res[32]), ialu_op2[SCR1_IALU_MUL_WIDTH-1:0]}))
-                        : (signed'({(~mul_cmd[1] & ialu_op2[31] & sum1_res[32]), res32_2_reg[SCR1_IALU_MUL_WIDTH-1:0]}));
+                        ? (signed'({1'b0, ialu_op2[SCR1_IALU_MUL_WIDTH-1:0]}))
+                        : (signed'({1'b0, res32_2_reg[SCR1_IALU_MUL_WIDTH-1:0]}));
 `endif // ~SCR1_FAST_MUL
         mul_res = mul_op1 * mul_op2;
     end
@@ -334,37 +345,40 @@ always_comb begin
     res32_2     = '0;
     res32_1_c   = '0;
     res32_3     = '0;
-    if (div_vd) begin
-        case (curr_state)
-            SCR1_IALU_FSM_IDLE,
-            SCR1_IALU_FSM_ITER : begin
-                logic [30:0]    prev_low;
-                logic           quo;
-                prev_low    = (curr_state == SCR1_IALU_FSM_IDLE)
-                                ? (ialu_op1[30:0])
-                                : (res32_3_reg[30:0]);
-                quo         = ~((~div_cmd[0] & ialu_op1[31]) ^ (sum2_res[32]))
-                              | ((~div_cmd[0] & ialu_op1[31]) & (~|{sum2_res, prev_low}));
+    case (mdu_cmd)
+        SCR1_IALU_MDU_DIV : begin
+            case (curr_state)
+                SCR1_IALU_FSM_IDLE,
+                SCR1_IALU_FSM_ITER : begin
+                    logic [30:0]    prev_low;
+                    logic           quo;
+                    prev_low    = (curr_state == SCR1_IALU_FSM_IDLE)
+                                    ? (ialu_op1[30:0])
+                                    : (res32_3_reg[30:0]);
+                    quo         = ~((~div_cmd[0] & ialu_op1[31]) ^ (sum2_res[32]))
+                                  | ((~div_cmd[0] & ialu_op1[31]) & (~|{sum2_res, prev_low}));
 
-                {res32_1_c, res32_1}    = sum2_res;                 // Hight part of extended dividend (reminder)
-                res32_3     = (curr_state == SCR1_IALU_FSM_IDLE)
-                                ? ({ialu_op1[30:0], 1'b0})
-                                : ({res32_3_reg[30:0], 1'b0});      // Low part of extended dividend (reminder)
-                res32_2     = (curr_state == SCR1_IALU_FSM_IDLE)
-                                ? ({'0, quo})
-                                : ({res32_2_reg[32-2:0], quo});     // Quotient
+                    {res32_1_c, res32_1}    = sum2_res;                 // Hight part of extended dividend (reminder)
+                    res32_3     = (curr_state == SCR1_IALU_FSM_IDLE)
+                                    ? ({ialu_op1[30:0], 1'b0})
+                                    : ({res32_3_reg[30:0], 1'b0});      // Low part of extended dividend (reminder)
+                    res32_2     = (curr_state == SCR1_IALU_FSM_IDLE)
+                                    ? ({'0, quo})
+                                    : ({res32_2_reg[32-2:0], quo});     // Quotient
 
-            end
-            default : begin end
-        endcase
-    end
+                end
+                default : begin end
+            endcase
+        end
 `ifndef SCR1_FAST_MUL
-    if (mul_vd) begin
-        {res32_1, res32_2}  = (curr_state == SCR1_IALU_FSM_IDLE)
-                                ? ({sum2_res, ialu_op2[31:SCR1_IALU_MUL_WIDTH]})
-                                : ({sum2_res, res32_2_reg[31:SCR1_IALU_MUL_WIDTH]});
-    end
+        SCR1_IALU_MDU_MUL : begin
+            {res32_1, res32_2}  = (curr_state == SCR1_IALU_FSM_IDLE)
+                                    ? ({sum2_res, ialu_op2[31:SCR1_IALU_MUL_WIDTH]})
+                                    : ({sum2_res, res32_2_reg[31:SCR1_IALU_MUL_WIDTH]});
+        end
 `endif // ~SCR1_FAST_MUL
+        default : begin end
+    endcase
 end
 `endif // SCR1_RVM_EXT
 
@@ -376,15 +390,15 @@ end
 always_comb begin
     iter_req  = 1'b0;
     iter_rdy  = 1'b0;
-    corr_req = div_vd & ((div_cmd == 2'b00) & (ialu_op1[31] ^ ialu_op2[31]) |
+    corr_req = (mdu_cmd == SCR1_IALU_MDU_DIV) & ((div_cmd == 2'b00) & (ialu_op1[31] ^ ialu_op2[31]) |
               (div_cmd[1] & |res32_1 & ((~div_cmd[0] & ialu_op1[31]) ^ res32_1_c)));
  `ifdef SCR1_FAST_MUL
-    if (div_vd) begin
+    if (mdu_cmd == SCR1_IALU_MDU_DIV) begin
         iter_req  = |ialu_op1 & |ialu_op2 & (curr_state == SCR1_IALU_FSM_IDLE);
         iter_rdy  = sum1_flags.c & (curr_state == SCR1_IALU_FSM_ITER);
     end
  `else // ~SCR1_FAST_MUL
-    if (mul_vd | div_vd) begin
+    if (mdu_cmd != SCR1_IALU_MDU_NONE) begin
         iter_req  = |ialu_op1 & |ialu_op2 & (curr_state == SCR1_IALU_FSM_IDLE);
         iter_rdy  = sum1_flags.c & (curr_state == SCR1_IALU_FSM_ITER);
     end
@@ -401,10 +415,9 @@ always_comb begin
     ialu_cmp    = 1'b0;
     shft_cmd    = 2'b0;
 `ifdef SCR1_RVM_EXT
-    mul_vd      = 1'b0;
+    mdu_cmd     = SCR1_IALU_MDU_NONE;
     mul_cmd     = {((ialu_cmd == SCR1_IALU_CMD_MULHU) | (ialu_cmd == SCR1_IALU_CMD_MULHSU)),
                    ((ialu_cmd == SCR1_IALU_CMD_MULHU) | (ialu_cmd == SCR1_IALU_CMD_MULH))};
-    div_vd      = 1'b0;
     div_cmd     = {((ialu_cmd == SCR1_IALU_CMD_REM)   | (ialu_cmd == SCR1_IALU_CMD_REMU)),
                    ((ialu_cmd == SCR1_IALU_CMD_REMU)  | (ialu_cmd == SCR1_IALU_CMD_DIVU))};
     ialu_rdy    = 1'b1;
@@ -461,7 +474,7 @@ always_comb begin
         SCR1_IALU_CMD_MULHU,
         SCR1_IALU_CMD_MULHSU,
         SCR1_IALU_CMD_MULH : begin
-            mul_vd      = 1'b1;
+            mdu_cmd     = SCR1_IALU_MDU_MUL;
  `ifdef SCR1_FAST_MUL
             ialu_res     = (|mul_cmd) ? mul_res[(32*2)-1:32] : mul_res[31:0];
  `else // ~SCR1_FAST_MUL
@@ -481,7 +494,7 @@ always_comb begin
         SCR1_IALU_CMD_DIVU,
         SCR1_IALU_CMD_REM,
         SCR1_IALU_CMD_REMU : begin
-            div_vd      = 1'b1;
+            mdu_cmd     = SCR1_IALU_MDU_DIV;
             case (curr_state)
                 SCR1_IALU_FSM_IDLE : begin
                     ialu_res     = (|ialu_op2 | div_cmd[1]) ? ialu_op1 : '1;
@@ -495,7 +508,6 @@ always_comb begin
                     ialu_res     = (div_cmd[1]) ? sum2_res[31:0] : sum1_res[31:0];
                     ialu_rdy     = 1'b1;
                 end
-                default : begin end
             endcase
         end
 `endif // SCR1_RVM_EXT
@@ -510,20 +522,23 @@ end
 //-------------------------------------------------------------------------------
 always_ff @(posedge clk) begin
     if (ialu_vd & ~ialu_rdy) begin
-        if (div_vd) begin
-            cnt_res_reg     <= cnt_res;                     // Counter
-            res32_1_c_reg   <= res32_1_c;                   // Iteration reminder carry
-            res32_1_reg     <= res32_1;                     // Iteration reminder
-            res32_2_reg     <= res32_2;                     // Iteration quotient
-            res32_3_reg     <= res32_3;                     // Iteration reminder (low)
-        end
+        case (mdu_cmd)
+            SCR1_IALU_MDU_DIV : begin
+                cnt_res_reg     <= cnt_res;                     // Counter
+                res32_1_c_reg   <= res32_1_c;                   // Iteration reminder carry
+                res32_1_reg     <= res32_1;                     // Iteration reminder
+                res32_2_reg     <= res32_2;                     // Iteration quotient
+                res32_3_reg     <= res32_3;                     // Iteration reminder (low)
+            end
  `ifndef SCR1_FAST_MUL
-        else if (mul_vd) begin
-            cnt_res_reg     <= cnt_res;                     // Counter
-            res32_2_reg     <= res32_2;                     // Multiplication low result / operand 2
-            res32_1_reg     <= res32_1;                     // Multiplication hight result
-        end
+            SCR1_IALU_MDU_MUL : begin
+                cnt_res_reg     <= cnt_res;                     // Counter
+                res32_2_reg     <= res32_2;                     // Multiplication low result / operand 2
+                res32_1_reg     <= res32_1;                     // Multiplication hight result
+            end
  `endif // SCR1_FAST_MUL
+            default : begin end
+        endcase
     end
 end
 `endif // SCR1_RVM_EXT
@@ -549,13 +564,6 @@ SCR1_SVA_IALU_XCHECK_QUEUE : assert property (
     ) else $error("IALU Error: unknown values in queue");
 
 // Behavior checks
-
- `ifndef SCR1_FAST_MUL
-SCR1_SVA_IALU_ILL_ITER_OPS : assert property (
-    @(negedge clk) disable iff (~rst_n)
-    $onehot0({mul_vd, div_vd})
-    ) else $error("IALU Error: illegal combination of control signals");
- `endif // SCR1_FAST_MUL
 
 SCR1_SVA_IALU_ILL_STATE : assert property (
     @(negedge clk) disable iff (~rst_n)
@@ -597,4 +605,3 @@ SCR1_SVA_IALU_ITER_TO_CORR : assert property (
 `endif // SCR1_SIM_ENV
 
 endmodule : scr1_pipe_ialu
-

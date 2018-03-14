@@ -39,6 +39,9 @@ module scr1_pipe_csr (
     input   logic                                       exu2csr_take_exc,       // Take exception trap
     input   logic                                       exu2csr_mret_update,    // MRET update CSR
     input   logic                                       exu2csr_mret_instr,     // MRET instruction
+`ifdef SCR1_DBGC_EN
+    input   logic                                       exu_no_commit,          // Forbid instruction commitment
+`endif // SCR1_DBGC_EN
     input   type_scr1_exc_code_e                        exu2csr_exc_code,       // Exception code (see scr1_arch_types.svh)
     input   logic [`SCR1_XLEN-1:0]                      exu2csr_trap_val,       // Trap value
     output  logic [`SCR1_XLEN-1:0]                      csr2exu_new_pc,         // Exception/IRQ/MRET new PC
@@ -499,9 +502,21 @@ assign csr2exu_rw_exc = csr_r_exc | csr_w_exc
 assign csr2exu_mstatus_mie_up   = csr_mstatus_up | csr_mie_up | e_mret;
 
 // Event priority
-assign e_exc    = exu2csr_take_exc;
-assign e_irq    = exu2csr_take_irq & ~exu2csr_take_exc;
-assign e_mret   = exu2csr_mret_update;
+assign e_exc    = exu2csr_take_exc
+`ifdef SCR1_DBGC_EN
+                & ~exu_no_commit
+`endif // SCR1_DBGC_EN
+                ;
+assign e_irq    = exu2csr_take_irq & ~exu2csr_take_exc
+`ifdef SCR1_DBGC_EN
+                & ~exu_no_commit
+`endif // SCR1_DBGC_EN
+                ;
+assign e_mret   = exu2csr_mret_update
+`ifdef SCR1_DBGC_EN
+                & ~exu_no_commit
+`endif // SCR1_DBGC_EN
+                ;
 
 // IRQ exception codes priority
 always_comb begin
@@ -628,7 +643,7 @@ always_comb begin
 `else // SCR1_VECT_IRQ_EN
     if (csr_mtvec_mode == SCR1_CSR_MTVEC_MODE_VECTORED) begin
         case (1'b1)
-            e_exc                           : csr2exu_new_pc    = {csr_mtvec_base, SCR1_CSR_MTVEC_BASE_ZERO_BITS'(0)};
+            exu2csr_take_exc                : csr2exu_new_pc    = {csr_mtvec_base, SCR1_CSR_MTVEC_BASE_ZERO_BITS'(0)};
             (csr_mip_meip & csr_mie_meie)   : csr2exu_new_pc    = {csr_mtvec_base, SCR1_EXC_CODE_IRQ_M_EXTERNAL, 2'd0};
             (csr_mip_msip & csr_mie_msie)   : csr2exu_new_pc    = {csr_mtvec_base, SCR1_EXC_CODE_IRQ_M_SOFTWARE, 2'd0};
             (csr_mip_mtip & csr_mie_mtie)   : csr2exu_new_pc    = {csr_mtvec_base, SCR1_EXC_CODE_IRQ_M_TIMER, 2'd0};
@@ -638,7 +653,7 @@ always_comb begin
         csr2exu_new_pc  = {csr_mtvec_base, SCR1_CSR_MTVEC_BASE_ZERO_BITS'(0)};
     end
 `endif // SCR1_VECT_IRQ_EN
-    if (exu2csr_mret_instr & ~e_irq) begin
+    if (exu2csr_mret_instr & ~exu2csr_take_irq) begin
 `ifdef SCR1_RVC_EXT
         csr2exu_new_pc  = {csr_mepc, 1'b0};
 `else // SCR1_RVC_EXT
@@ -696,9 +711,9 @@ end
 
 // MTVEC
 generate
-    if (SCR1_CSR_MTVEC_BASE_RW_BITS == 0) begin
+    if (SCR1_CSR_MTVEC_BASE_RW_BITS == 0) begin : mtvec_base_ro
         assign csr_mtvec_base   = SCR1_CSR_MTVEC_BASE_RST_VAL;
-    end else if (SCR1_CSR_MTVEC_BASE_RW_BITS == SCR1_CSR_MTVEC_BASE_VAL_BITS) begin
+    end else if (SCR1_CSR_MTVEC_BASE_RW_BITS == SCR1_CSR_MTVEC_BASE_VAL_BITS) begin : mtvec_base_rw
         always_ff @(negedge rst_n, posedge clk) begin
             if (~rst_n) begin
                 csr_mtvec_base  <= SCR1_CSR_MTVEC_BASE_RST_VAL;
@@ -708,7 +723,7 @@ generate
                 end
             end
         end
-    end else begin
+    end else begin : mtvec_base_ro_rw
         assign csr_mtvec_base[SCR1_CSR_MTVEC_BASE_ZERO_BITS+:SCR1_CSR_MTVEC_BASE_RO_BITS]   = SCR1_CSR_MTVEC_BASE_RST_VAL[SCR1_CSR_MTVEC_BASE_ZERO_BITS+:SCR1_CSR_MTVEC_BASE_RO_BITS];
         always_ff @(negedge rst_n, posedge clk) begin
             if (~rst_n) begin

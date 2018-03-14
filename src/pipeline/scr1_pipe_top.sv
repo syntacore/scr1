@@ -440,6 +440,9 @@ scr1_pipe_csr i_pipe_csr (
     .exu2csr_take_exc       (exu2csr_take_exc   ),
     .exu2csr_mret_update    (exu2csr_mret_update),
     .exu2csr_mret_instr     (exu2csr_mret_instr ),
+`ifdef SCR1_DBGC_EN
+    .exu_no_commit          (exu_no_commit      ),
+`endif // SCR1_DBGC_EN
     .exu2csr_exc_code       (exu2csr_exc_code   ),
     .exu2csr_trap_val       (exu2csr_trap_val   ),
     .csr2exu_new_pc         (csr2exu_new_pc     ),
