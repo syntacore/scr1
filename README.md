@@ -20,6 +20,7 @@ src                          | SCR1 RTL source and testbench files
 tests/common                 | Common source files for tests
 tests/riscv_isa              | Common source files for RISC-V ISA tests
 tests/benchmarks/dhrystone21 | Dhrystone 2.1 source files
+tests/vectored_isr_sample    | Simple test example for vectored interrupt mode
 
 ## Quick start guide
 

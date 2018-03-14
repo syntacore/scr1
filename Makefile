@@ -44,11 +44,14 @@ endif
 
 default: run_modelsim
 
-tests: riscv_isa dhrystone21
+tests: vectored_isr_sample riscv_isa dhrystone21
 
 $(test_info): clean_hex tests
 	cd $(bld_dir); \
 	ls -tr *.hex > $@
+
+vectored_isr_sample: | $(bld_dir)
+	$(MAKE) -C $(root_dir)/tests/vectored_isr_sample
 
 dhrystone21: | $(bld_dir)
 	$(MAKE) -C $(root_dir)/tests/benchmarks/dhrystone21
