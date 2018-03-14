@@ -266,10 +266,10 @@ end
 
 
 generate
-    if (SCR1_AXI_RESP_BP == 1) begin
+    if (SCR1_AXI_RESP_BP == 1) begin : axi_resp_bp
         assign core_rdata = (rvalid & rready & rlast) ? rcvd_rdata : '0;
         assign core_resp  = (axi_reinit) ? SCR1_MEM_RESP_NOTRDY : rcvd_resp;
-    end else begin
+    end else begin : axi_resp_no_bp
         always_ff @(negedge rst_n, posedge clk) begin
             if (~rst_n)              core_resp  <= SCR1_MEM_RESP_NOTRDY;
             else                     core_resp  <= (axi_reinit) ? SCR1_MEM_RESP_NOTRDY : rcvd_resp;
