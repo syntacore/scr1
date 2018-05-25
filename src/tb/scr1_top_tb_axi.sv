@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_top_tb_axi.sv>
 /// @brief      SCR1 top testbench AXI
 ///
@@ -19,17 +19,17 @@ localparam logic [`SCR1_XLEN-1:0]   SCR1_EXIT_ADDR      = 32'h000000F8;
 // Local signal declaration
 //------------------------------------------------------------------------------
 logic                                   rst_n;
-logic                                   clk = 0;
-logic                                   rtc_clk = 0;
+logic                                   clk         = 1'b0;
+logic                                   rtc_clk     = 1'b0;
 logic   [31:0]                          fuse_mhartid;
 integer                                 imem_req_ack_stall;
 integer                                 dmem_req_ack_stall;
 `ifdef SCR1_IPIC_EN
 logic [SCR1_IRQ_LINES_NUM-1:0]          irq_lines;
 `else // SCR1_IPIC_EN
-logic                                   ext_irq = 0;
+logic                                   ext_irq     = 1'b0;
 `endif // SCR1_IPIC_EN
-logic                                   soft_irq = 0;
+logic                                   soft_irq    = 1'b0;
 
 `ifdef SCR1_DBGC_EN
 logic                                   trst_n;

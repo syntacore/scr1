@@ -1,10 +1,13 @@
 `ifndef SCR1_IPIC_SVH
 `define SCR1_IPIC_SVH
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_ipic.svh>
-/// @brief      IPIC include file
+/// @brief      IPIC header file
 ///
 
+`include "scr1_arch_description.svh"
+
+`ifdef SCR1_IPIC_EN
 //-------------------------------------------------------------------------------
 // Parameters declaration
 //-------------------------------------------------------------------------------
@@ -45,4 +48,5 @@ typedef enum logic {
     SCR1_CSR2IPIC_ERROR = 'x
 } type_scr1_csr2ipic_wr_e;
 
+`endif // SCR1_IPIC_EN
 `endif // SCR1_IPIC_SVH

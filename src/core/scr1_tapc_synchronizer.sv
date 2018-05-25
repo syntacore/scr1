@@ -1,8 +1,11 @@
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_tapc_synchronizer.sv>
-/// @brief      TAP Controller clock domain crossing synchronizer
+/// @brief      TAPC clock domain crossing synchronizer
 ///
 
+`include "scr1_arch_description.svh"
+
+`ifdef SCR1_DBGC_EN
 `include "scr1_tapc.svh"
 `include "scr1_dbgc.svh"
 
@@ -191,3 +194,5 @@ end
 assign sys_rst_sts = sys_rst_sts_core_sync[1];
 
 endmodule : scr1_tapc_synchronizer
+
+`endif // SCR1_DBGC_EN

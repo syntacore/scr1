@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_top_ahb.sv>
 /// @brief      SCR1 AHB top
 ///
@@ -194,7 +194,7 @@ scr1_core_top i_core_top (
 // TCM instance
 //-------------------------------------------------------------------------------
 scr1_tcm #(
-    .SCR1_TCM_SIZE  (`SCR1_DMEM_AWIDTH'h00010000)
+    .SCR1_TCM_SIZE  (`SCR1_DMEM_AWIDTH'(~SCR1_TCM_ADDR_MASK + 1'b1))
 ) i_tcm (
     .clk            (clk                ),
     .rst_n          (rst_n_out          ),

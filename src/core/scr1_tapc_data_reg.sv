@@ -1,8 +1,11 @@
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_tapc_data_reg.sv>
-/// @brief      TAPC Data register. Parameterized implementation of JTAG TAPC's Data Register (DR)
+/// @brief      TAPC data register. Parameterized implementation of JTAG TAPC's Data Register (DR)
 ///
 
+`include "scr1_arch_description.svh"
+
+`ifdef SCR1_DBGC_EN
 module scr1_tapc_data_reg #(
     parameter   int unsigned            SCR1_WIDTH       = 8,   // Register width, bits
     parameter   logic [SCR1_WIDTH-1:0]  SCR1_RESET_VALUE = '0   // Register's value after reset
@@ -126,3 +129,5 @@ end
 `endif // SCR1_SIM_ENV
 
 endmodule : scr1_tapc_data_reg
+
+`endif // SCR1_DBGC_EN

@@ -1,6 +1,6 @@
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_pipe_lsu.sv>
-/// @brief      Load/Store Unit
+/// @brief      Load/Store Unit (LSU)
 ///
 
 `include "scr1_arch_description.svh"
@@ -159,10 +159,10 @@ end
 always_comb begin
     case (lsu_cmd_r)
         SCR1_LSU_CMD_LW     : lsu2exu_l_data = dmem2lsu_rdata;
-        SCR1_LSU_CMD_LH     : lsu2exu_l_data = signed'  (dmem2lsu_rdata[15:0]);
-        SCR1_LSU_CMD_LHU    : lsu2exu_l_data = unsigned'(dmem2lsu_rdata[15:0]);
-        SCR1_LSU_CMD_LB     : lsu2exu_l_data = signed'  (dmem2lsu_rdata[7:0]);
-        SCR1_LSU_CMD_LBU    : lsu2exu_l_data = unsigned'(dmem2lsu_rdata[7:0]);
+        SCR1_LSU_CMD_LH     : lsu2exu_l_data = $signed  (dmem2lsu_rdata[15:0]);
+        SCR1_LSU_CMD_LHU    : lsu2exu_l_data = $unsigned(dmem2lsu_rdata[15:0]);
+        SCR1_LSU_CMD_LB     : lsu2exu_l_data = $signed  (dmem2lsu_rdata[7:0]);
+        SCR1_LSU_CMD_LBU    : lsu2exu_l_data = $unsigned(dmem2lsu_rdata[7:0]);
         default             : lsu2exu_l_data = '0;
     endcase // lsu_cmd_r
 end

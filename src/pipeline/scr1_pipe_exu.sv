@@ -1,6 +1,6 @@
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_pipe_exu.sv>
-/// @brief      Execution Unit
+/// @brief      Execution Unit (EXU)
 ///
 
 `include "scr1_arch_description.svh"
@@ -704,14 +704,18 @@ assign wfi_run_cond     = csr2exu_ip_ie;
 
 assign wfi_run2halt     = ~wfi_halted & wfi_halt_cond;
 
-always_ff @(
+always_ff @(negedge rst_n,
 `ifndef SCR1_CLKCTRL_EN
 posedge clk
 `else // SCR1_CLKCTRL_EN
 posedge clk_alw_on
 `endif // SCR1_CLKCTRL_EN
 ) begin
-    wfi_run_start <= (wfi_halted & wfi_run_cond);
+    if (~rst_n) begin
+        wfi_run_start  <= 1'b0;
+    end else begin
+        wfi_run_start <= (wfi_halted & wfi_run_cond);
+    end
 end
 
 always_ff @(negedge rst_n,

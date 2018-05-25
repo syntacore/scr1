@@ -1,10 +1,11 @@
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_dp_memory.sv>
 /// @brief      Dual-port synchronous memory with byte enable inputs
 ///
 
 `include "scr1_arch_description.svh"
 
+`ifdef SCR1_TCM_EN
 module scr1_dp_memory
 #(
     parameter SCR1_WIDTH    = 32,
@@ -103,3 +104,5 @@ end
 `endif // SCR1_TARGET_FPGA_INTEL
 
 endmodule : scr1_dp_memory
+
+`endif // SCR1_TCM_EN

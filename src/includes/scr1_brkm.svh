@@ -1,14 +1,15 @@
 `ifndef SCR1_INCLUDE_BRKM_DEFS
 `define SCR1_INCLUDE_BRKM_DEFS
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_brkm.svh>
-/// @brief      Hardware Breakpoint Module (BRKM)
+/// @brief      BRKM header file
 ///
 
 `include "scr1_arch_description.svh"
-`include "scr1_csr.svh"
 
 `ifdef SCR1_BRKM_EN
+`include "scr1_csr.svh"
+
  `define SCR1_BRKM_ARCH_SUPP_OPER_EXEC
  `define SCR1_BRKM_ARCH_SUPP_OPER_LOAD
  `define SCR1_BRKM_ARCH_SUPP_OPER_STORE
@@ -37,27 +38,10 @@
 `ifdef SCR1_BRKM_ARCH_SUPP_DATA_MASK
  `define SCR1_BRKM_ARCH_SUPP_DATA
 `endif
-`else // SCR1_BRKM_EN
- `undef SCR1_BRKM_ARCH_SUPP_OPER_EXEC
- `undef SCR1_BRKM_ARCH_SUPP_OPER_LOAD
- `undef SCR1_BRKM_ARCH_SUPP_OPER_STORE
- `undef SCR1_BRKM_ARCH_SUPP_ADDR_EXACT
- `undef SCR1_BRKM_ARCH_SUPP_ADDR_RANGE
- `undef SCR1_BRKM_ARCH_SUPP_ADDR_RANGE_EXT_EXEC
- `undef SCR1_BRKM_ARCH_SUPP_ADDR_RANGE_EXT_LDST
- `undef SCR1_BRKM_ARCH_SUPP_ADDR_MASK
- `undef SCR1_BRKM_ARCH_SUPP_ADDR_MASK_EXT_EXEC
- `undef SCR1_BRKM_ARCH_SUPP_ADDR_MASK_EXT_LDST
- `undef SCR1_BRKM_ARCH_SUPP_DATA_EXACT
- `undef SCR1_BRKM_ARCH_SUPP_DATA_RANGE
- `undef SCR1_BRKM_ARCH_SUPP_DATA_MASK
- `undef SCR1_BRKM_ARCH_SUPP_DATA
-`endif // SCR1_BRKM_EN
 
 //-------------------------------------------------------------------------------
 // BRKM Configuration Parameters
 //-------------------------------------------------------------------------------
-localparam int unsigned SCR1_BRKM_BRKPT_NUMBER = 2;
 localparam int unsigned SCR1_BRKM_PKG_BRKPT_NUMBER = SCR1_BRKM_BRKPT_NUMBER;
 
 localparam bit SCR1_BRKM_PKG_SUPP_OPER_EXEC             = 1'b1;
@@ -104,7 +88,7 @@ localparam int unsigned SCR1_BRKM_PKG_LDST_DATA_WIDTH   = `SCR1_DMEM_DWIDTH;
 // CSR definitions
 //-------------------------------------------------------------------------------
 localparam int unsigned SCR1_BRKM_PKG_CSR_OFFS_WIDTH    = (SCR1_CSR_ADDR_BRKM_MSPAN > 'd1)
-                                                        ? unsigned'($clog2(SCR1_CSR_ADDR_BRKM_MSPAN))
+                                                        ? $unsigned($clog2(SCR1_CSR_ADDR_BRKM_MSPAN))
                                                         : (SCR1_CSR_ADDR_BRKM_MSPAN);
 
 typedef enum logic [SCR1_BRKM_PKG_CSR_OFFS_WIDTH-1:0] {
@@ -291,5 +275,23 @@ typedef struct {
     logic [SCR1_BRKM_PKG_LDST_ADDR_WIDTH-1:0]       addr;
 } type_scr1_brkm_lsu_mon_s;
 
-`endif // SCR1_INCLUDE_BRKM_DEFS
+`else // SCR1_BRKM_EN
 
+`undef SCR1_BRKM_ARCH_SUPP_OPER_EXEC
+`undef SCR1_BRKM_ARCH_SUPP_OPER_LOAD
+`undef SCR1_BRKM_ARCH_SUPP_OPER_STORE
+`undef SCR1_BRKM_ARCH_SUPP_ADDR_EXACT
+`undef SCR1_BRKM_ARCH_SUPP_ADDR_RANGE
+`undef SCR1_BRKM_ARCH_SUPP_ADDR_RANGE_EXT_EXEC
+`undef SCR1_BRKM_ARCH_SUPP_ADDR_RANGE_EXT_LDST
+`undef SCR1_BRKM_ARCH_SUPP_ADDR_MASK
+`undef SCR1_BRKM_ARCH_SUPP_ADDR_MASK_EXT_EXEC
+`undef SCR1_BRKM_ARCH_SUPP_ADDR_MASK_EXT_LDST
+`undef SCR1_BRKM_ARCH_SUPP_DATA_EXACT
+`undef SCR1_BRKM_ARCH_SUPP_DATA_RANGE
+`undef SCR1_BRKM_ARCH_SUPP_DATA_MASK
+`undef SCR1_BRKM_ARCH_SUPP_DATA
+
+`endif // SCR1_BRKM_EN
+
+`endif // SCR1_INCLUDE_BRKM_DEFS

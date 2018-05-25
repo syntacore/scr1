@@ -1,6 +1,6 @@
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_memory_tb_ahb.sv>
-/// @brief      Memory instance for TB with AHB interfaces
+/// @brief      AHB memory testbench
 ///
 
 `include "scr1_ahb.svh"
@@ -13,7 +13,9 @@ module scr1_memory_tb_ahb #(
     // Control
     input   logic                                   rst_n,
     input   logic                                   clk,
+`ifdef SCR1_IPIC_EN
     output  logic  [SCR1_IRQ_LINES_NUM-1:0]         irq_lines,
+`endif // SCR1_IPIC_EN
     input   integer                                 imem_req_ack_stall_in,
     input   integer                                 dmem_req_ack_stall_in,
 
@@ -64,7 +66,9 @@ typedef enum logic {
 //-------------------------------------------------------------------------------
 logic [7:0]                             memory [0:2**SCR1_MEM_POWER_SIZE-1];
 logic [31:0]                            mem_err_ptr;
+`ifdef SCR1_IPIC_EN
 logic [SCR1_IRQ_LINES_NUM-1:0]          irq_reg;
+`endif // SCR1_IPIC_EN
 logic [7:0]                             mirage [0:2**SCR1_MEM_POWER_SIZE-1];
 bit                                     mirage_en;
 bit                                     mirage_rangeen;
@@ -446,10 +450,12 @@ always_ff @(negedge rst_n, posedge clk) begin
                         dmem_ahb_be   <= dmem_be;
                         if (~dmem_hwrite & scr1_check_err_addr(dmem_haddr)) begin
                             case (dmem_haddr)
+`ifdef SCR1_IPIC_EN
                                 SCR1_IRQ_ADDR : begin
                                     dmem_hrdata_l <= '0;
                                     dmem_hrdata_l[SCR1_IRQ_LINES_NUM-1:0] <= irq_reg;
                                 end
+`endif // SCR1_IPIC_EN
                                 SCR1_MEM_ERR_PTR : begin
                                     dmem_hrdata_l <= mem_err_ptr;
                                 end
@@ -485,9 +491,11 @@ always_ff @(negedge rst_n, posedge clk) begin
                             dmem_ahb_be   <= dmem_be;
                             if (~dmem_hwrite & scr1_check_err_addr(dmem_haddr)) begin
                                 case (dmem_haddr)
+`ifdef SCR1_IPIC_EN
                                     SCR1_IRQ_ADDR : begin
                                         // Skip access, switch to SCR1_AHB_STATE_IDLE
                                     end
+`endif // SCR1_IPIC_EN
                                     SCR1_MEM_ERR_PTR : begin
                                         // Skip access, switch to SCR1_AHB_STATE_IDLE
                                     end
@@ -555,7 +563,9 @@ end
 
 always @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
+`ifdef SCR1_IPIC_EN
         irq_reg     <= '0;
+`endif // SCR1_IPIC_EN
         mem_err_ptr <= SCR1_MEM_ERR_ADDR;
     end else begin
         if ((dmem_ahb_state == SCR1_AHB_STATE_DATA) & dmem_req_ack & dmem_ahb_wr) begin
@@ -564,9 +574,11 @@ always @(negedge rst_n, posedge clk) begin
                     SCR1_PRINT_ADDR : begin
                         $write("%c", dmem_hwdata[7:0]);
                     end
+`ifdef SCR1_IPIC_EN
                     SCR1_IRQ_ADDR : begin
                         irq_reg <= dmem_hwdata[SCR1_IRQ_LINES_NUM-1:0];
                     end
+`endif // SCR1_IPIC_EN
                     SCR1_MEM_ERR_PTR : begin
                         mem_err_ptr <= dmem_hwdata;
                     end
@@ -582,6 +594,8 @@ always @(negedge rst_n, posedge clk) begin
     end
 end
 
+`ifdef SCR1_IPIC_EN
 assign irq_lines = irq_reg;
+`endif // SCR1_IPIC_EN
 
 endmodule : scr1_memory_tb_ahb

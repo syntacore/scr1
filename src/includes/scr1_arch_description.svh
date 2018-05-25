@@ -1,14 +1,14 @@
 `ifndef SCR1_ARCH_DESCRIPTION_SVH
 `define SCR1_ARCH_DESCRIPTION_SVH
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_arch_description.svh>
-/// @brief      Architecture Description File
+/// @brief      Architecture description file
 ///
 
 //-------------------------------------------------------------------------------
 // Core fundamental parameters (READ-ONLY, do not modify)
 //-------------------------------------------------------------------------------
-`define SCR1_MIMPID             32'h18031400
+`define SCR1_MIMPID             32'h18050700
 `define SCR1_XLEN               32
 `define SCR1_FLEN               `SCR1_XLEN      // for test compatibility
 `define SCR1_IMEM_AWIDTH        `SCR1_XLEN
@@ -24,11 +24,17 @@ parameter int unsigned          SCR1_CSR_MTVEC_BASE_VAL_BITS    = `SCR1_XLEN-SCR
 //-------------------------------------------------------------------------------
 `ifndef SCR1_ARCH_CUSTOM
 
+// SCR1 recommended configuration
+//`define SCR1_CFG_RV32EC
+//`define SCR1_CFG_RV32IC
+//`define SCR1_CFG_RV32IMC_LOWAREA
+//`define SCR1_CFG_RV32IMC_HIGHPERF
+
 //------------------------------------------------
 // Default parameter set:
 //------------------------------------------------
 
-// `define SCR1_RVE_EXT                // enables RV32E base integer instruction set
+//`define SCR1_RVE_EXT                // enables RV32E base integer instruction set
 `define SCR1_RVM_EXT                // enables standard extension for integer mul/div
 `define SCR1_RVC_EXT                // enables standard extension for compressed instructions
 
@@ -73,6 +79,31 @@ parameter bit [`SCR1_DMEM_AWIDTH-1:0]   SCR1_TIMER_ADDR_PATTERN     = 'h00490000
 parameter bit [`SCR1_XLEN-1:0]                              SCR1_ARCH_RST_VECTOR                = `SCR1_XLEN'h200;
 parameter bit [`SCR1_XLEN-1:SCR1_CSR_MTVEC_BASE_ZERO_BITS]  SCR1_ARCH_CSR_MTVEC_BASE_RST_VAL    = SCR1_CSR_MTVEC_BASE_VAL_BITS'(`SCR1_XLEN'h1C0 >> SCR1_CSR_MTVEC_BASE_ZERO_BITS);
 
+`ifdef SCR1_CFG_RV32EC
+ `define SCR1_RVE_EXT
+ `undef  SCR1_RVM_EXT
+ `undef  SCR1_IPIC_EN
+ `undef  SCR1_DBGC_EN
+ `undef  SCR1_BRKM_EN
+ `undef  SCR1_EXU_STAGE_BYPASS
+
+`elsif SCR1_CFG_RV32IC
+ `undef  SCR1_RVM_EXT
+  parameter int unsigned SCR1_BRKM_BRKPT_NUMBER = 2;
+
+`elsif SCR1_CFG_RV32IMC_LOWAREA
+ `undef  SCR1_FAST_MUL
+ `undef  SCR1_IPIC_EN
+ `undef  SCR1_DBGC_EN
+ `undef  SCR1_BRKM_EN
+
+`elsif SCR1_CFG_RV32IMC_HIGHPERF
+ parameter int unsigned SCR1_BRKM_BRKPT_NUMBER = 4;
+
+`else // default
+ parameter int unsigned SCR1_BRKM_BRKPT_NUMBER = 2;
+`endif
+
 `else // SCR1_ARCH_CUSTOM
 
 //------------------------------------------------
@@ -106,7 +137,7 @@ parameter int unsigned  SCR1_CSR_MTVEC_BASE_RO_BITS = (`SCR1_XLEN-(SCR1_CSR_MTVE
 //-------------------------------------------------------------------------------
 // Parameters for simulation
 //-------------------------------------------------------------------------------
-//`define SCR1_SIM_ENV                    // enable simulation code (asserts, covergroups, tracelog)
+//`define SCR1_SIM_ENV                    // enable simulation code (SVA, trace log)
 `define SCR1_TRACE_LOG_EN               // enable trace log
 `define SCR1_TRACE_LOG_FULL             // full trace log
 

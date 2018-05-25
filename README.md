@@ -65,7 +65,7 @@ Set the $RISCV_TESTS environment variable accordingly:
     export RISCV_TESTS=<PATH TO RISCV-TESTS>
 
 ### Build RTL, compile and run tests
-`make run_<SIMULATOR> BUS=<AHB, AXI>` will build RTL and tests, then run all tests with default parameters.
+`make run_<SIMULATOR> BUS=<AHB, AXI> RVE=<0, 1> RVM=<0, 1> IPIC=<0, 1>` will build RTL and tests, then run all tests with default parameters.
 
 Currently supported options:
 * run_modelsim

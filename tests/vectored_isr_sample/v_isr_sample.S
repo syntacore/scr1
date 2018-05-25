@@ -110,10 +110,10 @@ _start:
     li                  a0, MTIE
     csrs                mie, a0
     // timer counter = 0 (updated in isr)
-    li                  t3, 0
-    _read_mtime         s2
-    addi                s2, s2, 256
-    _write_mtimecmp_32  s2
+    li                  t2, 0
+    _read_mtime         s1
+    addi                s1, s1, 256
+    _write_mtimecmp_32  s1
     wfi
     // disable all irq
     csrw                mie, zero
@@ -130,9 +130,9 @@ _start:
     li                  t1, (1 << 9)
     sh                  t1, (t0)
     wfi
-    li                  s2, 2
+    li                  s1, 2
     li                  a0, 0
-    beq                 t3, s2, 1f
+    beq                 t2, s1, 1f
     li                  a0, -1
 1:
     jmp_sc_exit
@@ -144,14 +144,14 @@ vec_machine_tmr_handler:
     li              a0, -1
     bne             a1, a5, check_fail
     csrr            t1, mip
-    li              t4, MIP_MTIP
-    and             t4, t1, t4
+    li              t0, MIP_MTIP
+    and             t0, t1, t0
     beqz            t1, check_fail
     _reset_mtimecmp
     csrr            t1, mip
     andi            t1, t1, MIP_MTIP
     bne             t1, zero, check_fail
-    addi            t3, t3, 1              // tmr irq counter update
+    addi            t2, t2, 1              // tmr irq counter update
     mret
 
 vec_machine_ext_handler:
@@ -160,8 +160,8 @@ vec_machine_ext_handler:
     li              a0, -1
     bne             a1, a5, check_fail
     csrr            t1, mip
-    li              t4, MIP_MEIP
-    and             t4, t1, t4
+    li              t0, MIP_MEIP
+    and             t0, t1, t0
     beqz            t1, check_fail
     csrw            IPIC_SOI, zero
     csrw            IPIC_EOI, zero
@@ -169,7 +169,7 @@ vec_machine_ext_handler:
     li              t0, MIP_MEIP
     and             t1, t1, t0
     bne             t1, zero, check_fail
-    addi            t3, t3, 1               // ext irq counter update
+    addi            t2, t2, 1               // ext irq counter update
     mret
 
 check_fail:

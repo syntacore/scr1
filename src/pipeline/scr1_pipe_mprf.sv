@@ -1,6 +1,6 @@
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_pipe_mprf.sv>
-/// @brief      Multi Port Register File
+/// @brief      Multi Port Register File (MPRF)
 ///
 
 `include "scr1_arch_description.svh"
@@ -34,8 +34,8 @@ type_scr1_mprf_v [1:31]     mprf_int;
 //-------------------------------------------------------------------------------
 // Read MPRF
 //-------------------------------------------------------------------------------
-assign mprf2exu_rs1_data = (|exu2mprf_rs1_addr) ? mprf_int[unsigned'(exu2mprf_rs1_addr)] : '0;
-assign mprf2exu_rs2_data = (|exu2mprf_rs2_addr) ? mprf_int[unsigned'(exu2mprf_rs2_addr)] : '0;
+assign mprf2exu_rs1_data = (|exu2mprf_rs1_addr) ? mprf_int[$unsigned(exu2mprf_rs1_addr)] : '0;
+assign mprf2exu_rs2_data = (|exu2mprf_rs2_addr) ? mprf_int[$unsigned(exu2mprf_rs2_addr)] : '0;
 
 //-------------------------------------------------------------------------------
 // Write MPRF
@@ -46,7 +46,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     end else begin
         if (exu2mprf_w_req) begin
             if (|exu2mprf_rd_addr) begin
-                mprf_int[unsigned'(exu2mprf_rd_addr)] <= exu2mprf_rd_data;
+                mprf_int[$unsigned(exu2mprf_rd_addr)] <= exu2mprf_rd_data;
             end
         end
    end

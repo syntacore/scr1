@@ -1,9 +1,11 @@
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_pipe_dbga.sv>
-/// @brief      SCR1 pipeline debug agent
+/// @brief      Debug Agent (DBGA)
 ///
 
 `include "scr1_arch_description.svh"
+
+`ifdef SCR1_DBGC_EN
 `include "scr1_dbgc.svh"
 
 module scr1_pipe_dbga (
@@ -288,3 +290,5 @@ SCR1_SVA_DBGA_HALT : assert property (
 `endif // SCR1_SIM_ENV
 
 endmodule : scr1_pipe_dbga
+
+`endif // SCR1_DBGC_EN

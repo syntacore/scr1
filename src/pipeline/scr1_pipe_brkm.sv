@@ -1,10 +1,11 @@
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_pipe_brkm.sv>
 /// @brief      Hardware Breakpoint Module (BRKM)
 ///
 
+`include "scr1_arch_description.svh"
 
-
+`ifdef SCR1_BRKM_EN
 `include "scr1_riscv_isa_decoding.svh"
 `include "scr1_brkm.svh"
 
@@ -57,7 +58,7 @@ genvar bp;
 //-------------------------------------------------------------------------------
 // Local parameters declaration
 //-------------------------------------------------------------------------------
-localparam int BRKM_LCL_BRKPT_ID_WIDTH      = signed'((SCR1_BRKM_PKG_BRKPT_NUMBER > 'd1)
+localparam int BRKM_LCL_BRKPT_ID_WIDTH      = $signed((SCR1_BRKM_PKG_BRKPT_NUMBER > 'd1)
                                             ? $clog2(SCR1_BRKM_PKG_BRKPT_NUMBER)
                                             : (SCR1_BRKM_PKG_BRKPT_NUMBER));
 
@@ -783,7 +784,7 @@ endgenerate
 
 generate
 
-for (bp = 0; unsigned'(bp) < SCR1_BRKM_PKG_BRKPT_NUMBER; ++bp)
+for (bp = 0; $unsigned(bp) < SCR1_BRKM_PKG_BRKPT_NUMBER; ++bp)
 begin : gen_matcher_array
     if (BRKM_LCL_WATCH_EXEC)
     begin : gen_marray_watch_exec
@@ -1050,3 +1051,5 @@ SCR1_SVA_BRKM_XCHECK : assert property (
 `endif // SCR1_SIM_ENV
 
 endmodule : scr1_pipe_brkm
+
+`endif // SCR1_BRKM_EN

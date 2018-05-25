@@ -1,6 +1,6 @@
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_pipe_top.sv>
-/// @brief      SCR1 Pipeline Top Unit
+/// @brief      SCR1 pipeline top
 ///
 
 `include "scr1_arch_description.svh"

@@ -1,10 +1,11 @@
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_dbgc.sv>
 /// @brief      Debug Controller (DBGC)
 ///
 
-
 `include "scr1_arch_description.svh"
+
+`ifdef SCR1_DBGC_EN
 `include "scr1_csr.svh"
 `include "scr1_dbgc.svh"
 
@@ -1653,3 +1654,5 @@ end
 `endif // SCR1_SIM_ENV
 
 endmodule : scr1_dbgc
+
+`endif // SCR1_DBGC_EN

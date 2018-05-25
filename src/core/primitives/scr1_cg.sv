@@ -1,8 +1,11 @@
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_cg.sv>
 /// @brief      SCR1 clock gate primitive
 ///
 
+`include "scr1_arch_description.svh"
+
+`ifdef SCR1_CLKCTRL_EN
 module scr1_cg (
     input   logic   clk,
     input   logic   clk_en,
@@ -25,3 +28,5 @@ end
 assign clk_out  = latch_en & clk;
 
 endmodule : scr1_cg
+
+`endif // SCR1_CLKCTRL_EN

@@ -1,6 +1,6 @@
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_pipe_ialu.sv>
-/// @brief      Integer Arithmetic Logic Unit
+/// @brief      Integer Arithmetic Logic Unit (IALU)
 ///
 
 `include "scr1_arch_description.svh"
@@ -197,14 +197,14 @@ always_comb begin
                 SCR1_IALU_FSM_ITER : begin
                     sum1_sub    = 1'b1;
                     sum1_op1    = (curr_state == SCR1_IALU_FSM_IDLE)
-                                    ? (signed'(SCR1_DIV_INIT_CNT))
-                                    : (signed'({'0, cnt_res_reg}));
+                                    ? ($signed(SCR1_DIV_INIT_CNT))
+                                    : ($signed({'0, cnt_res_reg}));
                     sum1_op2    = 32'sb1;
                 end
                 SCR1_IALU_FSM_CORR : begin
                     sum1_sub    = 1'b1;
                     sum1_op1    = '0;
-                    sum1_op2    = signed'(res32_2_reg);
+                    sum1_op2    = $signed(res32_2_reg);
                 end
             endcase
         end
@@ -212,9 +212,9 @@ always_comb begin
         SCR1_IALU_MDU_MUL : begin
             sum1_sub    = 1'b1;
             if (curr_state == SCR1_IALU_FSM_IDLE) begin
-                sum1_op1    = (signed'(SCR1_MUL_INIT_CNT));
+                sum1_op1    = ($signed(SCR1_MUL_INIT_CNT));
             end else begin
-                sum1_op1    = signed'({'0, cnt_res_reg});
+                sum1_op1    = $signed({'0, cnt_res_reg});
             end
             sum1_op2    = 32'sb1;
         end
@@ -250,8 +250,8 @@ end
 `ifdef SCR1_RVM_EXT
 always_comb begin
     sum2_sub    = 1'b0;
-    sum2_op1    = signed'(ialu_sum2_op1);
-    sum2_op2    = signed'(ialu_sum2_op2);
+    sum2_op1    = $signed(ialu_sum2_op1);
+    sum2_op2    = $signed(ialu_sum2_op2);
     case (mdu_cmd)
         SCR1_IALU_MDU_DIV : begin
             case (curr_state)
@@ -265,9 +265,9 @@ always_comb begin
                     inv         = (~div_cmd[0] & (ialu_op1[31] ^ ialu_op2[31]));
                     sum2_sub    = ~inv ^ sgn;
                     sum2_op1    = (curr_state == SCR1_IALU_FSM_IDLE)
-                                    ? signed'({(~div_cmd[0] & ialu_op1[31]), ialu_op1[31]})
-                                    : signed'({res32_1_reg[31:0], res32_3_reg[31]});
-                    sum2_op2    = signed'({(~div_cmd[0] & ialu_op2[31]), ialu_op2});
+                                    ? $signed({(~div_cmd[0] & ialu_op1[31]), ialu_op1[31]})
+                                    : $signed({res32_1_reg[31:0], res32_3_reg[31]});
+                    sum2_op2    = $signed({(~div_cmd[0] & ialu_op2[31]), ialu_op2});
                 end
                 SCR1_IALU_FSM_CORR : begin
                     logic           sgn;
@@ -275,8 +275,8 @@ always_comb begin
                     sgn         = (~div_cmd[0] & ialu_op1[31]) ^ res32_1_c_reg;
                     inv         = (~div_cmd[0] & (ialu_op1[31] ^ ialu_op2[31]));
                     sum2_sub    = ~inv ^ sgn;
-                    sum2_op1    = signed'({1'b0, res32_1_reg});
-                    sum2_op2    = signed'({(~div_cmd[0] & ialu_op2[31]), ialu_op2});
+                    sum2_op1    = $signed({1'b0, res32_1_reg});
+                    sum2_op2    = $signed({(~div_cmd[0] & ialu_op2[31]), ialu_op2});
                 end
             endcase
         end
@@ -285,8 +285,8 @@ always_comb begin
             sum2_sub    = ~mul_cmd[1] & ialu_op2[31] & sum1_res[32];
             sum2_op1    = (curr_state == SCR1_IALU_FSM_IDLE)
                             ? ('0)
-                            : (signed'({(~&mul_cmd & res32_1_reg[31]), res32_1_reg}));
-            sum2_op2    = signed'(mul_res);
+                            : ($signed({(~&mul_cmd & res32_1_reg[31]), res32_1_reg}));
+            sum2_op2    = $signed(mul_res);
         end
 `endif // SCR1_FAST_MUL
        default : begin end
@@ -324,13 +324,13 @@ always_comb begin
     mul_op2 = '0;
     mul_res = '0;
     if (mdu_cmd == SCR1_IALU_MDU_MUL) begin
-        mul_op1 = signed'({(~&mul_cmd   & ialu_op1[31]), ialu_op1});
+        mul_op1 = $signed({(~&mul_cmd   & ialu_op1[31]), ialu_op1});
 `ifdef SCR1_FAST_MUL
-        mul_op2 = signed'({(~mul_cmd[1] & ialu_op2[31]), ialu_op2});
+        mul_op2 = $signed({(~mul_cmd[1] & ialu_op2[31]), ialu_op2});
 `else // ~SCR1_FAST_MUL
         mul_op2 = (curr_state == SCR1_IALU_FSM_IDLE)
-                        ? (signed'({1'b0, ialu_op2[SCR1_IALU_MUL_WIDTH-1:0]}))
-                        : (signed'({1'b0, res32_2_reg[SCR1_IALU_MUL_WIDTH-1:0]}));
+                        ? ($signed({1'b0, ialu_op2[SCR1_IALU_MUL_WIDTH-1:0]}))
+                        : ($signed({1'b0, res32_2_reg[SCR1_IALU_MUL_WIDTH-1:0]}));
 `endif // ~SCR1_FAST_MUL
         mul_res = mul_op1 * mul_op2;
     end

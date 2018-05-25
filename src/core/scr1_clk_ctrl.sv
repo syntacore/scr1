@@ -1,10 +1,11 @@
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_clk_ctrl.sv>
 /// @brief      SCR1 clock control
 ///
 
 `include "scr1_arch_description.svh"
 
+`ifdef SCR1_CLKCTRL_EN
 module scr1_clk_ctrl (
     input   logic   clk,
     input   logic   rst_n,
@@ -46,3 +47,5 @@ scr1_cg i_scr1_cg_pipe (
 );
 
 endmodule : scr1_clk_ctrl
+
+`endif // SCR1_CLKCTRL_EN

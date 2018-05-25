@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_memory_tb_axi.sv>
 /// @brief      AXI memory testbench
 ///
@@ -16,7 +16,9 @@ module scr1_memory_tb_axi #(
     // System
     input   logic                          rst_n,
     input   logic                          clk,
+`ifdef SCR1_IPIC_EN
     output  logic [SCR1_IRQ_LINES_NUM-1:0] irq_lines,
+`endif // SCR1_IPIC_EN
 
     // Write address channel
     input  logic [N_IF-1:0]                awvalid,
@@ -93,11 +95,15 @@ function automatic logic [W_DATA-1:0] mem_read (
     end
 
     for(int i=byte_lane; i<bytes_max & bytes_num!=0; ++i) begin
+`ifdef SCR1_IPIC_EN
         if (adr[W_ADR-1:1]==IRQ_ADDR[W_ADR-1:1]) begin
             mem_read[(i*8)+:8] = irq_lines[(i*8)+:8];
         end else begin
             mem_read[(i*8)+:8] = memory[adr];
         end
+`else // SCR1_IPIC_EN
+        mem_read[(i*8)+:8] = memory[adr];
+`endif // SCR1_IPIC_EN
         adr = adr+1'b1;
         bytes_num = bytes_num - 1'b1;
     end
@@ -122,8 +128,10 @@ function automatic void mem_write (
     for(int i=byte_lane; i<bytes_max & bytes_num!=0; ++i) begin
         if(bytes_en[i] & adr==PRINT_ADDR) begin
             $write("%c",data[(i*8)+:8]);
+`ifdef SCR1_IPIC_EN
         end else if(bytes_en[i] & adr[W_ADR-1:1]==IRQ_ADDR[W_ADR-1:1]) begin
             irq_lines[(i*8)+:8] = data[(i*8)+:8];
+`endif // SCR1_IPIC_EN
         end else if(bytes_en[i]) begin
             memory[adr] = data[(i*8)+:8];
         end
@@ -229,7 +237,8 @@ end
 SVA_TBMEM_AWADDR_404 :
     assert property (
         @(negedge clk) disable iff (~rst_n)
-        awvalid[gi] |-> awaddr[gi]<SIZE | awaddr[gi]==PRINT_ADDR
+        awvalid[gi] |-> awaddr[gi]<SIZE | awaddr[gi]==PRINT_ADDR |
+        awaddr[gi]==IRQ_ADDR
     )
     else $error("TBMEM: awaddr[%0d] >= SIZE",gi);
 
@@ -287,7 +296,8 @@ SVA_TBMEM_X_BREADY :
 SVA_TBMEM_ARADDR_404 :
     assert property (
         @(negedge clk) disable iff (~rst_n)
-        arvalid[gi] |-> araddr[gi]<SIZE | araddr[gi]==PRINT_ADDR
+        arvalid[gi] |-> araddr[gi]<SIZE | araddr[gi]==PRINT_ADDR |
+        awaddr[gi]==IRQ_ADDR
     )
     else $error("TBMEM: awaddr[%0d] >= SIZE",gi);
 

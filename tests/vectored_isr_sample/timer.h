@@ -12,9 +12,9 @@
 #define MEM_MTIMECMP    0x00490010
 #define MEM_MTIMECMPH   0x00490014
 
-#define TMP   t4
-#define TMP2  t5
-#define TMP3  t1
+#define TMP   t0
+#define TMP2  t1
+#define TMP3  t2
 
 // Reset
 .macro _reset_mtime

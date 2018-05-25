@@ -3,7 +3,16 @@
 #------------------------------------------------------------------------------
 
 # Parameters
-export ARCH ?= im
+ifeq ($(RVE),1)
+export ARCH += e
+else
+export ARCH += i
+endif
+
+ifeq ($(RVM),1)
+export ARCH := $(ARCH)m
+endif
+
 export ABI  ?= ilp32
 # Testbench memory delay patterns (FFFFFFFF - no delay, 00000000 - random delay, 00000001 - max delay)
 imem_pattern ?= FFFFFFFF
@@ -38,13 +47,30 @@ export rtl_files  := rtl_axi.files
 export top_module := scr1_top_tb_axi
 endif
 
+ifeq ($(RVE),1)
+EXT_CFLAGS := -D__RVE_EXT
+endif
+
+ifeq ($(RVE),1)
+else
+
+ifeq ($(IPIC),1)
+TARGETS += vectored_isr_sample
+endif
+
+ifeq ($(RVM),1)
+TARGETS += riscv_isa
+endif
+
+endif
+TARGETS += dhrystone21
 
 # Targets
 .PHONY: tests run_modelsim run_vcs run_ncsim
 
 default: run_modelsim
 
-tests: vectored_isr_sample riscv_isa dhrystone21
+tests: $(TARGETS)
 
 $(test_info): clean_hex tests
 	cd $(bld_dir); \
@@ -54,7 +80,7 @@ vectored_isr_sample: | $(bld_dir)
 	$(MAKE) -C $(root_dir)/tests/vectored_isr_sample
 
 dhrystone21: | $(bld_dir)
-	$(MAKE) -C $(root_dir)/tests/benchmarks/dhrystone21
+	$(MAKE) -C $(root_dir)/tests/benchmarks/dhrystone21 EXT_CFLAGS="$(EXT_CFLAGS)"
 
 riscv_isa: | $(bld_dir)
 	$(MAKE) -C $(root_dir)/tests/riscv_isa

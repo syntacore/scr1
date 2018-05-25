@@ -1,9 +1,11 @@
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_brkm_matcher.sv>
 /// @brief      Matcher of the BRKM
 ///
 
+`include "scr1_arch_description.svh"
 
+`ifdef SCR1_BRKM_EN
 `include "scr1_arch_types.svh"
 `include "scr1_brkm.svh"
 
@@ -89,7 +91,7 @@ begin : gen_match_addr_mask
                         addr_lsb_mask = L_BRKM_OP_WIDTH_ID_POW'(1);
                     end
                     SCR1_OP_WIDTH_WORD : begin
-                        addr_lsb_mask = unsigned'(L_BRKM_OP_WIDTH_ID_POW'(3));
+                        addr_lsb_mask = $unsigned(L_BRKM_OP_WIDTH_ID_POW'(3));
                     end
                     default : begin
                         addr_lsb_mask = '0;
@@ -152,3 +154,5 @@ assign match_addr_channel   = ((~addr_exact_en) & (~addr_mask_en))
 assign match = valid & match_addr_channel;
 
 endmodule : scr1_brkm_matcher
+
+`endif // SCR1_BRKM_EN

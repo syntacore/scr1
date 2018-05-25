@@ -1,12 +1,13 @@
 `ifndef SCR1_INCLUDE_DBGC_DEFS
 `define SCR1_INCLUDE_DBGC_DEFS
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_dbgc.svh>
-/// @brief      Debug Controller (DBGC)
+/// @brief      DBGC header file
 ///
 
 `include "scr1_arch_description.svh"
 
+`ifdef SCR1_DBGC_EN
 //======================================================================================================================
 // Parameters
 //======================================================================================================================
@@ -512,4 +513,5 @@ typedef struct packed {
     logic [SCR1_DBGC_HART_HDMCR_RSRV0_BIT_L-SCR1_DBGC_HART_HDMCR_RSRV0_BIT_R:0] rsrv0;
 } type_scr1_dbgc_hart_dmode_cause_reg_s;
 
+`endif // SCR1_DBGC_EN
 `endif // SCR1_INCLUDE_DBGC_DEFS

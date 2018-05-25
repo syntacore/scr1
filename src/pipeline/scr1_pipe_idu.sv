@@ -1,6 +1,6 @@
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_pipe_idu.sv>
-/// @brief      Instruction Decoder Unit
+/// @brief      Instruction Decoder Unit (IDU)
 ///
 
 `include "scr1_memif.svh"

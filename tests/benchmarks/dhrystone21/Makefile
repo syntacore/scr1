@@ -3,7 +3,7 @@ src_dir := $(dir $(lastword $(MAKEFILE_LIST)))
 FLAGS = -O3 -funroll-loops -fpeel-loops -fgcse-sm -fgcse-las -flto
 FLAGS_STR = "$(FLAGS)"
 
-CFLAGS := $(FLAGS) \
+CFLAGS := $(FLAGS) $(EXT_CFLAGS) \
 -static -std=gnu99 -fno-common -fno-builtin-printf \
 -Wa,-march=rv32$(ARCH) -march=rv32$(ARCH) -mabi=$(ABI) \
 -DFLAGS_STR=\"$(FLAGS_STR)\" \

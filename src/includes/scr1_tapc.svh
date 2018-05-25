@@ -1,12 +1,13 @@
 `ifndef SCR1_INCLUDE_TAPC_DEFS
 `define SCR1_INCLUDE_TAPC_DEFS
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_tapc.svh>
-/// @brief      TAPC definitions file
+/// @brief      TAPC header file
 ///
 
 `include "scr1_arch_description.svh"
 
+`ifdef SCR1_DBGC_EN
 package scr1_tapc_pkg;
 
 //-------------------------------------------------------------------------------
@@ -66,4 +67,5 @@ endpackage : scr1_tapc_pkg
 
 import scr1_tapc_pkg::*;
 
+`endif // SCR1_DBGC_EN
 `endif // SCR1_INCLUDE_TAPC_DEFS

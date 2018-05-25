@@ -1,6 +1,6 @@
-/// Copyright by Syntacore LLC © 2016, 2017. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
 /// @file       <scr1_timer.sv>
-/// @brief      Memory-mapped timer
+/// @brief      Memory-mapped Timer
 ///
 
 `include "scr1_arch_description.svh"
