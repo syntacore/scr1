@@ -243,6 +243,7 @@ assign port2_addr   = (port_sel == SCR1_SEL_PORT2) ? dmem_addr  : 'x;
 assign port2_wdata  = (port_sel == SCR1_SEL_PORT2) ? dmem_wdata : 'x;
 
 `ifdef SCR1_SIM_ENV
+`ifndef VERILATOR
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -252,6 +253,7 @@ SCR1_SVA_DMEM_RT_XCHECK : assert property (
     dmem_req |-> !$isunknown({port_sel, dmem_cmd, dmem_width})
     ) else $error("DMEM router Error: unknown values");
 
+`endif // VERILATOR
 `endif // SCR1_SIM_ENV
 
 endmodule : scr1_dmem_router

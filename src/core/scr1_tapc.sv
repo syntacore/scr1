@@ -24,7 +24,7 @@ module scr1_tapc (
     output  logic                                   master_tap_sel, // Master TAP Select
     // DAP scan-chains
     output  logic                                   dap_ch_sel,     // DAP Chain Select
-    output  logic [SCR1_DBGC_DAP_CH_ID_WIDTH-1:0]   dap_ch_id,      // DAP Chain Identificator
+    output  logic [SCR1_DBGC_DAP_CH_ID_WIDTH-1:0]   dap_ch_id,      // DAP Chain Identifier
     output  logic                                   dap_ch_capture, // DAP Chain Capture
     output  logic                                   dap_ch_shift,   // DAP Chain Shift
     output  logic                                   dap_ch_update,  // DAP Chain Update
@@ -265,7 +265,7 @@ always_ff @(posedge tck, negedge trst_n) begin
 end
 
 //-------------------------------------------------------------------------------
-// IR Decoder / DR Outputs Multiplexor
+// IR Decoder / DR Outputs Multiplexer
 //-------------------------------------------------------------------------------
 always_comb begin
     dr_out                          = 1'b0;
@@ -340,7 +340,7 @@ always_comb begin
 end
 
 //-------------------------------------------------------------------------------
-// TDO Multiplexor & Output Registers
+// TDO Multiplexer & Output Registers
 //-------------------------------------------------------------------------------
 always_comb begin
     tdo_mux_en = 1'b0;
@@ -496,6 +496,7 @@ assign dap_ch_update    = tap_fsm_dr_update;
 
 
 `ifdef SCR1_SIM_ENV
+`ifndef VERILATOR
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -521,6 +522,7 @@ SCR1_SVA_TAPC_XCHECK_NEGCLK : assert property (
     $error("TAPC @negedge error: unknown values");
 end
 
+`endif // VERILATOR
 `endif // SCR1_SIM_ENV
 
 endmodule : scr1_tapc

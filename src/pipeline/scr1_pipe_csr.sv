@@ -122,11 +122,21 @@ logic                                               csr_mtvec_mode;     // MTVEC
 logic                                               csr_mip_mtip;       // MIP: Machine timer interrupt pending
 logic                                               csr_mip_meip;       // MIP: Machine external interrupt pending
 logic                                               csr_mip_msip;       // MIP: Machine software interrupt pending
+
 `ifndef SCR1_CSR_REDUCED_CNT
+
 logic [SCR1_CSR_COUNTERS_WIDTH-1:0]                 csr_instret;        // INSTRET
-logic [SCR1_CSR_COUNTERS_WIDTH-1:0]                 csr_instret_new;
+logic [SCR1_CSR_COUNTERS_WIDTH-1:8]                 csr_instret_hi;
+logic [SCR1_CSR_COUNTERS_WIDTH-1:8]                 csr_instret_hi_new;
+logic [7:0]                                         csr_instret_lo;
+logic [7:0]                                         csr_instret_lo_new;
+
 logic [SCR1_CSR_COUNTERS_WIDTH-1:0]                 csr_cycle;          // CYCLE
-logic [SCR1_CSR_COUNTERS_WIDTH-1:0]                 csr_cycle_new;
+logic [SCR1_CSR_COUNTERS_WIDTH-1:8]                 csr_cycle_hi;
+logic [SCR1_CSR_COUNTERS_WIDTH-1:8]                 csr_cycle_hi_new;
+logic [7:0]                                         csr_cycle_lo;
+logic [7:0]                                         csr_cycle_lo_new;
+
 `endif // ~SCR1_CSR_REDUCED_CNT
 
 `ifdef SCR1_CSR_MCOUNTEN_EN
@@ -150,8 +160,10 @@ logic                                               csr_mtvec_up;
 `ifndef SCR1_CSR_REDUCED_CNT
 logic [1:0]                                         csr_cycle_up;
 logic [1:0]                                         csr_instret_up;
-logic                                               csr_cycle_inc;
-logic                                               csr_instret_inc;
+logic                                               csr_cycle_inc_lo;
+logic                                               csr_cycle_inc_hi;
+logic                                               csr_instret_inc_lo;
+logic                                               csr_instret_inc_hi;
 `endif // SCR1_CSR_REDUCED_CNT
 
 `ifdef SCR1_CSR_MCOUNTEN_EN
@@ -753,21 +765,31 @@ assign csr_mtvec_mode   = SCR1_CSR_MTVEC_MODE_DIRECT;
 
 
 `ifndef SCR1_CSR_REDUCED_CNT
+
 // CYCLE
-assign csr_cycle_inc    = 1'b1
+assign csr_cycle        = {csr_cycle_hi, csr_cycle_lo};
+assign csr_cycle_inc_lo = 1'b1
  `ifdef SCR1_CSR_MCOUNTEN_EN
                         & csr_mcounten_cy
  `endif // SCR1_CSR_MCOUNTEN_EN
                         ;
+assign csr_cycle_inc_hi = csr_cycle_inc_lo & (&csr_cycle_lo);
 
 always_comb begin
-    csr_cycle_new   = csr_cycle;
-    if (csr_cycle_inc) begin
-        csr_cycle_new   = csr_cycle + 1'b1;
-    end
+    csr_cycle_lo_new = csr_cycle_lo;
+    csr_cycle_hi_new = csr_cycle_hi;
+
+    if (csr_cycle_inc_lo)   csr_cycle_lo_new = csr_cycle_lo + 1'b1;
+    if (csr_cycle_inc_hi)   csr_cycle_hi_new = csr_cycle_hi + 1'b1;
+
     case (csr_cycle_up)
-        2'b01   : csr_cycle_new[31:0]   = csr_w_data;
-        2'b10   : csr_cycle_new[63:32]  = csr_w_data;
+        2'b01   : begin
+            csr_cycle_lo_new        = csr_w_data[7:0];
+            csr_cycle_hi_new[31:8]  = csr_w_data[31:8];
+        end
+        2'b10   : begin
+            csr_cycle_hi_new[63:32] = csr_w_data;
+        end
         default : begin end
     endcase
 end
@@ -778,44 +800,56 @@ always_ff @(negedge rst_n, posedge clk) begin
 always_ff @(negedge rst_n, posedge clk_alw_on) begin
 `endif // SCR1_CLKCTRL_EN
     if (~rst_n) begin
-        csr_cycle   <= '0;
+        csr_cycle_lo    <= '0;
+        csr_cycle_hi    <= '0;
     end else begin
-        if (csr_cycle_inc | (|csr_cycle_up)) begin
-            csr_cycle   <= csr_cycle_new;
-        end
+        if (csr_cycle_inc_lo | csr_cycle_up[0]) csr_cycle_lo <= csr_cycle_lo_new;
+        if (csr_cycle_inc_hi | (|csr_cycle_up)) csr_cycle_hi <= csr_cycle_hi_new;
     end
 end
+
 `endif // SCR1_CSR_REDUCED_CNT
 
 `ifndef SCR1_CSR_REDUCED_CNT
+
 // INSTRET
-assign csr_instret_inc  = instret_nexc
+assign csr_instret          = {csr_instret_hi, csr_instret_lo};
+assign csr_instret_inc_lo   = instret_nexc
  `ifdef SCR1_CSR_MCOUNTEN_EN
-                        & csr_mcounten_ir
+                            & csr_mcounten_ir
  `endif // SCR1_CSR_MCOUNTEN_EN
-                        ;
+                            ;
+assign csr_instret_inc_hi   = csr_instret_inc_lo & (&csr_instret_lo);
 
 always_comb begin
-    csr_instret_new = csr_instret;
-    if (csr_instret_inc) begin
-        csr_instret_new = csr_instret + 1'b1;
-    end
+    csr_instret_lo_new = csr_instret_lo;
+    csr_instret_hi_new = csr_instret_hi;
+
+    if (csr_instret_inc_lo) csr_instret_lo_new = csr_instret_lo + 1'b1;
+    if (csr_instret_inc_hi) csr_instret_hi_new = csr_instret_hi + 1'b1;
+
     case (csr_instret_up)
-        2'b01   : csr_instret_new[31:0]     = csr_w_data;
-        2'b10   : csr_instret_new[63:32]    = csr_w_data;
+        2'b01   : begin
+            csr_instret_lo_new          = csr_w_data[7:0];
+            csr_instret_hi_new[31:8]    = csr_w_data[31:8];
+        end
+        2'b10   : begin
+            csr_instret_hi_new[63:32]   = csr_w_data;
+        end
         default : begin end
     endcase
 end
 
 always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
-        csr_instret <= '0;
+        csr_instret_lo  <= '0;
+        csr_instret_hi  <= '0;
     end else begin
-        if (csr_instret_inc | (|csr_instret_up)) begin
-            csr_instret <= csr_instret_new;
-        end
+        if (csr_instret_inc_lo | csr_instret_up[0]) csr_instret_lo <= csr_instret_lo_new;
+        if (csr_instret_inc_hi | (|csr_instret_up)) csr_instret_hi <= csr_instret_hi_new;
     end
 end
+
 `endif // SCR1_CSR_REDUCED_CNT
 
 
@@ -840,6 +874,7 @@ assign csr2brkm_wdata   = exu2csr_w_data;
 
 
 `ifdef SCR1_SIM_ENV
+`ifndef VERILATOR
 //-------------------------------------------------------------------------------
 // Assertions
 //-------------------------------------------------------------------------------
@@ -952,6 +987,7 @@ SCR1_SVA_CSR_CYCLE_INSTRET_UP : assert property (
 
 `endif // SCR1_CSR_REDUCED_CNT
 
+`endif // VERILATOR
 `endif // SCR1_SIM_ENV
 
 endmodule : scr1_pipe_csr

@@ -86,6 +86,7 @@ assign dout_parallel = shift_reg;
 assign dout_serial = shift_reg[0];
 
 `ifdef SCR1_SIM_ENV
+`ifndef VERILATOR
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -105,6 +106,7 @@ SCR1_SVA_TAPC_SHIFTREG_XCHECK : assert property (
     $error("TAPC Shift Reg error: unknown values");
 end
 
+`endif // VERILATOR
 `endif // SCR1_SIM_ENV
 
 endmodule : scr1_tapc_shift_reg

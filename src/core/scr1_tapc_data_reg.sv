@@ -96,6 +96,7 @@ assign dout_serial = shift_reg[0];
 
 
 `ifdef SCR1_SIM_ENV
+`ifndef VERILATOR
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -126,6 +127,7 @@ SCR1_SVA_TAPC_DATAREG_XCHECK_NEGCLK : assert property (
     $error("TAPC Data Reg @negedge error: unknown values");
 end
 
+`endif // VERILATOR
 `endif // SCR1_SIM_ENV
 
 endmodule : scr1_tapc_data_reg

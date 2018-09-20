@@ -28,8 +28,8 @@ module scr1_tapc_synchronizer (
     input  logic                                    dap_ch_sel,         // DAP Chain Select input  (TCK domain)
     output logic                                    dap_ch_sel_core,    // DAP Chain Select output (SysCLK domain)
 
-    input  logic [SCR1_DBGC_DAP_CH_ID_WIDTH-1:0]    dap_ch_id,          // DAP Chain Identificator input  (TCK domain)
-    output logic [SCR1_DBGC_DAP_CH_ID_WIDTH-1:0]    dap_ch_id_core,     // DAP Chain Identificator output (SysCLK domain)
+    input  logic [SCR1_DBGC_DAP_CH_ID_WIDTH-1:0]    dap_ch_id,          // DAP Chain Identifier input  (TCK domain)
+    output logic [SCR1_DBGC_DAP_CH_ID_WIDTH-1:0]    dap_ch_id_core,     // DAP Chain Identifier output (SysCLK domain)
 
     input  logic                                    dap_ch_capture,     // DAP Chain Capture input  (TCK domain)
     output logic                                    dap_ch_capture_core,// DAP Chain Capture output (SysCLK domain)

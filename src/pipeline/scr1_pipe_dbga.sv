@@ -211,11 +211,12 @@ end
 //-------------------------------------------------------------------------------
 // Hart STATE struct
 //-------------------------------------------------------------------------------
-
+`ifndef VERILATOR
 assign dbgc_hart_state.halted   = dbg_halted;
 assign dbgc_hart_state.timeout  = dbgc_timeout_flag;
 assign dbgc_hart_state.error    = 1'b0;         // unused
 assign dbgc_hart_state.commit   = 1'b0;         // unused
+`endif // VERILATOR
 
 always_ff @(posedge clk, negedge rst_n) begin
     if (~rst_n) begin
@@ -225,6 +226,12 @@ always_ff @(posedge clk, negedge rst_n) begin
         dbgc_hart_state.dmode_cause.sstep       <= 1'b0;
         dbgc_hart_state.dmode_cause.brkpt       <= 1'b0;
         dbgc_hart_state.dmode_cause.brkpt_hw    <= 1'b0;
+`ifdef VERILATOR
+        dbgc_hart_state.halted                  <= dbg_halted;
+        dbgc_hart_state.timeout                 <= dbgc_timeout_flag;
+        dbgc_hart_state.error                   <= 1'b0;         // unused
+        dbgc_hart_state.commit                  <= 1'b0;         // unused
+`endif // VERILATOR
     end else begin
         if (dbg_run2halt) begin
             dbgc_hart_state.except                  <= exu_exc_req;
@@ -240,6 +247,12 @@ always_ff @(posedge clk, negedge rst_n) begin
             dbgc_hart_state.dmode_cause.brkpt_hw    <= 1'b0;
 `endif // SCR1_BRKM_EN
         end // dbg_run2halt
+`ifdef VERILATOR
+        dbgc_hart_state.halted  <= dbg_halted;
+        dbgc_hart_state.timeout <= dbgc_timeout_flag;
+        dbgc_hart_state.error   <= 1'b0;         // unused
+        dbgc_hart_state.commit  <= 1'b0;         // unused
+`endif // VERILATOR
     end
 end
 
@@ -253,6 +266,7 @@ assign dbgc_hart_dreg_in    = csr2dbga_ddr;
 assign dbgc_hart_dreg_wr    = csr2dbga_ddr_we;
 
 `ifdef SCR1_SIM_ENV
+`ifndef VERILATOR
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -287,6 +301,7 @@ SCR1_SVA_DBGA_HALT : assert property (
     (dbg_run2halt & ~dbgc_timeout_flag) |-> ~exu_busy
 ) else $error("DBGA Error: core not ready to halt");
 
+`endif // VERILATOR
 `endif // SCR1_SIM_ENV
 
 endmodule : scr1_pipe_dbga

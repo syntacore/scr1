@@ -106,6 +106,7 @@ typedef enum logic [2:0] {
 
 type_scr1_ifu_fsm_e                 fsm;
 logic [`SCR1_XLEN-1:2]              imem_addr_r;
+logic [`SCR1_XLEN-1:2]              imem_addr_r_new;
 logic [SCR1_TXN_CNT_W-1:0]          num_txns_pending;           // Transactions sent but not yet returned
 logic [SCR1_TXN_CNT_W-1:0]          discard_resp_cnt;           // Number of imem responses to discard
 logic [SCR1_TXN_CNT_W-1:0]          discard_resp_cnt_new;
@@ -367,6 +368,7 @@ assign num_txns_pending_full    = &num_txns_pending;
 assign imem_txns_pending        = |num_txns_pending;
 `endif // SCR1_CLKCTRL_EN
 
+assign imem_addr_r_new = (new_pc_req ? new_pc[`SCR1_XLEN-1:2] : imem_addr_r) + 1'b1;
 
 always_ff @(posedge clk, negedge rst_n) begin
     if (~rst_n) begin
@@ -374,7 +376,14 @@ always_ff @(posedge clk, negedge rst_n) begin
     end else begin
         if (imem_req & imem_req_ack) begin
             // if req & ack, store either incremented new_pc or incremented address
-            imem_addr_r <= (new_pc_req ? new_pc[`SCR1_XLEN-1:2] : imem_addr_r) + 1'b1;
+            if (new_pc_req) begin
+                imem_addr_r <= imem_addr_r_new;
+            end else begin
+                imem_addr_r[5:2] <= imem_addr_r_new[5:2];
+                if (&imem_addr_r[5:2]) begin
+                    imem_addr_r[`SCR1_XLEN-1:6] <= imem_addr_r_new[`SCR1_XLEN-1:6];
+                end
+            end
         end else if (new_pc_req) begin
             imem_addr_r <= new_pc[`SCR1_XLEN-1:2];
         end
@@ -559,6 +568,7 @@ end
 
 
 `ifdef SCR1_SIM_ENV
+`ifndef VERILATOR
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -619,6 +629,7 @@ SCR1_SVA_IFU_IMEM_FAULT_RVI_HI : assert property (
     ifu2idu_err_rvi_hi |-> ifu2idu_imem_err
     ) else $error("IFU Error: ifu2idu_imem_err == 0");
 
+`endif // VERILATOR
 `endif // SCR1_SIM_ENV
 
 endmodule : scr1_pipe_ifu

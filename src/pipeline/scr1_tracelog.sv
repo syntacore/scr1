@@ -199,7 +199,9 @@ assign trace_update = update_pc_en | (mprf_wr_en & ~mstatus_mie_up);
 int unsigned temp_fhandler;
 
 initial begin
+`ifndef VERILATOR
     #1 hart.hextoa(fuse_mhartid);
+`endif // VERILATOR
 
 `ifdef SCR1_TRACE_LOG_FULL
     tracelog_full   = 1'b1;

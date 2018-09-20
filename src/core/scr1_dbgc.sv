@@ -13,15 +13,14 @@ module scr1_dbgc (
     // Common signals
     input  logic                                        rst_n,              // DBGC Reset
     input  logic                                        clk,                // DBGC Clock
-`ifdef SCR1_CLKCTRL_EN
+    input  logic                                        clk_en,             // DBGC global clock enable
     output logic                                        sleep_rdy,          // Sleep Ready: 1 if DBGC is ready for clock gating
     output logic                                        sleep_wakeup,       // Sleep Wakeup: 1 - request for wake-up
-`endif // SCR1_CLKCTRL_EN
     // FUSE I/F
     input  logic [`SCR1_XLEN-1:0]                       fuse_mhartid,       // Fuse MHARTID input
     // DAP scan-chains
     input  logic                                        dap_ch_sel,         // DAP Chain Select
-    input  logic [SCR1_DBGC_DAP_CH_ID_WIDTH-1:0]        dap_ch_id,          // DAP Chain Identificator
+    input  logic [SCR1_DBGC_DAP_CH_ID_WIDTH-1:0]        dap_ch_id,          // DAP Chain Identifier
     input  logic                                        dap_ch_capture,     // DAP Chain Capture
     input  logic                                        dap_ch_shift,       // DAP Chain Shift
     input  logic                                        dap_ch_update,      // DAP Chain Update
@@ -188,6 +187,8 @@ logic                                       hart_if_cmd_err_nack_reg;
 logic                                       hart_if_cmd_err_timeout_reg;
 logic                                       hart_if_cmd_err_illeg_dbg_context_reg;
 logic                                       hart_if_cmd_err_unexp_reset_reg;
+
+logic                                       dbgc_rst_active;
 
 //-------------------------------------------------------------------------------
 // Debug Access Port (DAP)
@@ -368,7 +369,7 @@ always_ff @(negedge rst_n, posedge clk) begin
         dap_ctrl_reg.unit   <= SCR1_DBGC_UNIT_ID_HART_0;
         dap_ctrl_reg.fgrp   <= SCR1_DBGC_FGRP_CORE_REGTRANS;
     end
-    else begin
+    else if (clk_en) begin
         if (dap_ctrl_reg_wr) begin
             dap_ctrl_reg    <= dap_head_shift_reg_pdout;
         end
@@ -380,7 +381,7 @@ always_ff @(negedge rst_n, posedge clk) begin
         dap_lock_state_ctrl_reg.unit    <= SCR1_DBGC_UNIT_ID_HART_0;
         dap_lock_state_ctrl_reg.fgrp    <= SCR1_DBGC_FGRP_CORE_REGTRANS;
     end
-    else begin
+    else if (clk_en) begin
         if (state_lock_set) begin
             dap_lock_state_ctrl_reg     <= dap_ctrl_reg;
         end
@@ -391,7 +392,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         dap_err_fsm_busy_reg        <= 1'b0;
     end
-    else begin
+    else if (clk_en) begin
         if (decod_hart_sticky_clr) begin
             dap_err_fsm_busy_reg    <= 1'b0;
         end
@@ -494,7 +495,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         decod_fsm_opcode_reg        <= SCR1_DBGC_FSM_OPCODE_REGTRANS;
     end
-    else begin
+    else if (clk_en) begin
         if (fsm_opcode_reg_wr) begin
             decod_fsm_opcode_reg    <= decod_fsm_opcode;
         end
@@ -505,7 +506,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         decod_dap_cmd_opcode_reg        <= decod_dap_cmd_opcode_regtrans_rd_core_dbgid;
     end
-    else begin
+    else if (clk_en) begin
         if (fsm_opcode_reg_wr) begin
             decod_dap_cmd_opcode_reg    <= decod_dap_cmd_opcode_mux;
         end
@@ -767,7 +768,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         decod_err_invld_dap_opcode_hart_reg     <= 1'b0;
     end
-    else begin
+    else if (clk_en) begin
         if (decod_hart_sticky_clr) begin
             decod_err_invld_dap_opcode_hart_reg <= 1'b0;
         end
@@ -784,7 +785,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         decod_err_invld_dap_opcode_core_reg     <= 1'b0;
     end
-    else begin
+    else if (clk_en) begin
         if (decod_hart_sticky_clr) begin
             decod_err_invld_dap_opcode_core_reg <= 1'b0;
         end
@@ -811,7 +812,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         fsm_state_reg <= SCR1_DBGC_FSM_STATE_IDLE;
     end
-    else begin
+    else if (clk_en) begin
         fsm_state_reg <= fsm_state_next;
     end
 end
@@ -1094,7 +1095,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         state_lock_reg      <= 1'b0;
     end
-    else begin
+    else if (clk_en) begin
         if (dap_lock_clr) begin
             state_lock_reg  <= 1'b0;
         end
@@ -1108,7 +1109,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         state_dmode_reg     <= SCR1_DBGC_HART_RUN_MODE;
     end
-    else begin
+    else if (clk_en) begin
         if (state_dmode_clr) begin
             state_dmode_reg <= SCR1_DBGC_HART_RUN_MODE;
         end
@@ -1164,7 +1165,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         state_hart_dmode_cause_rst_entr_reg     <= 1'b0;
     end
-    else begin
+    else if (clk_en) begin
         if (state_dmode_clr) begin
             state_hart_dmode_cause_rst_entr_reg <= 1'b0;
         end
@@ -1204,7 +1205,7 @@ always_ff @(negedge rst_n, posedge clk) begin
         state_core_rst_delay <= 1'b0;
         state_hart_rst_delay <= 1'b0;
     end
-    else begin
+    else if (clk_en) begin
         state_hart_err_delay <= state_hart_err;
         state_core_err_delay <= state_core_err;
         state_core_rst_delay <= core_rst_sts;
@@ -1235,7 +1236,7 @@ always_ff @(negedge rst_n, posedge clk) begin
         core_dcr_irq_dsbl_reg  <= SCR1_DBGC_HART_IRQ_DSBL_NORMAL;
         core_dcr_hart0_rst_reg <= 1'b0;
     end
-    else begin
+    else if (clk_en) begin
         if (decod_core_reg_wr.ctrl) begin
             core_dcr_core_rst_reg           <= core_dcr_in.rst;
             case (core_dcr_in.irq_dsbl)
@@ -1282,7 +1283,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         core_dsr_rst_stky_reg       <= 1'b0;
     end
-    else begin
+    else if (clk_en) begin
         if (  (decod_core_reg_wr.sts )
             & (core_dsr_in.rst_sticky)
         ) begin
@@ -1298,7 +1299,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         core_dsr_err_stky_reg       <= 1'b0;
     end
-    else begin
+    else if (clk_en) begin
         if (  (decod_core_reg_wr.sts )
             & (core_dsr_in.err_sticky)
         ) begin
@@ -1314,7 +1315,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         core_dsr_hart0_err_stky_reg     <= 1'b0;
     end
-    else begin
+    else if (clk_en) begin
         if (  (decod_core_reg_wr.sts )
             & (core_dsr_in.hart[0].err_sticky)
         ) begin
@@ -1361,7 +1362,7 @@ always_ff @(negedge rst_n, posedge clk) begin
         hart_dcr_rst_reg                <= 1'b0;
         hart_dcr_pc_admt_dsbl_reg       <= 1'b0;
     end
-    else begin
+    else if (clk_en) begin
         if (decod_hart_reg_wr.ctrl) begin
             hart_dcr_rst_reg            <= hart_dcr_in.rst;
             hart_dcr_pc_admt_dsbl_reg   <= hart_dcr_in.pc_advmt_dsbl;
@@ -1393,7 +1394,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         hart_dsr_rst_stky_reg       <= 1'b0;
     end
-    else begin
+    else if (clk_en) begin
         if (decod_hart_sticky_clr) begin
             hart_dsr_rst_stky_reg   <= 1'b0;
         end
@@ -1407,7 +1408,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         hart_dsr_lock_stky_reg      <= 1'b0;
     end
-    else begin
+    else if (clk_en) begin
         if (decod_hart_sticky_clr) begin
             hart_dsr_lock_stky_reg  <= 1'b0;
         end
@@ -1433,7 +1434,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         hart_dmer_reg <= '0;
     end
-    else begin
+    else if (clk_en) begin
         if (decod_hart_reg_wr.dmode_en) begin
             hart_dmer_reg.rst_brk   <= hart_dmer_in.rst_exit_brk;
             hart_dmer_reg.sstep     <= hart_dmer_in.sstep;
@@ -1463,7 +1464,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         hart_ddr_reg                <= '0;
     end
-    else begin
+    else if (clk_en) begin
         case (fsm_ddr_input_sel)
 
             SCR1_DBGC_FSM_DDR_IN_SEL_DAP : begin
@@ -1503,7 +1504,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         hart_dcir_reg       <= '0;
     end
-    else begin
+    else if (clk_en) begin
         if (fsm_dcir_wr) begin
             hart_dcir_reg   <= dap_data_shift_reg_pdout;
         end
@@ -1520,7 +1521,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         hart_pcsample_reg       <= '0;
     end
-    else begin
+    else if (clk_en) begin
         if (decod_hart_pc_sample_reg_wr) begin
             hart_pcsample_reg   <= hart_dbg_pcsample;
         end
@@ -1542,7 +1543,7 @@ always_ff @(negedge rst_n, posedge clk) begin
         hart_if_runctrl_reg.pc_advmt_dsbl   <= 1'b0;
         hart_if_runctrl_reg.brkpt_hw_dsbl   <= 1'b0;
     end
-    else begin
+    else if (clk_en) begin
         if (fsm_hart_cmd_reg_wr) begin
             hart_if_dbg_cmd_reg             <= decod_hart_dbg_cmd;
             hart_if_runctrl_reg             <= decod_hart_runctrl;
@@ -1554,7 +1555,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         hart_if_cmd_err_nack_reg        <= 1'b0;
     end
-    else begin
+    else if (clk_en) begin
         if (decod_hart_sticky_clr) begin
             hart_if_cmd_err_nack_reg    <= 1'b0;
         end
@@ -1568,7 +1569,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         hart_if_cmd_err_timeout_reg     <= 1'b0;
     end
-    else begin
+    else if (clk_en) begin
         if (decod_hart_sticky_clr) begin
             hart_if_cmd_err_timeout_reg <= 1'b0;
         end
@@ -1582,7 +1583,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         hart_if_cmd_err_illeg_dbg_context_reg       <= 1'b0;
     end
-    else begin
+    else if (clk_en) begin
         if (decod_hart_sticky_clr) begin
             hart_if_cmd_err_illeg_dbg_context_reg   <= 1'b0;
         end
@@ -1596,7 +1597,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         hart_if_cmd_err_unexp_reset_reg     <= 1'b0;
     end
-    else begin
+    else if (clk_en) begin
         if (decod_hart_sticky_clr) begin
             hart_if_cmd_err_unexp_reset_reg <= 1'b0;
         end
@@ -1617,12 +1618,19 @@ assign hart_dbg_dreg_out    = hart_ddr_reg;
 //-------------------------------------------------------------------------------
 // Sleep logic
 //-------------------------------------------------------------------------------
-`ifdef SCR1_CLKCTRL_EN
 assign sleep_rdy    = ~dap_ch_sel & (fsm_state_reg == SCR1_DBGC_FSM_STATE_IDLE);
-assign sleep_wakeup =  dap_ch_sel | (~rst_n) | core_rst_sts | hart_rst_sts;
-`endif // SCR1_CLKCTRL_EN
+assign sleep_wakeup =  dap_ch_sel | dbgc_rst_active | core_rst_sts | hart_rst_sts;
+
+always_ff @(posedge clk, negedge rst_n) begin
+    if (~rst_n) begin
+        dbgc_rst_active <= 1'b1;
+    end else begin
+        dbgc_rst_active <= 1'b0;
+    end
+end
 
 `ifdef SCR1_SIM_ENV
+`ifndef VERILATOR
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -1651,6 +1659,8 @@ SCR1_SVA_DBGC_XCHECK : assert property (
 ) else begin
     $error("DBGC error: unknown values");
 end
+
+`endif // VERILATOR
 `endif // SCR1_SIM_ENV
 
 endmodule : scr1_dbgc

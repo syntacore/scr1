@@ -8,7 +8,9 @@
 
 module scr1_pipe_mprf (
     // Common
+`ifdef SCR1_MPRF_RST_EN
     input   logic                               rst_n,
+`endif // SCR1_MPRF_RST_EN
     input   logic                               clk,
 
     // EXU <-> MPRF interface
@@ -40,29 +42,42 @@ assign mprf2exu_rs2_data = (|exu2mprf_rs2_addr) ? mprf_int[$unsigned(exu2mprf_rs
 //-------------------------------------------------------------------------------
 // Write MPRF
 //-------------------------------------------------------------------------------
+`ifdef SCR1_MPRF_RST_EN
+
 always_ff @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
         mprf_int <= '0;
     end else begin
-        if (exu2mprf_w_req) begin
-            if (|exu2mprf_rd_addr) begin
-                mprf_int[$unsigned(exu2mprf_rd_addr)] <= exu2mprf_rd_data;
-            end
+        if (exu2mprf_w_req & |exu2mprf_rd_addr) begin
+            mprf_int[$unsigned(exu2mprf_rd_addr)] <= exu2mprf_rd_data;
         end
-   end
+    end
 end
+
+`else // SCR1_MPRF_RST_EN
+
+always_ff @(posedge clk) begin
+    if (exu2mprf_w_req & |exu2mprf_rd_addr) begin
+        mprf_int[$unsigned(exu2mprf_rd_addr)] <= exu2mprf_rd_data;
+    end
+end
+
+`endif // SCR1_MPRF_RST_EN
 
 
 `ifdef SCR1_SIM_ENV
+`ifndef VERILATOR
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
-
+`ifdef SCR1_MPRF_RST_EN
 SCR1_SVA_MPRF_WRITEX : assert property (
     @(negedge clk) disable iff (~rst_n)
     exu2mprf_w_req |-> !$isunknown({exu2mprf_rd_addr, (|exu2mprf_rd_addr ? exu2mprf_rd_data : `SCR1_XLEN'd0)})
     ) else $error("MPRF error: unknown values");
+`endif // SCR1_MPRF_RST_EN
 
+`endif // VERILATOR
 `endif // SCR1_SIM_ENV
 
 endmodule : scr1_pipe_mprf

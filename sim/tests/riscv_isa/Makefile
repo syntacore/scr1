@@ -1,4 +1,4 @@
-ARCH := imfc
+override ARCH := imfc
 
 include rv32_tests.inc
 

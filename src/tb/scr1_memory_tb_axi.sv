@@ -71,9 +71,15 @@ localparam [W_ADR-1:0]                      IRQ_ADDR       = 32'hF000_0100;
 logic  [7:0]                                memory [0:SIZE-1];
 logic  [N_IF-1:0] [W_ADR-1:0]               awaddr_hold;
 logic  [N_IF-1:0] [2:0]                     awsize_hold;
-string                                      stuff_file;
 genvar                                      gi;
 genvar                                      gj;
+
+`ifdef VERILATOR
+logic [255:0]                               test_file;
+`else // VERILATOR
+string                                      test_file;
+`endif // VERILATOR
+bit                                         test_file_init;
 
 //-------------------------------------------------------------------------------
 // Local functions
@@ -140,14 +146,6 @@ function automatic void mem_write (
     end
 endfunction : mem_write
 
-//-------------------------------------------------------------------------------
-// Load file to mem
-//-------------------------------------------------------------------------------
-always @(negedge rst_n) begin
-    memory = '{SIZE{'0}};
-    if(stuff_file.len()>0) $readmemh(stuff_file,memory);
-end
-
 generate for(gi=0; gi<N_IF; ++gi) begin : rw_if
 
 //-------------------------------------------------------------------------------
@@ -195,6 +193,7 @@ always @(posedge clk, negedge rst_n) begin
         bresp[gi]   <= 2'd3;
         awready[gi] <= 1'b1;
         wready[gi]  <= 1'b1;
+        if (test_file_init) $readmemh(test_file, memory);
     end else begin
 
         // Write data: response
@@ -231,6 +230,7 @@ always @(posedge clk, negedge rst_n) begin
     end
 end
 
+`ifndef VERILATOR
 //-------------------------------------------------------------------------------
 // Assertions
 //-------------------------------------------------------------------------------
@@ -328,6 +328,8 @@ SVA_TBMEM_X_RREADY :
         rvalid[gi] |-> !$isunknown(rready[gi])
     )
     else $error("TBMEM: X state on rready[%0d]",gi);
+
+`endif // VERILATOR
 
 end endgenerate
 

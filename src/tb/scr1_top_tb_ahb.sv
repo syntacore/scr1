@@ -9,19 +9,25 @@
 `include "scr1_ipic.svh"
 `endif // SCR1_IPIC_EN
 
-module scr1_top_tb_ahb ();
+module scr1_top_tb_ahb (
+`ifdef VERILATOR
+    input logic clk
+`endif // VERILATOR
+);
 
 //-------------------------------------------------------------------------------
 // Local parameters
 //-------------------------------------------------------------------------------
-localparam                          SCR1_MEM_POWER_SIZE = 24;
+localparam                          SCR1_MEM_POWER_SIZE = 18;
 localparam logic [`SCR1_XLEN-1:0]   SCR1_EXIT_ADDR      = 32'h000000F8;
 
 //-------------------------------------------------------------------------------
 // Local signal declaration
 //-------------------------------------------------------------------------------
 logic                                   rst_n;
+`ifndef VERILATOR
 logic                                   clk         = 1'b0;
+`endif // VERILATOR
 logic                                   rtc_clk     = 1'b0;
 `ifdef SCR1_IPIC_EN
 logic [SCR1_IRQ_LINES_NUM-1:0]          irq_lines;
@@ -71,18 +77,33 @@ int unsigned                            f_results;
 int unsigned                            f_info;
 string                                  s_results;
 string                                  s_info;
+`ifdef VERILATOR
+logic [255:0]                           test_file;
+`else // VERILATOR
+string                                  test_file;
+`endif // VERILATOR
 
+bit                                     test_running;
 int unsigned                            tests_passed;
 int unsigned                            tests_total;
 
+bit [1:0]                               rst_cnt;
+bit                                     rst_init;
 
+
+`ifndef VERILATOR
 always #5   clk     = ~clk;         // 100 MHz
 always #500 rtc_clk = ~rtc_clk;     // 1 MHz
+`endif // VERILATOR
 
-task reset();
-    rst_n       = 0;
-    #1 rst_n    = 1;
-endtask
+// Reset logic
+assign rst_n = &rst_cnt;
+
+always_ff @(posedge clk) begin
+    if (rst_init)       rst_cnt <= '0;
+    else if (~&rst_cnt) rst_cnt <= rst_cnt + 1'b1;
+end
+
 
 `ifdef SCR1_DBGC_EN
 initial begin
@@ -107,38 +128,49 @@ initial begin
     $value$plusargs("test_info=%s", s_info);
     $value$plusargs("test_results=%s", s_results);
 
-    fuse_mhartid        = 0;
-    rst_n               = 1;
+    fuse_mhartid = 0;
 
     f_info      = $fopen(s_info, "r");
     f_results   = $fopen(s_results, "a");
+end
 
-    forever begin
-        if ($feof(f_info)) break;
-        $fscanf(f_info, "%s\n", i_memory_tb.stuff_file);
-        i_top.i_core_top.i_pipe_top.i_tracelog.test_name = i_memory_tb.stuff_file;
-        $write("\033[0;34m---Test: %s\033[0m\n", i_memory_tb.stuff_file);
-        reset();
-        forever begin
-            @(posedge clk)
-            if (i_top.i_core_top.i_pipe_top.curr_pc == SCR1_EXIT_ADDR) begin
-                bit test_pass;
-                test_pass = (i_top.i_core_top.i_pipe_top.i_pipe_mprf.mprf_int[10] == 0);
-                tests_total     += 1;
-                tests_passed    += test_pass;
-                $fwrite(f_results, "%s\t\t%s\n", i_memory_tb.stuff_file, (test_pass ? "PASS" : "__FAIL"));
-                if (test_pass) $write("\033[0;32mTest passed\033[0m\n");
-                else $write("\033[0;31mTest failed\033[0m\n");
-                break;
-            end
+always_ff @(posedge clk) begin
+    if (test_running) begin
+        rst_init <= 1'b0;
+        if ((i_top.i_core_top.i_pipe_top.curr_pc == SCR1_EXIT_ADDR) & ~rst_init & &rst_cnt) begin
+            bit test_pass;
+            test_running <= 1'b0;
+            test_pass = (i_top.i_core_top.i_pipe_top.i_pipe_mprf.mprf_int[10] == 0);
+            tests_total     += 1;
+            tests_passed    += test_pass;
+            $fwrite(f_results, "%s\t\t%s\n", test_file, (test_pass ? "PASS" : "__FAIL"));
+            if (test_pass) $write("\033[0;32mTest passed\033[0m\n");
+            else $write("\033[0;31mTest failed\033[0m\n");
+        end
+    end else begin
+`ifdef VERILATOR
+        if ($fgets(test_file,f_info)) begin
+`else // VERILATOR
+        if (!$feof(f_info)) begin
+            $fscanf(f_info, "%s\n", test_file);
+`endif // VERILATOR
+            // Launch new test
+            i_top.i_core_top.i_pipe_top.i_tracelog.test_name = test_file;
+            i_memory_tb.test_file = test_file;
+            i_memory_tb.test_file_init = 1'b1;
+            $write("\033[0;34m---Test: %s\033[0m\n", test_file);
+            test_running <= 1'b1;
+            rst_init <= 1'b1;
+        end else begin
+            // Exit
+            $display("\n#--------------------------------------");
+            $display("# Summary: %0d/%0d tests passed", tests_passed, tests_total);
+            $display("#--------------------------------------\n");
+            $fclose(f_info);
+            $fclose(f_results);
+            $finish();
         end
     end
-    $display("\n#--------------------------------------");
-    $display("# Summary: %0d/%0d tests passed", tests_passed, tests_total);
-    $display("#--------------------------------------\n");
-    $fclose(f_info);
-    $fclose(f_results);
-    $finish();
 end
 
 //-------------------------------------------------------------------------------

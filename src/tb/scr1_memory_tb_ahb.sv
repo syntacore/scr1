@@ -42,8 +42,6 @@ module scr1_memory_tb_ahb #(
     output  logic                                   dmem_hresp
 );
 
-string stuff_file;
-
 //-------------------------------------------------------------------------------
 // Local parameters
 //-------------------------------------------------------------------------------
@@ -74,6 +72,13 @@ bit                                     mirage_en;
 bit                                     mirage_rangeen;
 bit [SCR1_AHB_WIDTH-1:0]                mirage_adrlo = '1;
 bit [SCR1_AHB_WIDTH-1:0]                mirage_adrhi = '1;
+
+`ifdef VERILATOR
+logic [255:0]                           test_file;
+`else // VERILATOR
+string                                  test_file;
+`endif // VERILATOR
+bit                                     test_file_init;
 
 //-------------------------------------------------------------------------------
 // Local functions
@@ -552,21 +557,13 @@ end
 //-------------------------------------------------------------------------------
 // Data Memory write
 //-------------------------------------------------------------------------------
-
-always @(negedge rst_n) begin
-    if (stuff_file.len() > 0) begin
-        $readmemh(stuff_file,memory);
-    end else begin
-        memory = '{2**SCR1_MEM_POWER_SIZE{'0}};
-    end
-end
-
 always @(negedge rst_n, posedge clk) begin
     if (~rst_n) begin
 `ifdef SCR1_IPIC_EN
         irq_reg     <= '0;
 `endif // SCR1_IPIC_EN
         mem_err_ptr <= SCR1_MEM_ERR_ADDR;
+        if (test_file_init) $readmemh(test_file, memory);
     end else begin
         if ((dmem_ahb_state == SCR1_AHB_STATE_DATA) & dmem_req_ack & dmem_ahb_wr) begin
             if (scr1_check_err_addr(dmem_ahb_addr)) begin

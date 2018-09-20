@@ -280,11 +280,12 @@ end
 assign haddr  = req_fifo[0].haddr;
 
 `ifdef SCR1_SIM_ENV
+`ifndef VERILATOR
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
 
-// Check Core interafce
+// Check Core interface
 SCR1_SVA_IMEM_AHB_BRIDGE_REQ_XCHECK : assert property (
     @(negedge clk) disable iff (~rst_n)
     !$isunknown(imem_req)
@@ -321,6 +322,7 @@ SCR1_IMEM_AHB_BRIDGE_HRESP_XCHECK : assert property (
     !$isunknown(hresp)
     ) else $error("IMEM AHB bridge Error: hresp has unknown values");
 
+`endif // VERILATOR
 `endif // SCR1_SIM_ENV
 
 endmodule : scr1_imem_ahb

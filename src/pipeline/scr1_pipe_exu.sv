@@ -30,12 +30,10 @@ module scr1_pipe_exu (
     input   logic                               idu2exu_req,            // Request form IDU to EXU
     output  logic                               exu2idu_rdy,            // EXU ready for new data from IDU
     input   type_scr1_exu_cmd_s                 idu2exu_cmd,            // EXU command
-`ifndef SCR1_EXU_STAGE_BYPASS
     input   logic                               idu2exu_use_rs1,        // Clock gating on rs1_addr field
     input   logic                               idu2exu_use_rs2,        // Clock gating on rs2_addr field
     input   logic                               idu2exu_use_rd,         // Clock gating on rd_addr field
     input   logic                               idu2exu_use_imm,        // Clock gating on imm field
-`endif // SCR1_EXU_STAGE_BYPASS
 
     // EXU <-> MPRF interface
     output  logic [`SCR1_MPRF_ADDR_WIDTH-1:0]   exu2mprf_rs1_addr,      // MPRF rs1 read address
@@ -140,6 +138,11 @@ logic                           exu_queue_vd;
 type_scr1_exu_cmd_s             exu_queue;
 logic                           queue_barrier;
 
+`ifndef SCR1_EXU_STAGE_BYPASS
+logic                           idu2exu_use_rs1_r;
+logic                           idu2exu_use_rs2_r;
+`endif // SCR1_EXU_STAGE_BYPASS
+
 logic                           exu_rdy;
 
 // IALU interface
@@ -228,6 +231,8 @@ always_ff @(posedge clk) begin
         exu_queue.wfi_req        <= idu2exu_cmd.wfi_req;
         exu_queue.exc_req        <= idu2exu_cmd.exc_req;
         exu_queue.exc_code       <= idu2exu_cmd.exc_code;
+        idu2exu_use_rs1_r        <= idu2exu_use_rs1;
+        idu2exu_use_rs2_r        <= idu2exu_use_rs2;
         if (idu2exu_use_rs1) begin
             exu_queue.rs1_addr   <= idu2exu_cmd.rs1_addr;
         end
@@ -298,6 +303,10 @@ always_comb begin
         ialu_op1 = mprf2exu_rs1_data;
         ialu_op2 = exu_queue.imm;
     end
+`ifdef SCR1_RVM_EXT
+    ialu_op1 = ialu_vd ? ialu_op1 : '0;
+    ialu_op2 = ialu_vd ? ialu_op2 : '0;
+`endif // SCR1_RVM_EXT
     // SUM2
     if (exu_queue.sum2_op == SCR1_SUM2_OP_REG_IMM) begin
         ialu_sum2_op1 = mprf2exu_rs1_data;
@@ -308,8 +317,13 @@ always_comb begin
     end
 end
 
-assign exu2mprf_rs1_addr    = `SCR1_MPRF_ADDR_WIDTH'(exu_queue.rs1_addr);
-assign exu2mprf_rs2_addr    = `SCR1_MPRF_ADDR_WIDTH'(exu_queue.rs2_addr);
+`ifdef SCR1_EXU_STAGE_BYPASS
+assign exu2mprf_rs1_addr    = (exu_queue_vd & idu2exu_use_rs1) ? `SCR1_MPRF_ADDR_WIDTH'(exu_queue.rs1_addr) : '0;
+assign exu2mprf_rs2_addr    = (exu_queue_vd & idu2exu_use_rs2) ? `SCR1_MPRF_ADDR_WIDTH'(exu_queue.rs2_addr) : '0;
+`else // SCR1_EXU_STAGE_BYPASS
+assign exu2mprf_rs1_addr    = (exu_queue_vd & idu2exu_use_rs1_r) ? `SCR1_MPRF_ADDR_WIDTH'(exu_queue.rs1_addr) : '0;
+assign exu2mprf_rs2_addr    = (exu_queue_vd & idu2exu_use_rs2_r) ? `SCR1_MPRF_ADDR_WIDTH'(exu_queue.rs2_addr) : '0;
+`endif // SCR1_EXU_STAGE_BYPASS
 
 
 //-------------------------------------------------------------------------------
@@ -608,7 +622,14 @@ always_ff @(negedge rst_n, posedge clk) begin
         & ~exu_pc_advmt_dsbl & ~exu_no_commit
 `endif // SCR1_DBGC_EN
         ) begin
-            curr_pc    <= new_pc_req ? new_pc : inc_pc;
+            if (new_pc_req) begin
+                curr_pc <= new_pc;
+            end else begin
+                curr_pc[5:0] <= inc_pc[5:0];
+                if (inc_pc[6] ^ curr_pc[6]) begin
+                    curr_pc[`SCR1_XLEN-1:6] <= inc_pc[`SCR1_XLEN-1:6];
+                end
+            end
         end // update PC
     end
 end
@@ -714,7 +735,7 @@ posedge clk_alw_on
     if (~rst_n) begin
         wfi_run_start  <= 1'b0;
     end else begin
-        wfi_run_start <= (wfi_halted & wfi_run_cond);
+        wfi_run_start <= (wfi_halted & wfi_run_cond & ~exu2csr_take_irq);
     end
 end
 
@@ -755,6 +776,7 @@ assign update_pc_en = (init_pc | instret | exu2csr_take_irq)
                     ;
 assign update_pc    = new_pc_req ? new_pc : inc_pc;
 
+`ifndef VERILATOR
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -799,6 +821,8 @@ SCR1_SVA_EXU_BRKPT : assert property (
     brkpt_hw |-> brkpt
     ) else $error("EXU Error: brkpt is 0");
 `endif // SCR1_BRKM_EN
+
+`endif // VERILATOR
 
 `endif // SCR1_SIM_ENV
 

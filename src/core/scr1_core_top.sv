@@ -134,6 +134,10 @@ logic                                           clk_dbgc;
 logic                                           clk_alw_on;
 `endif // SCR1_CLKCTRL_EN
 
+logic                                           dbgc_clk_en;
+logic                                           dbgc_sleep_rdy;
+logic                                           dbgc_sleep_wakeup;
+
 // Block busy signals
 logic                                           ifu_busy;
 logic                                           idu_busy;
@@ -318,16 +322,22 @@ assign dbgc_core_state_busy.wb_cnt  = '0;
 assign dbgc_core_state_busy.mdu     = 1'b0;
 `endif // SCR1_RVM_EXT
 
+always_ff @(posedge clk, negedge rst_n) begin
+    if (~rst_n) begin
+        dbgc_clk_en <= 1'b1;
+    end else begin
+        if (dbgc_sleep_wakeup)      dbgc_clk_en <= 1'b1;
+        else if (dbgc_sleep_rdy)    dbgc_clk_en <= 1'b0;
+    end
+end
+
 scr1_dbgc i_dbgc (
     // Common
     .rst_n              (sys_rst_n),
-`ifndef SCR1_CLKCTRL_EN
     .clk                (clk),
-`else // SCR1_CLKCTRL_EN
-    .clk                (clk_dbgc),
-    .sleep_rdy          (),
-    .sleep_wakeup       (),
-`endif // SCR1_CLKCTRL_EN
+    .clk_en             (dbgc_clk_en),
+    .sleep_rdy          (dbgc_sleep_rdy),
+    .sleep_wakeup       (dbgc_sleep_wakeup),
     // Fuse
     .fuse_mhartid       (fuse_mhartid),
     // DAP scan-chains

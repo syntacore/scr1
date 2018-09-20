@@ -1029,6 +1029,7 @@ always_comb begin
 end
 
 `ifdef SCR1_SIM_ENV
+`ifndef VERILATOR
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -1048,6 +1049,7 @@ SCR1_SVA_BRKM_XCHECK : assert property (
 ) else
     $error("BRKM error: unknown values");
 
+`endif // VERILATOR
 `endif // SCR1_SIM_ENV
 
 endmodule : scr1_pipe_brkm

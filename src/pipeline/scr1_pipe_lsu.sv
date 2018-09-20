@@ -243,6 +243,7 @@ assign lsu_hwbrk    = (exu2lsu_req & brkm2lsu_i_x_req) | brkm2lsu_d_x_req;
 `endif // SCR1_BRKM_EN
 
 `ifdef SCR1_SIM_ENV
+`ifndef VERILATOR
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -297,6 +298,7 @@ SCR1_COV_LSU_MISALIGN_BRKPT : cover property (
 );
 `endif // SCR1_BRKM_EN
 
+`endif // VERILATOR
 `endif // SCR1_SIM_ENV
 
 endmodule : scr1_pipe_lsu

@@ -136,7 +136,7 @@ logic [SCR1_IRQ_VECT_NUM-1:0]           ipr_m;                  // Interrupt pen
 logic [SCR1_IRQ_VECT_NUM-1:0]           ipr_clr;                // Interrupt pending clr
 
 logic [SCR1_IRQ_VECT_NUM-1:0]           ier;                    // Interrupt enable register(IPIC_IER)
-logic [SCR1_IRQ_VECT_NUM-1:0]           irr_m;                  // Inerrupt register register(IPIC_IPR & IPIC_IER & PRV==M)
+logic [SCR1_IRQ_VECT_NUM-1:0]           irr_m;                  // Interrupt register register(IPIC_IPR & IPIC_IER & PRV==M)
 
 
 logic [SCR1_IRQ_VECT_WIDTH-1:0]         cisv_m;                 // Number of the current M-mode interrupt in service register(IPIC_CISV_M)
@@ -191,7 +191,7 @@ always_comb begin
             end
 
             SCR1_IPIC_ISVR : begin
-                // Agregated serviced interrupts
+                // Aggregated serviced interrupts
                 ipic2csr_rdata = isvr_m;
             end
 
@@ -282,7 +282,7 @@ always_comb begin
             end
 
             SCR1_IPIC_IPR : begin
-                // Agregated pending interrupts
+                // Aggregated pending interrupts
                 ipr_clr = csr2ipic_wdata[SCR1_IRQ_VECT_NUM-1:0];
             end
 
@@ -391,7 +391,7 @@ end
 assign ipr_m = ipr;
 
 //-------------------------------------------------------------------------------
-// Interrupt Requested Register - just a combinatorial
+// Interrupt Requested Register
 //-------------------------------------------------------------------------------
 assign irr_m    = ipr_m & ier;
 

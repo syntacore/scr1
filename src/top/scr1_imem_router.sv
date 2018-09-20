@@ -161,6 +161,7 @@ assign port1_cmd   = (port_sel) ? imem_cmd  : SCR1_MEM_CMD_ERROR;
 assign port1_addr  = (port_sel) ? imem_addr : 'x;
 
 `ifdef SCR1_SIM_ENV
+`ifndef VERILATOR
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -170,6 +171,7 @@ SCR1_SVA_IMEM_RT_XCHECK : assert property (
     imem_req |-> !$isunknown({port_sel, imem_cmd})
     ) else $error("IMEM router Error: unknown values");
 
+`endif // VERILATOR
 `endif // SCR1_SIM_ENV
 
 endmodule : scr1_imem_router

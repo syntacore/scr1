@@ -174,7 +174,7 @@ typedef struct packed {
     logic                       halted;         // 1 - core halted, 0 - core running
     logic                       except;         // 1 - core exception
     logic                       commit;         // 1 - instruction retirement was accompanied with results commit to arch.state
-    logic                       timeout;        // 1 - time-out occured during an operation
+    logic                       timeout;        // 1 - time-out occurred during an operation
     type_scr1_dbgc_dbghalt_s    dmode_cause;    // Debug Mode Cause: Set of reasons of Debug Mode entering (reported)
 } type_scr1_dbgc_hart_state_s;
 

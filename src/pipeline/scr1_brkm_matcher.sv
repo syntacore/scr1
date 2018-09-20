@@ -22,7 +22,7 @@ module scr1_brkm_matcher #(
     // Address Channel
     input   logic                                               addr_exact_en,          // Address Exact Matching Enable
     input   logic                                               addr_mask_en,           // Address Mask Matching Enable
-    input   logic                                               addr_mask_ext_en,       // Address Mask Matching Extention Enable
+    input   logic                                               addr_mask_ext_en,       // Address Mask Matching Extension Enable
     input   logic [BRKM_MATCH_ADDR_WIDTH-1:0]                   addr,                   // Address bus under monitoring
     input   logic [BRKM_MATCH_ADDR_WIDTH-1:0]                   addr_lo,                // Content of a bploaddr register
     input   logic [BRKM_MATCH_ADDR_WIDTH-1:0]                   addr_hi,                // Content of a bphiaddr register

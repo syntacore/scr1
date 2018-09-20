@@ -829,6 +829,7 @@ always_comb begin
 end // RV32I(MC) decode
 
 `ifdef SCR1_SIM_ENV
+`ifndef VERILATOR
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -860,6 +861,7 @@ SCR1_SVA_IDU_IALU_CMD_RANGE : assert property (
         ))
     ) else $error("IDU Error: IALU_CMD out of range");
 
+`endif // VERILATOR
 `endif // SCR1_SIM_ENV
 
 endmodule : scr1_pipe_idu
