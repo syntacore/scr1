@@ -108,6 +108,7 @@ type_scr1_ifu_fsm_e                 fsm;
 logic [`SCR1_XLEN-1:2]              imem_addr_r;
 logic [`SCR1_XLEN-1:2]              imem_addr_r_new;
 logic [SCR1_TXN_CNT_W-1:0]          num_txns_pending;           // Transactions sent but not yet returned
+logic [SCR1_TXN_CNT_W-1:0]          num_txns_pending_new;
 logic [SCR1_TXN_CNT_W-1:0]          discard_resp_cnt;           // Number of imem responses to discard
 logic [SCR1_TXN_CNT_W-1:0]          discard_resp_cnt_new;
 logic                               discard_resp;
@@ -390,49 +391,33 @@ always_ff @(posedge clk, negedge rst_n) begin
     end
 end
 
+assign num_txns_pending_new = num_txns_pending + (imem_req & imem_req_ack) - (imem_resp_ok | imem_resp_er);
+
 always_ff @(posedge clk, negedge rst_n) begin
     if (~rst_n) begin
         num_txns_pending <= '0;
-    end else begin
-        case ({(imem_req & imem_req_ack), (imem_resp_ok | imem_resp_er)})
-            2'b00,
-            2'b11   : begin // simultaneous response and accepted request
-                      end
-            default : num_txns_pending <=   ((imem_resp_ok | imem_resp_er) ?
-                                                (num_txns_pending - 1'b1) :
-                                                (num_txns_pending + 1'b1));
-        endcase
+    end else if ((imem_req & imem_req_ack) ^ (imem_resp_ok | imem_resp_er)) begin
+        num_txns_pending <= num_txns_pending_new;
     end
 end
 
-// discard_resp_cnt sub
-always_comb begin
-    logic [SCR1_TXN_CNT_W-1:0]  op_a;
-    logic                       op_b;
 
-    op_a    = discard_resp_cnt;
-    op_b    = 1'b0;
+always_comb begin
     if (new_pc_req) begin
-        op_a    = num_txns_pending;
-        op_b    = (imem_resp_ok | imem_resp_er);
-    end else if (imem_resp_er) begin
-        op_a    = num_txns_pending;
-        op_b    = ~(imem_req & imem_req_ack);
-    end else if (imem_resp_ok & discard_resp) begin
-        op_a    = discard_resp_cnt;
-        op_b    = 1'b1;
+        discard_resp_cnt_new = num_txns_pending_new - (imem_req & imem_req_ack);
+    end else if (imem_resp_er & ~discard_resp) begin
+        discard_resp_cnt_new = num_txns_pending_new;
+    end else begin
+        discard_resp_cnt_new = discard_resp_cnt - 1'b1;
     end
-    discard_resp_cnt_new    = op_a - op_b;
 end
 
 always_ff @(posedge clk, negedge rst_n) begin
     if (~rst_n) begin
         discard_resp_cnt <= '0;
-    end else begin
-        if (new_pc_req | imem_resp_er | (imem_resp_ok & discard_resp)) begin
-            discard_resp_cnt    <= discard_resp_cnt_new;
-        end
-    end // rst_n
+    end else if (new_pc_req | imem_resp_er | (imem_resp_ok & discard_resp)) begin
+        discard_resp_cnt <= discard_resp_cnt_new;
+    end
 end
 
 assign num_vd_txns_pending  = num_txns_pending - discard_resp_cnt;

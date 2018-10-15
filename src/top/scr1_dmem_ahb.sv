@@ -353,7 +353,7 @@ always_comb begin
         end
         SCR1_FSM_DATA : begin
             if (hready) begin
-                req_fifo_rd = ~req_fifo_empty;
+                req_fifo_rd = ~req_fifo_empty & (hresp == SCR1_HRESP_OKAY);
             end
         end
         default : begin
