@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2019. See LICENSE for details
 /// @file       <scr1_ipic.sv>
 /// @brief      Integrated Programmable Interrupt Controller (IPIC)
 ///
@@ -81,7 +81,7 @@ begin
     logic               stage1_idx [7:0];
     logic [1:0]         stage2_idx [3:0];
     logic [2:0]         stage3_idx [1:0];
-    type_scr1_search_one_16_s tmp;
+    type_scr1_search_one_16_s result;
 
     // Stage 1
     for (int unsigned i=0; i<8; ++i) begin
@@ -108,10 +108,10 @@ begin
     end
 
     // Stage 4
-    tmp.vd = |stage3_vd;
-    tmp.idx = (stage3_vd[0]) ? {1'b0, stage3_idx[0]} : {1'b1, stage3_idx[1]};
+    result.vd = |stage3_vd;
+    result.idx = (stage3_vd[0]) ? {1'b0, stage3_idx[0]} : {1'b1, stage3_idx[1]};
 
-    return tmp;
+    return result;
 end
 endfunction : scr1_search_one_16
 

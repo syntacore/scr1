@@ -1,6 +1,6 @@
 `ifndef SCR1_ARCH_DESCRIPTION_SVH
 `define SCR1_ARCH_DESCRIPTION_SVH
-/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2019. See LICENSE for details
 /// @file       <scr1_arch_description.svh>
 /// @brief      Architecture description file
 ///
@@ -8,7 +8,7 @@
 //-------------------------------------------------------------------------------
 // Core fundamental parameters (READ-ONLY, do not modify)
 //-------------------------------------------------------------------------------
-`define SCR1_MIMPID             32'h18100900
+`define SCR1_MIMPID             32'h18110700
 `define SCR1_XLEN               32
 `define SCR1_FLEN               `SCR1_XLEN
 `define SCR1_IMEM_AWIDTH        `SCR1_XLEN

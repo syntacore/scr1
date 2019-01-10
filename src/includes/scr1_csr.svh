@@ -1,6 +1,6 @@
 `ifndef SCR1_CSR_SVH
 `define SCR1_CSR_SVH
-/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2019. See LICENSE for details
 /// @file       <scr1_csr.svh>
 /// @brief      CSR mapping/description file
 ///
@@ -130,7 +130,7 @@ parameter bit [`SCR1_XLEN-1:0]  SCR1_CSR_MISA       = (SCR1_MISA_MXL_32 << (`SCR
 parameter bit [`SCR1_XLEN-1:0] SCR1_CSR_MVENDORID   = '0;
 
 // MARCHID
-parameter bit [`SCR1_XLEN-1:0] SCR1_CSR_MARCHID     = '0;
+parameter bit [`SCR1_XLEN-1:0] SCR1_CSR_MARCHID     = `SCR1_XLEN'd8;
 
 // MIMPID
 parameter bit [`SCR1_XLEN-1:0] SCR1_CSR_MIMPID      = `SCR1_MIMPID;
