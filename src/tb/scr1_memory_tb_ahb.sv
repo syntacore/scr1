@@ -206,19 +206,11 @@ always_ff @(negedge rst_n, posedge clk) begin
         imem_req_ack_stall <= imem_req_ack_stall_in;
         imem_req_ack_rnd   <= 1'b0;
     end else begin
-        case (imem_ahb_state)
-            SCR1_AHB_STATE_IDLE : begin
-            end
-            SCR1_AHB_STATE_DATA : begin
-                if (imem_req_ack_stall == '0) begin
-                    imem_req_ack_rnd <= $random;
-                end else begin
-                    imem_req_ack_stall <= {imem_req_ack_stall[0], imem_req_ack_stall[31:1]};
-                end
-            end
-            default : begin
-            end
-        endcase
+        if (imem_req_ack_stall == '0) begin
+            imem_req_ack_rnd <= $random;
+        end else begin
+            imem_req_ack_stall <= {imem_req_ack_stall[0], imem_req_ack_stall[31:1]};
+        end
     end
 end
 
@@ -233,17 +225,19 @@ always_ff @(negedge rst_n, posedge clk) begin
     end else begin
         case (imem_ahb_state)
             SCR1_AHB_STATE_IDLE : begin
-                case (imem_htrans)
-                    SCR1_HTRANS_IDLE : begin
-                        imem_ahb_state <= SCR1_AHB_STATE_IDLE;
-                    end
-                    SCR1_HTRANS_NONSEQ : begin
-                        imem_ahb_state <= SCR1_AHB_STATE_DATA;
-                    end
-                    default : begin
-                        imem_ahb_state <= SCR1_AHB_STATE_ERR;
-                    end
-                endcase
+                if (imem_req_ack) begin
+                    case (imem_htrans)
+                        SCR1_HTRANS_IDLE : begin
+                            imem_ahb_state <= SCR1_AHB_STATE_IDLE;
+                        end
+                        SCR1_HTRANS_NONSEQ : begin
+                            imem_ahb_state <= SCR1_AHB_STATE_DATA;
+                        end
+                        default : begin
+                            imem_ahb_state <= SCR1_AHB_STATE_ERR;
+                        end
+                    endcase
+                end
             end
             SCR1_AHB_STATE_DATA : begin
                 if (imem_req_ack) begin
@@ -280,23 +274,25 @@ always_ff @(negedge rst_n, posedge clk) begin
     end else begin
         case (imem_ahb_state)
             SCR1_AHB_STATE_IDLE : begin
-                case (imem_htrans)
-                    SCR1_HTRANS_IDLE : begin
-                    end
-                    SCR1_HTRANS_NONSEQ : begin
-                        imem_ahb_addr  <= imem_haddr;
-                        if (scr1_check_err_addr(imem_haddr)) begin
-                            if(mirage_rangeen & imem_haddr>=mirage_adrlo & imem_haddr<mirage_adrhi)
-                                imem_hrdata_l <= scr1_read_mem({imem_haddr[SCR1_AHB_WIDTH-1:2], 2'b00}, imem_be, imem_wr_hazard, dmem_hwdata, 1'b1);
-                            else
-                                imem_hrdata_l <= scr1_read_mem({imem_haddr[SCR1_AHB_WIDTH-1:2], 2'b00}, imem_be, imem_wr_hazard, dmem_hwdata, 1'b0);
+                if (imem_req_ack) begin
+                    case (imem_htrans)
+                        SCR1_HTRANS_IDLE : begin
                         end
-                    end
-                    default : begin
-                        imem_ahb_addr  <= 'x;
-                        imem_hrdata_l  <= 'x;
-                    end
-                endcase
+                        SCR1_HTRANS_NONSEQ : begin
+                            imem_ahb_addr  <= imem_haddr;
+                            if (scr1_check_err_addr(imem_haddr)) begin
+                                if(mirage_rangeen & imem_haddr>=mirage_adrlo & imem_haddr<mirage_adrhi)
+                                    imem_hrdata_l <= scr1_read_mem({imem_haddr[SCR1_AHB_WIDTH-1:2], 2'b00}, imem_be, imem_wr_hazard, dmem_hwdata, 1'b1);
+                                else
+                                    imem_hrdata_l <= scr1_read_mem({imem_haddr[SCR1_AHB_WIDTH-1:2], 2'b00}, imem_be, imem_wr_hazard, dmem_hwdata, 1'b0);
+                            end
+                        end
+                        default : begin
+                            imem_ahb_addr  <= 'x;
+                            imem_hrdata_l  <= 'x;
+                        end
+                    endcase
+                end
             end
             SCR1_AHB_STATE_DATA : begin
                 if (imem_req_ack) begin
@@ -336,16 +332,25 @@ always_comb begin
     imem_hready = 1'b0;
     imem_hresp  = SCR1_HRESP_OKAY;
     imem_hrdata = 'x;
-    if (imem_ahb_state == SCR1_AHB_STATE_DATA) begin
-        if (imem_req_ack) begin
-            imem_hready = 1'b1;
-            if (~scr1_check_err_addr(imem_ahb_addr)) begin
-                imem_hresp  = SCR1_HRESP_ERROR;
-            end else begin
-                imem_hrdata = imem_hrdata_l;
+    case (imem_ahb_state)
+        SCR1_AHB_STATE_IDLE : begin
+            if (imem_req_ack) begin
+                imem_hready = 1'b1;
             end
         end
-    end
+        SCR1_AHB_STATE_DATA : begin
+            if (imem_req_ack) begin
+                imem_hready = 1'b1;
+                if (~scr1_check_err_addr(imem_ahb_addr)) begin
+                    imem_hresp  = SCR1_HRESP_ERROR;
+                end else begin
+                    imem_hrdata = imem_hrdata_l;
+                end
+            end
+        end
+        default : begin
+        end
+    endcase
 end
 
 //-------------------------------------------------------------------------------
@@ -356,19 +361,11 @@ always_ff @(negedge rst_n, posedge clk) begin
         dmem_req_ack_stall <= dmem_req_ack_stall_in;
         dmem_req_ack_rnd   <= 1'b0;
     end else begin
-        case (dmem_ahb_state)
-            SCR1_AHB_STATE_IDLE : begin
-            end
-            SCR1_AHB_STATE_DATA : begin
-                if (dmem_req_ack_stall == 32'd0) begin
-                    dmem_req_ack_rnd <= $random;
-                end else begin
-                    dmem_req_ack_stall <= {dmem_req_ack_stall[0], dmem_req_ack_stall[31:1]};
-                end
-            end
-            default : begin
-            end
-        endcase
+        if (dmem_req_ack_stall == 32'd0) begin
+            dmem_req_ack_rnd <= $random;
+        end else begin
+            dmem_req_ack_stall <= {dmem_req_ack_stall[0], dmem_req_ack_stall[31:1]};
+        end
     end
 end
 
@@ -383,17 +380,19 @@ always_ff @(negedge rst_n, posedge clk) begin
     end else begin
         case (dmem_ahb_state)
             SCR1_AHB_STATE_IDLE : begin
-                case (dmem_htrans)
-                    SCR1_HTRANS_IDLE : begin
-                        dmem_ahb_state <= SCR1_AHB_STATE_IDLE;
-                    end
-                    SCR1_HTRANS_NONSEQ : begin
-                        dmem_ahb_state    <= SCR1_AHB_STATE_DATA;
-                    end
-                    default : begin
-                        dmem_ahb_state    <= SCR1_AHB_STATE_ERR;
-                    end
-                endcase
+                if (dmem_req_ack) begin
+                    case (dmem_htrans)
+                        SCR1_HTRANS_IDLE : begin
+                            dmem_ahb_state <= SCR1_AHB_STATE_IDLE;
+                        end
+                        SCR1_HTRANS_NONSEQ : begin
+                            dmem_ahb_state    <= SCR1_AHB_STATE_DATA;
+                        end
+                        default : begin
+                            dmem_ahb_state    <= SCR1_AHB_STATE_ERR;
+                        end
+                    endcase
+                end
             end
             SCR1_AHB_STATE_DATA : begin
                 if (dmem_req_ack) begin
@@ -445,41 +444,43 @@ always_ff @(negedge rst_n, posedge clk) begin
     end else begin
         case (dmem_ahb_state)
             SCR1_AHB_STATE_IDLE : begin
-                case (dmem_htrans)
-                    SCR1_HTRANS_IDLE : begin
-                    end
-                    SCR1_HTRANS_NONSEQ : begin
-                        dmem_ahb_addr <= dmem_haddr;
-                        dmem_ahb_wr   <= dmem_hwrite;
-                        dmem_ahb_size <= dmem_hsize;
-                        dmem_ahb_be   <= dmem_be;
-                        if (~dmem_hwrite & scr1_check_err_addr(dmem_haddr)) begin
-                            case (dmem_haddr)
-`ifdef SCR1_IPIC_EN
-                                SCR1_IRQ_ADDR : begin
-                                    dmem_hrdata_l <= '0;
-                                    dmem_hrdata_l[SCR1_IRQ_LINES_NUM-1:0] <= irq_reg;
-                                end
-`endif // SCR1_IPIC_EN
-                                SCR1_MEM_ERR_PTR : begin
-                                    dmem_hrdata_l <= mem_err_ptr;
-                                end
-                                default : begin
-                                    if(mirage_rangeen & dmem_haddr>=mirage_adrlo & dmem_haddr<mirage_adrhi)
-                                        dmem_hrdata_l <= scr1_read_mem({dmem_haddr[SCR1_AHB_WIDTH-1:2], 2'b00}, dmem_be, dmem_wr_hazard, dmem_hwdata, 1'b1);
-                                    else
-                                        dmem_hrdata_l <= scr1_read_mem({dmem_haddr[SCR1_AHB_WIDTH-1:2], 2'b00}, dmem_be, dmem_wr_hazard, dmem_hwdata, 1'b0);
-                                end
-                            endcase
+                if (dmem_req_ack) begin
+                    case (dmem_htrans)
+                        SCR1_HTRANS_IDLE : begin
                         end
-                    end
-                    default : begin
-                        dmem_ahb_addr  <= 'x;
-                        dmem_ahb_wr    <= 'x;
-                        dmem_ahb_size  <= SCR1_HSIZE_ERR;
-                        dmem_hrdata_l  <= 'x;
-                    end
-                endcase
+                        SCR1_HTRANS_NONSEQ : begin
+                            dmem_ahb_addr <= dmem_haddr;
+                            dmem_ahb_wr   <= dmem_hwrite;
+                            dmem_ahb_size <= dmem_hsize;
+                            dmem_ahb_be   <= dmem_be;
+                            if (~dmem_hwrite & scr1_check_err_addr(dmem_haddr)) begin
+                                case (dmem_haddr)
+`ifdef SCR1_IPIC_EN
+                                    SCR1_IRQ_ADDR : begin
+                                        dmem_hrdata_l <= '0;
+                                        dmem_hrdata_l[SCR1_IRQ_LINES_NUM-1:0] <= irq_reg;
+                                    end
+`endif // SCR1_IPIC_EN
+                                    SCR1_MEM_ERR_PTR : begin
+                                        dmem_hrdata_l <= mem_err_ptr;
+                                    end
+                                    default : begin
+                                        if(mirage_rangeen & dmem_haddr>=mirage_adrlo & dmem_haddr<mirage_adrhi)
+                                            dmem_hrdata_l <= scr1_read_mem({dmem_haddr[SCR1_AHB_WIDTH-1:2], 2'b00}, dmem_be, dmem_wr_hazard, dmem_hwdata, 1'b1);
+                                        else
+                                            dmem_hrdata_l <= scr1_read_mem({dmem_haddr[SCR1_AHB_WIDTH-1:2], 2'b00}, dmem_be, dmem_wr_hazard, dmem_hwdata, 1'b0);
+                                    end
+                                endcase
+                            end
+                        end
+                        default : begin
+                            dmem_ahb_addr  <= 'x;
+                            dmem_ahb_wr    <= 'x;
+                            dmem_ahb_size  <= SCR1_HSIZE_ERR;
+                            dmem_hrdata_l  <= 'x;
+                        end
+                    endcase
+                end
             end
             SCR1_AHB_STATE_DATA : begin
                 if (dmem_req_ack) begin
@@ -540,18 +541,27 @@ always_comb begin
     dmem_hready = 1'b0;
     dmem_hresp  = SCR1_HRESP_OKAY;
     dmem_hrdata = 'x;
-    if (dmem_ahb_state == SCR1_AHB_STATE_DATA) begin
-        if (dmem_req_ack) begin
-            dmem_hready = 1'b1;
-            if (~scr1_check_err_addr(dmem_ahb_addr)) begin
-                dmem_hresp  = SCR1_HRESP_ERROR;
-            end else begin
-                if (~dmem_ahb_wr) begin
-                    dmem_hrdata = dmem_hrdata_l;
+    case (dmem_ahb_state)
+        SCR1_AHB_STATE_IDLE : begin
+            if (dmem_req_ack) begin
+                dmem_hready = 1'b1;
+            end
+        end
+        SCR1_AHB_STATE_DATA : begin
+            if (dmem_req_ack) begin
+                dmem_hready = 1'b1;
+                if (~scr1_check_err_addr(dmem_ahb_addr)) begin
+                    dmem_hresp  = SCR1_HRESP_ERROR;
+                end else begin
+                    if (~dmem_ahb_wr) begin
+                        dmem_hrdata = dmem_hrdata_l;
+                    end
                 end
             end
         end
-    end
+        default : begin
+        end
+    endcase
 end
 
 //-------------------------------------------------------------------------------
