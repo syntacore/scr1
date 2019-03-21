@@ -195,13 +195,16 @@ _run_test:
 
 #define EXTRA_DATA
 
-#define RVTEST_DATA_BEGIN                                               \
-        EXTRA_DATA                                                      \
-        .pushsection .tohost,"aw",@progbits;                            \
-        .align 6; .global tohost; tohost: .dword 0;                     \
-        .align 6; .global fromhost; fromhost: .dword 0;                 \
-        .popsection;                                                    \
-        .align 4; .global begin_signature; begin_signature:
+#define RVTEST_DATA_BEGIN                                                       \
+        EXTRA_DATA                                                              \
+        .pushsection .tohost,"aw",@progbits;                                    \
+        .align 6; .global tohost; tohost: .dword 0;                             \
+        .align 6; .global fromhost; fromhost: .dword 0;                         \
+        .popsection;                                                            \
+        .align 4;                                                               \
+        .global begin_regstate;  begin_regstate: .dword 0; .dword 0; .dword 0;  \
+        .align 4;                                                               \
+        .global begin_signature; begin_signature:
 
 #define RVTEST_DATA_END .align 4; .global end_signature; end_signature:
 

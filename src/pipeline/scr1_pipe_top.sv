@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2019. See LICENSE for details
 /// @file       <scr1_pipe_top.sv>
 /// @brief      SCR1 pipeline top
 ///
@@ -13,16 +13,20 @@
 `endif // SCR1_IPIC_EN
 
 `ifdef SCR1_DBGC_EN
-`include "scr1_dbgc.svh"
+`include "scr1_hdu.svh"
 `endif // SCR1_DBGC_EN
 
 `ifdef SCR1_BRKM_EN
-`include "scr1_brkm.svh"
+`include "scr1_tdu.svh"
 `endif // SCR1_BRKM_EN
 
 module scr1_pipe_top (
     // Common
-    input   logic                                       rst_n,
+    input   logic                                       pipe_rst_n,
+`ifdef SCR1_DBGC_EN
+    input  logic                                        pipe_rst_n_qlfy,
+    input  logic                                        dbg_rst_n,
+`endif // SCR1_DBGC_EN
     input   logic                                       clk,
 
     // Instruction Memory Interface
@@ -44,18 +48,30 @@ module scr1_pipe_top (
     input   type_scr1_mem_resp_e                        dmem_resp,
 
 `ifdef SCR1_DBGC_EN
-    // DBGC interface
-    input   type_scr1_dbgc_hart_dbg_mode_e              dbgc_hart_cmd,
-    input   logic                                       dbgc_hart_cmd_req,
-    output  logic                                       dbgc_hart_cmd_ack,
-    output  logic                                       dbgc_hart_cmd_nack,
-    input   type_scr1_dbgc_hart_runctrl_s               dbgc_hart_runctrl,
-    output  type_scr1_dbgc_hart_state_s                 dbgc_hart_state,
-    input   logic [SCR1_DBGC_DBG_CORE_INSTR_WIDTH-1:0]  dbgc_hart_instr,
-    input   logic [SCR1_DBGC_DBG_DATA_REG_WIDTH-1:0]    dbgc_hart_dreg_out,
-    output  logic [SCR1_DBGC_DBG_DATA_REG_WIDTH-1:0]    dbgc_hart_dreg_in,
-    output  logic                                       dbgc_hart_dreg_wr,
-    output  logic [SCR1_DBGC_DBG_DATA_REG_WIDTH-1:0]    dbgc_hart_pcsample,
+    // Debug interface:
+    // DM <-> Pipeline: HART Run Control i/f
+    input  logic                                        dm_active,
+    input  logic                                        dm_cmd_req,
+    input  type_scr1_hdu_dbgstates_e                    dm_cmd,
+    output logic                                        dm_cmd_resp,
+    output logic                                        dm_cmd_rcode, // 0 - Ok; 1 - Error
+    output logic                                        dm_hart_event,
+    output type_scr1_hdu_hartstatus_s                   dm_hart_status,
+    // DM <-> Pipeline: Program Buffer - HART instruction execution i/f
+    output logic                                        dm_pbuf_req,
+    output logic [SCR1_HDU_PBUF_ADDR_WIDTH-1:0]         dm_pbuf_addr, // so far request only for 1 instruction
+    input  logic                                        dm_pbuf_resp,
+    input  logic                                        dm_pbuf_rcode, // rcode: 0b0 - normal; 0b1 - error
+    input  logic [SCR1_HDU_CORE_INSTR_WIDTH-1:0]        dm_pbuf_instr,
+    // DM <-> Pipeline: HART Abstract Data regs i/f
+    output logic                                        dm_dreg_req,
+    output logic                                        dm_dreg_wr,
+    output logic [`SCR1_XLEN-1:0]                       dm_dreg_wdata,
+    input  logic                                        dm_dreg_resp,
+    input  logic                                        dm_dreg_fail, // ? - possibly not needed
+    input  logic [`SCR1_XLEN-1:0]                       dm_dreg_rdata,
+    //
+    output logic [`SCR1_XLEN-1:0]                       dm_pc_sample,
 `endif // SCR1_DBGC_EN
 
     // IRQ
@@ -102,7 +118,7 @@ logic [`SCR1_XLEN-1:0]                      new_pc;                 // New PC
 
 logic                                       stop_fetch;             // Stop IFU
 logic                                       exu_exc_req;            // Exception request
-logic                                       brkpt;                  // Breakpoint (sw/hw) on current instruction
+logic                                       brkpt;                  // Breakpoint (sw) on current instruction
 logic                                       exu_init_pc;            // Reset exit
 logic                                       wfi_run2halt;           // Transition to WFI halted state
 logic                                       instret;                // Instruction retirement (with or without exception)
@@ -174,37 +190,58 @@ logic [`SCR1_XLEN-1:0]                      ipic2csr_rdata;         // IPIC read
 `endif // SCR1_IPIC_EN
 
 `ifdef SCR1_BRKM_EN
-// CSR <-> BRKM
-logic                                       csr2brkm_req;           // Request to BRKM
-type_scr1_csr_cmd_sel_e                     csr2brkm_cmd;           // BRKM command
-logic [SCR1_BRKM_PKG_CSR_OFFS_WIDTH-1:0]    csr2brkm_addr;          // BRKM address
-logic [SCR1_BRKM_PKG_CSR_DATA_WIDTH-1:0]    csr2brkm_wdata;         // BRKM write data
-logic [SCR1_BRKM_PKG_CSR_DATA_WIDTH-1:0]    brkm2csr_rdata;         // BRKM read data
-type_scr1_csr_resp_e                        brkm2csr_resp;          // BRKM response
+// CSR <-> TDU
+logic                                       csr2tdu_req;           // Request to TDU
+type_scr1_csr_cmd_sel_e                     csr2tdu_cmd;           // TDU command
+logic [SCR1_CSR_ADDR_TDU_OFFS_W-1:0]        csr2tdu_addr;          // TDU address
+logic [`SCR1_XLEN-1:0]                      csr2tdu_wdata;         // TDU write data
+logic [`SCR1_XLEN-1:0]                      tdu2csr_rdata;         // TDU read data
+type_scr1_csr_resp_e                        tdu2csr_resp;          // TDU response
+ `ifdef SCR1_DBGC_EN
+                                                                    // Qualified TDU input signals from pipe_rst_n
+                                                                    // reset domain:
+logic                                       csr2tdu_req_qlfy;      //     Request to TDU
+type_scr1_csr_cmd_sel_e                     csr2tdu_cmd_qlfy;      //     TDU command
+logic [SCR1_CSR_ADDR_TDU_OFFS_W-1:0]        csr2tdu_addr_qlfy;     //     TDU address
+logic [`SCR1_XLEN-1:0]                      csr2tdu_wdata_qlfy;    //     TDU write data
+ `endif // SCR1_DBGC_EN
 
-// EXU/LSU <-> BRKM
-type_scr1_brkm_instr_mon_s                  exu2brkm_i_mon;         // Instruction monitor
-type_scr1_brkm_lsu_mon_s                    lsu2brkm_d_mon;         // Data monitor
-logic [SCR1_BRKM_BRKPT_NUMBER-1:0]          brkm2exu_i_match;       // Instruction breakpoint(s) match
-logic [SCR1_BRKM_BRKPT_NUMBER-1:0]          brkm2lsu_d_match;       // Data breakpoint(s) match
-logic                                       brkm2exu_i_x_req;       // Instruction breakpoint exception
-logic                                       brkm2lsu_i_x_req;       // Instruction breakpoint exception
-logic                                       brkm2lsu_d_x_req;       // Data breakpoint exception
-logic [SCR1_BRKM_BRKPT_NUMBER-1:0]          exu2brkm_bp_retire;     // Instruction with breakpoint flag retire
-logic                                       exu2brkm_bp_i_recover;  // Instruction breakpoint state recover
+// EXU/LSU <-> TDU
+type_scr1_brkm_instr_mon_s                  exu2tdu_i_mon;         // Instruction monitor
+type_scr1_brkm_lsu_mon_s                    lsu2tdu_d_mon;         // Data monitor
+logic [SCR1_TDU_ALLTRIG_NUM-1:0]            tdu2exu_i_match;       // Instruction breakpoint(s) match
+logic [SCR1_TDU_MTRIG_NUM-1:0]              tdu2lsu_d_match;       // Data breakpoint(s) match
+logic                                       tdu2exu_i_x_req;       // Instruction breakpoint exception
+logic                                       tdu2lsu_i_x_req;       // Instruction breakpoint exception
+logic                                       tdu2lsu_d_x_req;       // Data breakpoint exception
+logic [SCR1_TDU_ALLTRIG_NUM-1:0]            exu2tdu_bp_retire;     // Instruction with breakpoint flag retire
+ `ifdef SCR1_DBGC_EN
+                                                                    // Qualified TDU input signals from pipe_rst_n
+                                                                    // reset domain:
+type_scr1_brkm_instr_mon_s                  exu2tdu_i_mon_qlfy;         // Instruction monitor
+type_scr1_brkm_lsu_mon_s                    lsu2tdu_d_mon_qlfy;         // Data monitor
+logic [SCR1_TDU_ALLTRIG_NUM-1:0]            exu2tdu_bp_retire_qlfy;     // Instruction with breakpoint flag retire
+ `endif // SCR1_DBGC_EN
 `endif // SCR1_BRKM_EN
 
 `ifdef SCR1_DBGC_EN
-// DBGC
-logic                                       fetch_dbgc;             // Fetch instructions provided by DBGC
-logic [`SCR1_IMEM_DWIDTH-1:0]               dbgc_instr;
+// Debug signals:
+logic                                       fetch_pbuf;             // Fetch instructions provided by Program Buffer (via HDU)
+logic                                       csr2hdu_req;            // Request to HDU
+type_scr1_csr_cmd_sel_e                     csr2hdu_cmd;            // HDU command
+logic [SCR1_HDU_DEBUGCSR_ADDR_WIDTH-1:0]    csr2hdu_addr;           // HDU address
+logic [`SCR1_XLEN-1:0]                      csr2hdu_wdata;          // HDU write data
+logic [`SCR1_XLEN-1:0]                      hdu2csr_rdata;          // HDU read data
+type_scr1_csr_resp_e                        hdu2csr_resp;           // HDU response
+                                                                    // Qualified HDU input signals from pipe_rst_n
+                                                                    // reset domain:
+logic                                       csr2hdu_req_qlfy;       //     Request to HDU
+type_scr1_csr_cmd_sel_e                     csr2hdu_cmd_qlfy;       //     HDU command
+logic [SCR1_HDU_DEBUGCSR_ADDR_WIDTH-1:0]    csr2hdu_addr_qlfy;      //     HDU address
+logic [`SCR1_XLEN-1:0]                      csr2hdu_wdata_qlfy;     //     HDU write data
 
-logic [SCR1_DBGC_DBG_DATA_REG_WIDTH-1:0]    dbga2csr_ddr;           // DBGA read data (DDR - debug data register interface)
-logic [SCR1_DBGC_DBG_DATA_REG_WIDTH-1:0]    csr2dbga_ddr;           // DBGA write data
-logic                                       csr2dbga_ddr_we;        // DBGA write request
-
-logic                                       hwbrk_dsbl;             // Disables BRKM
-logic                                       brkm2dbga_dmode_req;    // BRKM requests transition to debug mode
+logic                                       hwbrk_dsbl;             // Disables TDU
+logic                                       tdu2hdu_dmode_req;      // TDU requests transition to debug mode
 
 logic                                       exu_no_commit;          // Forbid instruction commitment
 logic                                       exu_irq_dsbl;           // Disable IRQ
@@ -215,6 +252,22 @@ logic                                       dbg_halted;             // Debug hal
 logic                                       dbg_run2halt;           // Transition to debug halted state
 logic                                       dbg_halt2run;           // Transition to run state
 logic                                       dbg_run_start;          // First cycle of run state
+logic [`SCR1_XLEN-1:0]                      dbg_new_pc;             // New PC as starting point for HART Resume
+
+logic                                       ifu2hdu_pbuf_rdy;
+logic                                       hdu2ifu_pbuf_vd;
+logic                                       hdu2ifu_pbuf_err;
+logic [SCR1_HDU_CORE_INSTR_WIDTH-1:0]       hdu2ifu_pbuf_instr;
+
+// Qualified HDU input signals from pipe_rst_n reset domain:
+logic                                       ifu2hdu_pbuf_rdy_qlfy;
+logic                                       exu_busy_qlfy;
+logic                                       instret_qlfy;
+logic                                       exu_init_pc_qlfy;
+logic                                       exu_exc_req_qlfy;
+logic                                       brkpt_qlfy;
+logic [`SCR1_XLEN-1:0]                      curr_pc_qlfy;
+
 `endif // SCR1_DBGC_EN
 
 
@@ -223,7 +276,7 @@ logic                                       dbg_run_start;          // First cyc
 //-------------------------------------------------------------------------------
 assign stop_fetch   = wfi_run2halt
 `ifdef SCR1_DBGC_EN
-                    | dbg_run2halt
+                    | fetch_pbuf
 `endif // SCR1_DBGC_EN
                     ;
 
@@ -231,20 +284,20 @@ assign stop_fetch   = wfi_run2halt
 assign sleep_pipe   = wfi_halted & ~imem_txns_pending;
 assign wake_pipe    = csr2exu_ip_ie
 `ifdef SCR1_DBGC_EN
-                    | dbgc_hart_cmd_req
+                    | dm_active
 `endif // SCR1_DBGC_EN
                     ;
 `endif // SCR1_CLKCTRL_EN
 
 `ifdef SCR1_DBGC_EN
-assign dbgc_hart_pcsample = curr_pc;
+assign dm_pc_sample = curr_pc;
 `endif // SCR1_DBGC_EN
 
 //-------------------------------------------------------------------------------
 // Instruction fetch unit
 //-------------------------------------------------------------------------------
 scr1_pipe_ifu i_pipe_ifu (
-    .rst_n              (rst_n              ),
+    .rst_n              (pipe_rst_n         ),
     .clk                (clk                ),
 
     .imem_req_ack       (imem_req_ack       ),
@@ -258,8 +311,11 @@ scr1_pipe_ifu i_pipe_ifu (
     .new_pc_req         (new_pc_req         ),
     .stop_fetch         (stop_fetch         ),
 `ifdef SCR1_DBGC_EN
-    .fetch_dbgc         (fetch_dbgc         ),
-    .dbgc_instr         (dbgc_instr         ),
+    .fetch_pbuf         (fetch_pbuf         ),
+    .ifu2hdu_pbuf_rdy   (ifu2hdu_pbuf_rdy   ),
+    .hdu2ifu_pbuf_vd    (hdu2ifu_pbuf_vd    ),
+    .hdu2ifu_pbuf_err   (hdu2ifu_pbuf_err   ),
+    .hdu2ifu_pbuf_instr (hdu2ifu_pbuf_instr ),
 `endif // SCR1_DBGC_EN
 `ifdef SCR1_CLKCTRL_EN
     .imem_txns_pending  (imem_txns_pending  ),
@@ -278,7 +334,7 @@ scr1_pipe_ifu i_pipe_ifu (
 //-------------------------------------------------------------------------------
 scr1_pipe_idu i_pipe_idu (
 `ifdef SCR1_SIM_ENV
-    .rst_n              (rst_n              ),
+    .rst_n              (pipe_rst_n         ),
     .clk                (clk                ),
 `endif // SCR1_SIM_ENV
     .idu2ifu_rdy        (idu2ifu_rdy        ),
@@ -302,7 +358,7 @@ scr1_pipe_idu i_pipe_idu (
 // Execution unit
 //-------------------------------------------------------------------------------
 scr1_pipe_exu i_pipe_exu (
-    .rst_n                  (rst_n                ),
+    .rst_n                  (pipe_rst_n           ),
     .clk                    (clk                  ),
 `ifdef SCR1_CLKCTRL_EN
     .clk_alw_on             (clk_alw_on           ),
@@ -355,22 +411,23 @@ scr1_pipe_exu i_pipe_exu (
     .exu_irq_dsbl           (exu_irq_dsbl         ),
     .exu_pc_advmt_dsbl      (exu_pc_advmt_dsbl    ),
     .exu_dmode_sstep_en     (exu_dmode_sstep_en   ),
-    .fetch_dbgc             (fetch_dbgc           ),
+    .fetch_pbuf             (fetch_pbuf           ),
     .dbg_halted             (dbg_halted           ),
     .dbg_run2halt           (dbg_run2halt         ),
     .dbg_halt2run           (dbg_halt2run         ),
     .dbg_run_start          (dbg_run_start        ),
+    .dbg_new_pc             (dbg_new_pc           ),
 `endif // SCR1_DBGC_EN
 `ifdef SCR1_BRKM_EN
-    .exu2brkm_i_mon         (exu2brkm_i_mon       ),
-    .brkm2exu_i_match       (brkm2exu_i_match     ),
-    .brkm2exu_i_x_req       (brkm2exu_i_x_req     ),
-    .lsu2brkm_d_mon         (lsu2brkm_d_mon       ),
-    .brkm2lsu_i_x_req       (brkm2lsu_i_x_req     ),
-    .brkm2lsu_d_match       (brkm2lsu_d_match     ),
-    .brkm2lsu_d_x_req       (brkm2lsu_d_x_req     ),
-    .exu2brkm_bp_retire     (exu2brkm_bp_retire   ),
-    .exu2brkm_bp_i_recover  (exu2brkm_bp_i_recover),
+    .exu2tdu_i_mon          (exu2tdu_i_mon        ),
+    .tdu2exu_i_match        (tdu2exu_i_match      ),
+    .tdu2exu_i_x_req        (tdu2exu_i_x_req      ),
+    .lsu2tdu_d_mon          (lsu2tdu_d_mon        ),
+    .tdu2lsu_i_x_req        (tdu2lsu_i_x_req      ),
+    .tdu2lsu_d_match        (tdu2lsu_d_match      ),
+    .tdu2lsu_d_x_req        (tdu2lsu_d_x_req      ),
+    .exu2tdu_bp_retire      (exu2tdu_bp_retire    ),
+    .exu2tdu_bp_i_recover   (                     ),
     .brkpt_hw               (brkpt_hw             ),
 `endif // SCR1_BRKM_EN
     .brkpt                  (brkpt                ),
@@ -397,7 +454,7 @@ scr1_pipe_exu i_pipe_exu (
 //-------------------------------------------------------------------------------
 scr1_pipe_mprf i_pipe_mprf (
 `ifdef SCR1_MPRF_RST_EN
-    .rst_n                  (rst_n            ),
+    .rst_n                  (pipe_rst_n       ),
 `endif // SCR1_MPRF_RST_EN
     .clk                    (clk              ),
     .exu2mprf_rs1_addr      (exu2mprf_rs1_addr),
@@ -413,7 +470,7 @@ scr1_pipe_mprf i_pipe_mprf (
 // Control and status registers
 //-------------------------------------------------------------------------------
 scr1_pipe_csr i_pipe_csr (
-    .rst_n                  (rst_n              ),
+    .rst_n                  (pipe_rst_n         ),
     .clk                    (clk                ),
 `ifdef SCR1_CLKCTRL_EN
     .clk_alw_on             (clk_alw_on         ),
@@ -457,17 +514,21 @@ scr1_pipe_csr i_pipe_csr (
     .timer_irq              (timer_irq          ),
     .mtime_ext              (mtime_ext          ),
 `ifdef SCR1_DBGC_EN
-    .dbga2csr_ddr           (dbga2csr_ddr       ),
-    .csr2dbga_ddr           (csr2dbga_ddr       ),
-    .csr2dbga_ddr_we        (csr2dbga_ddr_we    ),
+    // CSR <-> HDU interface
+    .csr2hdu_req            (csr2hdu_req        ),
+    .csr2hdu_cmd            (csr2hdu_cmd        ),
+    .csr2hdu_addr           (csr2hdu_addr       ),
+    .csr2hdu_wdata          (csr2hdu_wdata      ),
+    .hdu2csr_rdata          (hdu2csr_rdata      ),
+    .hdu2csr_resp           (hdu2csr_resp       ),
 `endif // SCR1_DBGC_EN
 `ifdef SCR1_BRKM_EN
-    .csr2brkm_req           (csr2brkm_req       ),
-    .csr2brkm_cmd           (csr2brkm_cmd       ),
-    .csr2brkm_addr          (csr2brkm_addr      ),
-    .csr2brkm_wdata         (csr2brkm_wdata     ),
-    .brkm2csr_rdata         (brkm2csr_rdata     ),
-    .brkm2csr_resp          (brkm2csr_resp      ),
+    .csr2tdu_req            (csr2tdu_req       ),
+    .csr2tdu_cmd            (csr2tdu_cmd       ),
+    .csr2tdu_addr           (csr2tdu_addr      ),
+    .csr2tdu_wdata          (csr2tdu_wdata     ),
+    .tdu2csr_rdata          (tdu2csr_rdata     ),
+    .tdu2csr_resp           (tdu2csr_resp      ),
 `endif // SCR1_BRKM_EN
     .fuse_mhartid           (fuse_mhartid       )
 );
@@ -477,7 +538,7 @@ scr1_pipe_csr i_pipe_csr (
 //-------------------------------------------------------------------------------
 `ifdef SCR1_IPIC_EN
 scr1_ipic i_pipe_ipic (
-    .rst_n              (rst_n          ),
+    .rst_n              (pipe_rst_n     ),
 `ifdef SCR1_CLKCTRL_EN
     .clk                (clk_alw_on     ),
 `else // SCR1_CLKCTRL_EN
@@ -497,86 +558,171 @@ scr1_ipic i_pipe_ipic (
 // Breakpoint module
 //-------------------------------------------------------------------------------
 `ifdef SCR1_BRKM_EN
-scr1_pipe_brkm i_pipe_brkm (
+scr1_pipe_tdu i_pipe_tdu (
+    // Common signals
+ `ifdef SCR1_DBGC_EN
+    .rst_n                  (dbg_rst_n              ),
+ `else
     .rst_n                  (rst_n                  ),
+ `endif // SCR1_DBGC_EN
     .clk                    (clk                    ),
     .clk_en                 (1'b1                   ),
-`ifdef SCR1_DBGC_EN
-    .init                   (dbg_halt2run           ),
+ `ifdef SCR1_DBGC_EN
     .dsbl                   (hwbrk_dsbl             ),
-`else // SCR1_DBGC_EN
-    .init                   (1'b0                   ),
+ `else // SCR1_DBGC_EN
     .dsbl                   (1'b0                   ),
-`endif // SCR1_DBGC_EN
-    .csr2brkm_req           (csr2brkm_req           ),
-    .csr2brkm_cmd           (csr2brkm_cmd           ),
-    .csr2brkm_addr          (csr2brkm_addr          ),
-    .csr2brkm_wdata         (csr2brkm_wdata         ),
-    .brkm2csr_rdata         (brkm2csr_rdata         ),
-    .brkm2csr_resp          (brkm2csr_resp          ),
-`ifdef SCR1_DBGC_EN
-    .brkm2dbga_dmode_req    (brkm2dbga_dmode_req    ),
-`else // SCR1_DBGC_EN
-    .brkm2dbga_dmode_req    (),
-`endif // SCR1_DBGC_EN
-    .exu2brkm_i_mon         (exu2brkm_i_mon         ),
-    .brkm2exu_i_match       (brkm2exu_i_match       ),
-    .brkm2exu_i_x_req       (brkm2exu_i_x_req       ),
-    .lsu_brk_en             (),
-    .brkm2lsu_i_x_req       (brkm2lsu_i_x_req       ),
-    .lsu2brkm_d_mon         (lsu2brkm_d_mon         ),
-    .brkm2lsu_d_match       (brkm2lsu_d_match       ),
-    .brkm2lsu_d_x_req       (brkm2lsu_d_x_req       ),
-    .exu2brkm_bp_retire     (exu2brkm_bp_retire     ),
-    .exu2brkm_bp_i_recover  (exu2brkm_bp_i_recover  )
+ `endif // SCR1_DBGC_EN
+
+    // CSR I/F
+ `ifdef SCR1_DBGC_EN
+    .csr2tdu_req            (csr2tdu_req_qlfy      ),
+    .csr2tdu_cmd            (csr2tdu_cmd_qlfy      ),
+    .csr2tdu_addr           (csr2tdu_addr_qlfy     ),
+    .csr2tdu_wdata          (csr2tdu_wdata_qlfy    ),
+ `else // SCR1_DBGC_EN
+    .csr2tdu_req            (csr2tdu_req           ),
+    .csr2tdu_cmd            (csr2tdu_cmd           ),
+    .csr2tdu_addr           (csr2tdu_addr          ),
+    .csr2tdu_wdata          (csr2tdu_wdata         ),
+ `endif // SCR1_DBGC_EN
+    .csr2tdu_rdata          (tdu2csr_rdata         ),
+    .csr2tdu_resp           (tdu2csr_resp          ),
+    // ID I/F
+ `ifdef SCR1_DBGC_EN
+    .exu2tdu_i_mon          (exu2tdu_i_mon_qlfy    ),
+ `else // SCR1_DBGC_EN
+    .exu2tdu_i_mon          (exu2tdu_i_mon         ),
+ `endif // SCR1_DBGC_EN
+    // CFU I/F
+    .tdu2exu_i_match        (tdu2exu_i_match       ),
+    .tdu2exu_i_x_req        (tdu2exu_i_x_req       ),
+    // LSU I/F
+    .tdu2lsu_brk_en         (                       ),
+    .tdu2lsu_i_x_req        (tdu2lsu_i_x_req       ),
+ `ifdef SCR1_DBGC_EN
+    .tdu2lsu_d_mon          (lsu2tdu_d_mon_qlfy    ),
+ `else // SCR1_DBGC_EN
+    .tdu2lsu_d_mon          (lsu2tdu_d_mon         ),
+ `endif // SCR1_DBGC_EN
+    .tdu2lsu_d_match        (tdu2lsu_d_match       ),
+    .tdu2lsu_d_x_req        (tdu2lsu_d_x_req       ),
+    // EPU I/F
+ `ifdef SCR1_DBGC_EN
+    .tdu2hdu_dmode_req      (tdu2hdu_dmode_req      ),
+    // WB I/F
+    .exu2tdu_bp_retire      (exu2tdu_bp_retire_qlfy)
+ `else // SCR1_DBGC_EN
+    .tdu2hdu_dmode_req      (                       ),
+    // WB I/F
+    .exu2tdu_bp_retire      (exu2tdu_bp_retire     )
+ `endif // SCR1_DBGC_EN
 );
+
+ `ifdef SCR1_DBGC_EN
+assign csr2tdu_req_qlfy         = csr2tdu_req       & {$bits(csr2tdu_req){pipe_rst_n_qlfy}};
+assign csr2tdu_cmd_qlfy         = pipe_rst_n_qlfy   ? csr2tdu_cmd : SCR1_CSR_CMD_NONE;
+assign csr2tdu_addr_qlfy        = csr2tdu_addr      & {$bits(csr2tdu_addr){pipe_rst_n_qlfy}};
+assign csr2tdu_wdata_qlfy       = csr2tdu_wdata     & {$bits(csr2tdu_wdata){pipe_rst_n_qlfy}};
+//
+assign exu2tdu_i_mon_qlfy       = pipe_rst_n_qlfy ? exu2tdu_i_mon : '0;
+assign lsu2tdu_d_mon_qlfy       = pipe_rst_n_qlfy ? lsu2tdu_d_mon : '0;
+assign exu2tdu_bp_retire_qlfy   = exu2tdu_bp_retire & {$bits(exu2tdu_bp_retire){pipe_rst_n_qlfy}};
+ `endif // SCR1_DBGC_EN
+
 `endif // SCR1_BRKM_EN
 
 //-------------------------------------------------------------------------------
-// Pipeline debug agent
+// HART Debug Unit (HDU)
 //-------------------------------------------------------------------------------
 `ifdef SCR1_DBGC_EN
-scr1_pipe_dbga i_pipe_dbga (
-    .rst_n              (rst_n                  ),
+scr1_pipe_hdu i_pipe_hdu (
+    // Common signals
+    .rst_n                  (dbg_rst_n              ),
+    .clk_en                 (dm_active              ),
 `ifdef SCR1_CLKCTRL_EN
-    .clk_pipe_en        (clk_pipe_en            ),
-    .clk                (clk_dbgc               ),
+    .clk_pipe_en            (clk_pipe_en            ),
+    .clk                    (clk_dbgc               ),
 `else
-    .clk                (clk                    ),
+    .clk                    (clk                    ),
 `endif // SCR1_CLKCTRL_EN
-    .dbgc_hart_cmd      (dbgc_hart_cmd          ),
-    .dbgc_hart_cmd_req  (dbgc_hart_cmd_req      ),
-    .dbgc_hart_cmd_ack  (dbgc_hart_cmd_ack      ),
-    .dbgc_hart_cmd_nack (dbgc_hart_cmd_nack     ),
-    .dbgc_hart_runctrl  (dbgc_hart_runctrl      ),
-    .dbgc_hart_state    (dbgc_hart_state        ),
-    .dbgc_hart_instr    (dbgc_hart_instr        ),
-    .dbgc_hart_dreg_out (dbgc_hart_dreg_out     ),
-    .dbgc_hart_dreg_in  (dbgc_hart_dreg_in      ),
-    .dbgc_hart_dreg_wr  (dbgc_hart_dreg_wr      ),
+    // Control/status registers i/f
+    .csr_req                (csr2hdu_req_qlfy       ),
+    .csr_cmd                (csr2hdu_cmd_qlfy       ),
+    .csr_addr               (csr2hdu_addr_qlfy      ),
+    .csr_wdata              (csr2hdu_wdata_qlfy     ),
+    .csr_resp               (hdu2csr_resp           ),
+    .csr_rdata              (hdu2csr_rdata          ),
+    // HART Run Control i/f
+    .pipe_rst_n_qlfy        (pipe_rst_n_qlfy        ),
+    .dm_cmd_req             (dm_cmd_req             ),
+    .dm_cmd                 (dm_cmd                 ),
+    .dm_cmd_resp            (dm_cmd_resp            ),
+    .dm_cmd_rcode           (dm_cmd_rcode           ),
+    .dm_hart_event          (dm_hart_event          ),
+    .dm_hart_status         (dm_hart_status         ),
+    // Program Buffer - HART instruction execution i/f
+    .dm_pbuf_req            (dm_pbuf_req            ),
+    .dm_pbuf_addr           (dm_pbuf_addr           ),
+    .dm_pbuf_resp           (dm_pbuf_resp           ),
+    .dm_pbuf_rcode          (dm_pbuf_rcode          ),
+    .dm_pbuf_instr          (dm_pbuf_instr          ),
+    // HART Abstract Data regs i/f
+    .dm_dreg_req            (dm_dreg_req            ),
+    .dm_dreg_wr             (dm_dreg_wr             ),
+    .dm_dreg_wdata          (dm_dreg_wdata          ),
+    .dm_dreg_resp           (dm_dreg_resp           ),
+    .dm_dreg_fail           (dm_dreg_fail           ),
+    .dm_dreg_rdata          (dm_dreg_rdata          ),
+    //
+`ifdef SCR1_BRKM_EN
+    // HDU <-> TDU
+    .hart_hwbrk_dsbl        (hwbrk_dsbl             ),
+    .hart_tm_dmode_req      (tdu2hdu_dmode_req      ),
+    .hart_brkpt_hw          (brkpt_hw               ),
+`endif // SCR1_BRKM_EN
 
-    .fetch_dbgc         (fetch_dbgc             ),
-    .dbgc_instr         (dbgc_instr             ),
-    .hwbrk_dsbl         (hwbrk_dsbl             ),
-    .brkm_dmode_req     (brkm2dbga_dmode_req    ),
-    .brkpt_hw           (brkpt_hw               ),
-    .exu_busy           (exu_busy               ),
-    .instret            (instret                ),
-    .exu_exc_req        (exu_exc_req            ),
-    .brkpt              (brkpt                  ),
-    .exu_init_pc        (exu_init_pc            ),
-    .exu_no_commit      (exu_no_commit          ),
-    .exu_irq_dsbl       (exu_irq_dsbl           ),
-    .exu_pc_advmt_dsbl  (exu_pc_advmt_dsbl      ),
-    .exu_dmode_sstep_en (exu_dmode_sstep_en     ),
-    .dbga2csr_ddr       (dbga2csr_ddr           ),
-    .csr2dbga_ddr       (csr2dbga_ddr           ),
-    .csr2dbga_ddr_we    (csr2dbga_ddr_we        ),
-    .dbg_halted         (dbg_halted             ),
-    .dbg_run2halt       (dbg_run2halt           ),
-    .dbg_halt2run       (dbg_halt2run           ),
-    .dbg_run_start      (dbg_run_start          )
+    // HART Run Status
+    .hart_exu_busy          (exu_busy_qlfy          ),
+    .hart_instret           (instret_qlfy           ),
+    .hart_init_pc           (exu_init_pc_qlfy       ),
+    // HART Halt Status
+    .hart_exu_exc_req       (exu_exc_req_qlfy       ),
+    .hart_brkpt             (brkpt_qlfy             ),
+    // HART Run Control
+    .hart_fetch_pbuf        (fetch_pbuf             ),
+    .hart_exu_no_commit     (exu_no_commit          ),
+    .hart_exu_irq_dsbl      (exu_irq_dsbl           ),
+    .hart_exu_pc_advmt_dsbl (exu_pc_advmt_dsbl      ),
+    .hart_exu_dmode_sstep_en(exu_dmode_sstep_en     ),
+
+    // HART state
+    .hart_dbg_halted        (dbg_halted             ),
+    .hart_dbg_run2halt      (dbg_run2halt           ),
+    .hart_dbg_halt2run      (dbg_halt2run           ),
+    .hart_dbg_run_start     (dbg_run_start          ),
+    .hart_cmd_rctl          (                       ),
+    .hart_pc                (curr_pc_qlfy           ),
+    .hart_new_pc            (dbg_new_pc             ),
+    //
+    .hart_pbuf_instr_rdy    (ifu2hdu_pbuf_rdy_qlfy  ),
+    .hart_pbuf_instr_vd     (hdu2ifu_pbuf_vd        ),
+    .hart_pbuf_instr_err    (hdu2ifu_pbuf_err       ),
+    .hart_pbuf_instr        (hdu2ifu_pbuf_instr     )
 );
+
+assign csr2hdu_req_qlfy         = csr2hdu_req       & {$bits(csr2hdu_req){pipe_rst_n_qlfy}};
+assign csr2hdu_cmd_qlfy         = pipe_rst_n_qlfy   ? csr2hdu_cmd : SCR1_CSR_CMD_NONE;
+assign csr2hdu_addr_qlfy        = csr2hdu_addr      & {$bits(csr2hdu_addr){pipe_rst_n_qlfy}};
+assign csr2hdu_wdata_qlfy       = csr2hdu_wdata     & {$bits(csr2hdu_wdata){pipe_rst_n_qlfy}};
+//
+assign exu_busy_qlfy            = exu_busy          & {$bits(exu_busy){pipe_rst_n_qlfy}};
+assign instret_qlfy             = instret           & {$bits(instret){pipe_rst_n_qlfy}};
+assign exu_init_pc_qlfy         = exu_init_pc       & {$bits(exu_init_pc){pipe_rst_n_qlfy}};
+assign exu_exc_req_qlfy         = exu_exc_req       & {$bits(exu_exc_req){pipe_rst_n_qlfy}};
+assign brkpt_qlfy               = brkpt             & {$bits(brkpt){pipe_rst_n_qlfy}};
+assign ifu2hdu_pbuf_rdy_qlfy    = ifu2hdu_pbuf_rdy  & {$bits(ifu2hdu_pbuf_rdy){pipe_rst_n_qlfy}};
+assign curr_pc_qlfy             = curr_pc           & {$bits(curr_pc){pipe_rst_n_qlfy}};
+
 `endif // SCR1_DBGC_EN
 
 `ifdef SCR1_SIM_ENV
@@ -585,7 +731,7 @@ scr1_pipe_dbga i_pipe_dbga (
 //-------------------------------------------------------------------------------
 
 scr1_tracelog i_tracelog (
-    .rst_n          (rst_n                              ),
+    .rst_n          (pipe_rst_n                         ),
     .clk            (clk                                ),
     .fuse_mhartid   (fuse_mhartid                       ),
     // MPRF

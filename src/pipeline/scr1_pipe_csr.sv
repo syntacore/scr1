@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2019. See LICENSE for details
 /// @file       <scr1_pipe_csr.sv>
 /// @brief      Control Status Registers (CSR)
 ///
@@ -11,10 +11,10 @@
 `include "scr1_ipic.svh"
 `endif // SCR1_IPIC_EN
 `ifdef SCR1_DBGC_EN
-`include "scr1_dbgc.svh"
+`include "scr1_hdu.svh"
 `endif // SCR1_DBGC_EN
 `ifdef SCR1_BRKM_EN
-`include "scr1_brkm.svh"
+`include "scr1_tdu.svh"
 `endif // SCR1_BRKM_EN
 
 module scr1_pipe_csr (
@@ -74,20 +74,23 @@ module scr1_pipe_csr (
     input   logic [63:0]                                mtime_ext,              // External timer value
 
 `ifdef SCR1_DBGC_EN
-    // CSR <-> DBGA interface
-    input   logic [SCR1_DBGC_DBG_DATA_REG_WIDTH-1:0]    dbga2csr_ddr,           // DBGA read data
-    output  logic [SCR1_DBGC_DBG_DATA_REG_WIDTH-1:0]    csr2dbga_ddr,           // DBGA write data
-    output  logic                                       csr2dbga_ddr_we,        // DBGA write request
+    // CSR <-> HDU interface
+    output  logic                                       csr2hdu_req,           // Request to HDU
+    output  type_scr1_csr_cmd_sel_e                     csr2hdu_cmd,           // HDU command
+    output  logic [SCR1_HDU_DEBUGCSR_ADDR_WIDTH-1:0]    csr2hdu_addr,          // HDU address
+    output  logic [`SCR1_XLEN-1:0]                      csr2hdu_wdata,         // HDU write data
+    input   logic [`SCR1_XLEN-1:0]                      hdu2csr_rdata,         // HDU read data
+    input   type_scr1_csr_resp_e                        hdu2csr_resp,          // HDU response
 `endif // SCR1_DBGC_EN
 
 `ifdef SCR1_BRKM_EN
-    // CSR <-> BRKM interface
-    output  logic                                       csr2brkm_req,           // Request to BRKM
-    output  type_scr1_csr_cmd_sel_e                     csr2brkm_cmd,           // BRKM command
-    output  logic [SCR1_BRKM_PKG_CSR_OFFS_WIDTH-1:0]    csr2brkm_addr,          // BRKM address
-    output  logic [SCR1_BRKM_PKG_CSR_DATA_WIDTH-1:0]    csr2brkm_wdata,         // BRKM write data
-    input   logic [SCR1_BRKM_PKG_CSR_DATA_WIDTH-1:0]    brkm2csr_rdata,         // BRKM read data
-    input   type_scr1_csr_resp_e                        brkm2csr_resp,          // BRKM response
+    // CSR <-> TDU interface
+    output  logic                                       csr2tdu_req,           // Request to TDU
+    output  type_scr1_csr_cmd_sel_e                     csr2tdu_cmd,           // TDU command
+    output  logic [SCR1_CSR_ADDR_TDU_OFFS_W-1:0]        csr2tdu_addr,          // TDU address
+    output  logic [`SCR1_XLEN-1:0]                      csr2tdu_wdata,         // TDU write data
+    input   logic [`SCR1_XLEN-1:0]                      tdu2csr_rdata,         // TDU read data
+    input   type_scr1_csr_resp_e                        tdu2csr_resp,          // TDU response
 `endif // SCR1_BRKM_EN
 
     // MHARTID fuse
@@ -178,6 +181,10 @@ logic                                               e_exc;              // Succe
 logic                                               e_irq;              // Successful IRQ trap
 logic                                               e_mret;             // MRET instruction
 
+`ifdef SCR1_DBGC_EN
+logic                                               csr_hdu_req;
+`endif // SCR1_DBGC_EN
+
 `ifdef SCR1_BRKM_EN
 logic                                               csr_brkm_req;
 `endif // SCR1_BRKM_EN
@@ -220,6 +227,9 @@ always_comb begin
 `ifdef SCR1_IPIC_EN
     csr2ipic_r_req  = 1'b0;
 `endif // SCR1_IPIC_EN
+`ifdef SCR1_DBGC_EN
+    csr_hdu_req    = 1'b0;
+`endif // SCR1_DBGC_EN
 `ifdef SCR1_BRKM_EN
     csr_brkm_req   = 1'b0;
 `endif // SCR1_BRKM_EN
@@ -334,24 +344,24 @@ always_comb begin
 `endif // SCR1_IPIC_EN
 
 `ifdef SCR1_DBGC_EN
-        // Debug Data Register (DDR)
-        SCR1_CSR_ADDR_DBGC_SCRATCH  : begin
-            csr_r_data      = dbga2csr_ddr;
+        SCR1_HDU_DBGCSR_ADDR_DCSR,
+        SCR1_HDU_DBGCSR_ADDR_DPC,
+        SCR1_HDU_DBGCSR_ADDR_DSCRATCH0,
+        SCR1_HDU_DBGCSR_ADDR_DSCRATCH1 : begin
+            // HDU register access
+            csr_hdu_req = 1'b1;
+            csr_r_data  = hdu2csr_rdata;
         end
 `endif // SCR1_DBGC_EN
 
 `ifdef SCR1_BRKM_EN
-        // BRKM registers
-        SCR1_BRKM_PKG_CSR_ADDR_BPSELECT,
-        SCR1_BRKM_PKG_CSR_ADDR_BPCONTROL,
-        SCR1_BRKM_PKG_CSR_ADDR_BPLOADDR,
-        SCR1_BRKM_PKG_CSR_ADDR_BPHIADDR,
-        SCR1_BRKM_PKG_CSR_ADDR_BPLODATA,
-        SCR1_BRKM_PKG_CSR_ADDR_BPHIDATA,
-        SCR1_BRKM_PKG_CSR_ADDR_BPCTRLEXT,
-        SCR1_BRKM_PKG_CSR_ADDR_BRKMCTRL : begin
+        // TDU registers
+        SCR1_CSR_ADDR_TDU_TSELECT,
+        SCR1_CSR_ADDR_TDU_TDATA1,
+        SCR1_CSR_ADDR_TDU_TDATA2,
+        SCR1_CSR_ADDR_TDU_TINFO: begin
             csr_brkm_req    = 1'b1;
-            csr_r_data      = brkm2csr_rdata;
+            csr_r_data      = tdu2csr_rdata;
         end
 `endif // SCR1_BRKM_EN
 
@@ -396,10 +406,6 @@ always_comb begin
 `ifdef SCR1_IPIC_EN
     csr2ipic_w_req      = 1'b0;
 `endif // SCR1_IPIC_EN
-`ifdef SCR1_DBGC_EN
-    csr2dbga_ddr_we     = 1'b0;
-    csr2dbga_ddr        = '0;
-`endif // SCR1_DBGC_EN
 
     if (exu2csr_w_req) begin
         casez (exu2csr_rw_addr)
@@ -475,23 +481,20 @@ always_comb begin
 `endif // SCR1_IPIC_EN
 
 `ifdef SCR1_DBGC_EN
-            // Debug Data Register (DDR)
-            SCR1_CSR_ADDR_DBGC_SCRATCH  : begin
-                csr2dbga_ddr_we = 1'b1;
-                csr2dbga_ddr    = exu2csr_w_data;
+            SCR1_HDU_DBGCSR_ADDR_DCSR,
+            SCR1_HDU_DBGCSR_ADDR_DPC,
+            SCR1_HDU_DBGCSR_ADDR_DSCRATCH0,
+            SCR1_HDU_DBGCSR_ADDR_DSCRATCH1 : begin
             end
 `endif // SCR1_DBGC_EN
 
 `ifdef SCR1_BRKM_EN
-            // BRKM registers
-            SCR1_BRKM_PKG_CSR_ADDR_BPSELECT,
-            SCR1_BRKM_PKG_CSR_ADDR_BPCONTROL,
-            SCR1_BRKM_PKG_CSR_ADDR_BPLOADDR,
-            SCR1_BRKM_PKG_CSR_ADDR_BPHIADDR,
-            SCR1_BRKM_PKG_CSR_ADDR_BPLODATA,
-            SCR1_BRKM_PKG_CSR_ADDR_BPHIDATA,
-            SCR1_BRKM_PKG_CSR_ADDR_BPCTRLEXT,
-            SCR1_BRKM_PKG_CSR_ADDR_BRKMCTRL : begin end
+            // TDU registers
+            SCR1_CSR_ADDR_TDU_TSELECT,
+            SCR1_CSR_ADDR_TDU_TDATA1,
+            SCR1_CSR_ADDR_TDU_TDATA2,
+            SCR1_CSR_ADDR_TDU_TINFO: begin
+            end
 `endif // SCR1_BRKM_EN
 
             default : begin
@@ -503,8 +506,11 @@ end
 
 // CSR exception
 assign csr2exu_rw_exc = csr_r_exc | csr_w_exc
+`ifdef SCR1_DBGC_EN
+                     | ((csr2hdu_req) & (hdu2csr_resp != SCR1_CSR_RESP_OK))
+`endif // SCR1_DBGC_EN
 `ifdef SCR1_BRKM_EN
-                     | ((csr2brkm_req) & (brkm2csr_resp != SCR1_CSR_RESP_OK))
+                     | ((csr2tdu_req) & (tdu2csr_resp != SCR1_CSR_RESP_OK))
 `endif // SCR1_BRKM_EN
                     ;
 
@@ -736,16 +742,17 @@ generate
             end
         end
     end else begin : mtvec_base_ro_rw
-        assign csr_mtvec_base[SCR1_CSR_MTVEC_BASE_ZERO_BITS+:SCR1_CSR_MTVEC_BASE_RO_BITS]   = SCR1_CSR_MTVEC_BASE_RST_VAL[SCR1_CSR_MTVEC_BASE_ZERO_BITS+:SCR1_CSR_MTVEC_BASE_RO_BITS];
+        logic [(`SCR1_XLEN-1):(`SCR1_XLEN-1)-SCR1_CSR_MTVEC_BASE_RW_BITS]   csr_mtvec_base_reg;
         always_ff @(negedge rst_n, posedge clk) begin
             if (~rst_n) begin
-                csr_mtvec_base[(`SCR1_XLEN-1)-:SCR1_CSR_MTVEC_BASE_RW_BITS] <= SCR1_CSR_MTVEC_BASE_RST_VAL[(`SCR1_XLEN-1)-:SCR1_CSR_MTVEC_BASE_RW_BITS];
+                csr_mtvec_base_reg <= SCR1_CSR_MTVEC_BASE_RST_VAL[(`SCR1_XLEN-1)-:SCR1_CSR_MTVEC_BASE_RW_BITS] ;
             end else begin
                 if (csr_mtvec_up) begin
-                    csr_mtvec_base[(`SCR1_XLEN-1)-:SCR1_CSR_MTVEC_BASE_RW_BITS] <= csr_w_data[(`SCR1_XLEN-1)-:SCR1_CSR_MTVEC_BASE_RW_BITS];
+                    csr_mtvec_base_reg <= csr_w_data[(`SCR1_XLEN-1)-:SCR1_CSR_MTVEC_BASE_RW_BITS];
                 end
             end
         end
+        assign csr_mtvec_base = {csr_mtvec_base_reg, SCR1_CSR_MTVEC_BASE_RST_VAL[SCR1_CSR_MTVEC_BASE_ZERO_BITS+:SCR1_CSR_MTVEC_BASE_RO_BITS]};
     end
 endgenerate
 
@@ -862,14 +869,24 @@ assign csr2ipic_wdata   = csr2ipic_w_req                    ? exu2csr_w_data    
 `endif // SCR1_IPIC_EN
 
 
+`ifdef SCR1_DBGC_EN
+//-------------------------------------------------------------------------------
+// HDU
+//-------------------------------------------------------------------------------
+assign csr2hdu_req      = csr_hdu_req & ((exu2csr_r_req & ~csr_r_exc) | (exu2csr_w_req & ~csr_w_exc));
+assign csr2hdu_cmd      = exu2csr_w_cmd;
+assign csr2hdu_addr     = exu2csr_rw_addr[SCR1_HDU_DEBUGCSR_ADDR_WIDTH-1:0];
+assign csr2hdu_wdata    = exu2csr_w_data;
+`endif // SCR1_DBGC_EN
+
 `ifdef SCR1_BRKM_EN
 //-------------------------------------------------------------------------------
-// BRKM
+// TDU
 //-------------------------------------------------------------------------------
-assign csr2brkm_req     = csr_brkm_req & ((exu2csr_r_req & ~csr_r_exc) | (exu2csr_w_req & ~csr_w_exc));
-assign csr2brkm_cmd     = exu2csr_w_cmd;
-assign csr2brkm_addr    = exu2csr_rw_addr[SCR1_BRKM_PKG_CSR_OFFS_WIDTH-1:0];
-assign csr2brkm_wdata   = exu2csr_w_data;
+assign csr2tdu_req      = csr_brkm_req & ((exu2csr_r_req & ~csr_r_exc) | (exu2csr_w_req & ~csr_w_exc));
+assign csr2tdu_cmd      = exu2csr_w_cmd;
+assign csr2tdu_addr     = exu2csr_rw_addr[SCR1_CSR_ADDR_TDU_OFFS_W-1:0];
+assign csr2tdu_wdata    = exu2csr_w_data;
 `endif // SCR1_BRKM_EN
 
 

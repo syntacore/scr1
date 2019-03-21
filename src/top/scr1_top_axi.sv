@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2019. See LICENSE for details
 /// @file       <scr1_top_axi.sv>
 /// @brief      SCR1 AXI top
 ///
@@ -15,14 +15,22 @@
 
 module scr1_top_axi (
     // Control
-    input   logic                                   rst_n,                  // Reset signal
+    input   logic                                   pwrup_rst_n,            // Power-Up Reset
+    input   logic                                   rst_n,                  // Regular Reset signal
+    input   logic                                   cpu_rst_n,              // CPU Reset (Core Reset)
     input   logic                                   test_mode,              // Test mode
+    input   logic                                   test_rst_n,             // Test mode's reset
     input   logic                                   clk,                    // System clock
     input   logic                                   rtc_clk,                // Real-time clock
-    output  logic                                   rst_n_out,              // Core reset from DBGC
+`ifdef SCR1_DBGC_EN
+    output  logic                                   ndm_rst_n_out,          // Non-DM Reset from the Debug Module (DM)
+`endif // SCR1_DBGC_EN
 
     // Fuses
     input   logic [`SCR1_XLEN-1:0]                  fuse_mhartid,           // Hart ID
+`ifdef SCR1_DBGC_EN
+    input   logic [31:0]                            fuse_idcode,            // TAPC IDCODE
+`endif // SCR1_DBGC_EN
 
     // IRQ
 `ifdef SCR1_IPIC_EN
@@ -138,6 +146,13 @@ module scr1_top_axi (
 //-------------------------------------------------------------------------------
 // Local signal declaration
 //-------------------------------------------------------------------------------
+// Reset logic
+logic                                               pwrup_rst_n_sync;
+logic                                               rst_n_sync;
+logic                                               cpu_rst_n_sync;
+logic                                               reset_n_sync;
+logic                                               reset_n;
+logic                                               core_rst_n_local;
 
 // Instruction memory interface from core to router
 logic                                               core_imem_req_ack;
@@ -213,15 +228,67 @@ logic                                               axi_imem_idle;
 logic                                               axi_dmem_idle;
 
 //-------------------------------------------------------------------------------
+// Reset logic
+//-------------------------------------------------------------------------------
+// Power-Up Reset synchronizer
+scr1_reset_sync_cell i_pwrup_rstn_reset_sync (
+    .rst_n          (pwrup_rst_n),
+    .clk            (clk),
+    .test_rst_n     (test_rst_n),
+    .test_mode      (test_mode),
+    .rst_n_out      (pwrup_rst_n_sync)
+);
+
+// Regular Reset synchronizer
+scr1_reset_sync_cell i_rstn_reset_sync (
+    .rst_n          (rst_n),
+    .clk            (clk),
+    .test_rst_n     (test_rst_n),
+    .test_mode      (test_mode),
+    .rst_n_out      (rst_n_sync)
+);
+
+// CPU Reset synchronizer
+scr1_reset_sync_cell i_cpu_rstn_reset_sync (
+    .rst_n          (cpu_rst_n),
+    .clk            (clk),
+    .test_rst_n     (test_rst_n),
+    .test_mode      (test_mode),
+    .rst_n_out      (cpu_rst_n_sync)
+);
+
+// Combo Reset (Power-Up and Regular Resets): reset_n
+scr1_reset_buf_cell i_reset_buf_cell (
+    .rst_n              (reset_n_sync),
+    .clk                (clk),
+    .test_mode          (test_mode),
+    .test_rst_n         (test_rst_n),
+    .reset_n_in         (1'b1),
+    .reset_n_out        (reset_n),
+    .reset_n_status     ()
+);
+assign reset_n_sync = rst_n_sync & pwrup_rst_n_sync;
+
+//-------------------------------------------------------------------------------
 // SCR1 core instance
 //-------------------------------------------------------------------------------
 scr1_core_top i_core_top (
     // Control
-    .rst_n          (rst_n              ),
+    .pwrup_rst_n    (pwrup_rst_n_sync   ),
+    .rst_n          (rst_n_sync         ),
+    .cpu_rst_n      (cpu_rst_n_sync     ),
     .test_mode      (test_mode          ),
+    .test_rst_n     (test_rst_n         ),
     .clk            (clk                ),
-    .rst_n_out      (rst_n_out          ),
+    .core_rst_n_out (core_rst_n_local   ),
+    .core_rst_n_out_qlfy (              ),
+`ifdef SCR1_DBGC_EN
+    .ndm_rst_n_out  (ndm_rst_n_out      ),
+`endif // SCR1_DBGC_EN
     .fuse_mhartid   (fuse_mhartid       ),
+`ifdef SCR1_DBGC_EN
+    .fuse_idcode    (fuse_idcode        ),
+`endif // SCR1_DBGC_EN
     // IRQ
 `ifdef SCR1_IPIC_EN
     .irq_lines      (irq_lines          ),
@@ -267,7 +334,7 @@ scr1_tcm #(
     .SCR1_TCM_SIZE  (`SCR1_DMEM_AWIDTH'(~SCR1_TCM_ADDR_MASK + 1'b1))
 ) i_tcm (
     .clk            (clk                ),
-    .rst_n          (rst_n_out          ),
+    .rst_n          (core_rst_n_local   ),
     // Instruction interface to TCM
     .imem_req_ack   (tcm_imem_req_ack   ),
     .imem_req       (tcm_imem_req       ),
@@ -293,7 +360,7 @@ scr1_tcm #(
 //-------------------------------------------------------------------------------
 scr1_timer i_timer (
     // Common
-    .rst_n          (rst_n_out          ),
+    .rst_n          (core_rst_n_local   ),
     .clk            (clk                ),
     .rtc_clk        (rtc_clk            ),
     // Memory interface
@@ -319,7 +386,7 @@ scr1_imem_router #(
     .SCR1_ADDR_MASK     (SCR1_TCM_ADDR_MASK),
     .SCR1_ADDR_PATTERN  (SCR1_TCM_ADDR_PATTERN)
 ) i_imem_router (
-    .rst_n          (rst_n_out          ),
+    .rst_n          (core_rst_n_local   ),
     .clk            (clk                ),
     // Interface to core
     .imem_req_ack   (core_imem_req_ack  ),
@@ -373,7 +440,7 @@ scr1_dmem_router #(
     .SCR1_PORT2_ADDR_PATTERN    (SCR1_TIMER_ADDR_PATTERN)
 
 ) i_dmem_router (
-    .rst_n          (rst_n_out          ),
+    .rst_n          (core_rst_n_local   ),
     .clk            (clk                ),
     // Interface to core
     .dmem_req_ack   (core_dmem_req_ack  ),
@@ -441,7 +508,7 @@ scr1_mem_axi #(
 `endif // SCR1_IMEM_AXI_RESP_BP
 ) i_imem_axi (
     .clk            (clk                    ),
-    .rst_n          (rst_n                  ),
+    .rst_n          (reset_n                ),
     .axi_reinit     (axi_reinit             ),
     // Interface to core
     .core_idle      (axi_imem_idle          ),
@@ -517,7 +584,7 @@ scr1_mem_axi #(
 `endif // SCR1_DMEM_AXI_RESP_BP
 ) i_dmem_axi (
     .clk            (clk                    ),
-    .rst_n          (rst_n                  ),
+    .rst_n          (reset_n                ),
     .axi_reinit     (axi_reinit             ),
     // Interface to core
     .core_idle      (axi_dmem_idle          ),
@@ -579,8 +646,8 @@ scr1_mem_axi #(
 //-------------------------------------------------------------------------------
 // AXI reinit logic
 //-------------------------------------------------------------------------------
-always_ff @(negedge rst_n_out, posedge clk) begin
-    if (~rst_n_out)                             axi_reinit <= 1'b1;
+always_ff @(negedge core_rst_n_local, posedge clk) begin
+    if (~core_rst_n_local)                      axi_reinit <= 1'b1;
     else if (axi_imem_idle & axi_dmem_idle)     axi_reinit <= 1'b0;
 end
 

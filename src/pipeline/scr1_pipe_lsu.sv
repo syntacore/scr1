@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2019. See LICENSE for details
 /// @file       <scr1_pipe_lsu.sv>
 /// @brief      Load/Store Unit (LSU)
 ///
@@ -8,7 +8,7 @@
 `include "scr1_memif.svh"
 `include "scr1_riscv_isa_decoding.svh"
 `ifdef SCR1_BRKM_EN
-`include "scr1_brkm.svh"
+`include "scr1_tdu.svh"
 `endif // SCR1_BRKM_EN
 
 module scr1_pipe_lsu (
@@ -27,11 +27,11 @@ module scr1_pipe_lsu (
     output  type_scr1_exc_code_e                lsu2exu_exc_code,       // Exception code
     output  logic                               lsu_busy,
 
-    // BRKM <-> LSU interface
+    // TDU <-> LSU interface
 `ifdef SCR1_BRKM_EN
-    output  type_scr1_brkm_lsu_mon_s            lsu2brkm_d_mon,
-    input   logic                               brkm2lsu_i_x_req,
-    input   logic                               brkm2lsu_d_x_req,
+    output  type_scr1_brkm_lsu_mon_s            lsu2tdu_d_mon,
+    input   logic                               tdu2lsu_i_x_req,
+    input   logic                               tdu2lsu_d_x_req,
 `endif // SCR1_BRKM_EN
 
     // Data memory interface
@@ -211,34 +211,34 @@ end
 
 `ifdef SCR1_BRKM_EN
 //-------------------------------------------------------------------------------
-// BRKM
+// TDU
 //-------------------------------------------------------------------------------
-assign lsu2brkm_d_mon.vd        = exu2lsu_req & (fsm == SCR1_FSM_IDLE) & ~brkm2lsu_i_x_req;
-assign lsu2brkm_d_mon.addr      = exu2lsu_addr;
-assign lsu2brkm_d_mon.load      = (lsu2dmem_cmd == SCR1_MEM_CMD_RD);
-assign lsu2brkm_d_mon.store     = (lsu2dmem_cmd == SCR1_MEM_CMD_WR);
+assign lsu2tdu_d_mon.vd        = exu2lsu_req & (fsm == SCR1_FSM_IDLE) & ~tdu2lsu_i_x_req;
+assign lsu2tdu_d_mon.addr      = exu2lsu_addr;
+assign lsu2tdu_d_mon.load      = (lsu2dmem_cmd == SCR1_MEM_CMD_RD);
+assign lsu2tdu_d_mon.store     = (lsu2dmem_cmd == SCR1_MEM_CMD_WR);
 
 always_comb begin
     case (lsu2dmem_width)
         SCR1_MEM_WIDTH_BYTE: begin
-            lsu2brkm_d_mon.width = SCR1_OP_WIDTH_BYTE;
+            lsu2tdu_d_mon.width = SCR1_OP_WIDTH_BYTE;
         end
 
         SCR1_MEM_WIDTH_HWORD: begin
-            lsu2brkm_d_mon.width = SCR1_OP_WIDTH_HALF;
+            lsu2tdu_d_mon.width = SCR1_OP_WIDTH_HALF;
         end
 
         SCR1_MEM_WIDTH_WORD: begin
-            lsu2brkm_d_mon.width = SCR1_OP_WIDTH_WORD;
+            lsu2tdu_d_mon.width = SCR1_OP_WIDTH_WORD;
         end
 
         default: begin
-            lsu2brkm_d_mon.width = SCR1_OP_WIDTH_ERROR;
+            lsu2tdu_d_mon.width = SCR1_OP_WIDTH_ERROR;
         end
     endcase
 end
 
-assign lsu_hwbrk    = (exu2lsu_req & brkm2lsu_i_x_req) | brkm2lsu_d_x_req;
+assign lsu_hwbrk    = (exu2lsu_req & tdu2lsu_i_x_req) | tdu2lsu_d_x_req;
 
 `endif // SCR1_BRKM_EN
 
@@ -254,7 +254,7 @@ SCR1_SVA_LSU_XCHECK_CTRL : assert property (
     @(negedge clk) disable iff (~rst_n)
     !$isunknown({exu2lsu_req, fsm
 `ifdef SCR1_BRKM_EN
-        , brkm2lsu_i_x_req, brkm2lsu_d_x_req
+        , tdu2lsu_i_x_req, tdu2lsu_d_x_req
 `endif // SCR1_BRKM_EN
     })
     ) else $error("LSU Error: unknown control value");

@@ -52,17 +52,13 @@ always_ff @(posedge clk) begin
             memory_array[addrb][3] <= datab[24+:8];
         end
     end
-    if (renb) begin
-        qb <= memory_array[addrb];
-    end
+    qb <= memory_array[addrb];
 end
 //-------------------------------------------------------------------------------
 // Port A memory behavioral description
 //-------------------------------------------------------------------------------
 always_ff @(posedge clk) begin
-    if (rena) begin
-        qa <= memory_array[addra];
-    end
+    qa <= memory_array[addra];
 end
 
 `else // SCR1_TARGET_FPGA_INTEL

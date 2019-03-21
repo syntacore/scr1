@@ -17,6 +17,7 @@ module scr1_top_tb_axi (
 //------------------------------------------------------------------------------
 // Local parameters
 //------------------------------------------------------------------------------
+localparam                          SCR1_MEM_SIZE       = 1024*1024;
 localparam logic [`SCR1_XLEN-1:0]   SCR1_EXIT_ADDR      = 32'h000000F8;
 
 //------------------------------------------------------------------------------
@@ -219,7 +220,9 @@ always_ff @(posedge clk) begin
             $fscanf(f_info, "%s\n", test_file);
 `endif // VERILATOR
             // Launch new test
+`ifdef SCR1_TRACE_LOG_EN
             i_top.i_core_top.i_pipe_top.i_tracelog.test_name = test_file;
+`endif // SCR1_TRACE_LOG_EN
             i_memory_tb.test_file = test_file;
             i_memory_tb.test_file_init = 1'b1;
             $write("\033[0;34m---Test: %s\033[0m\n", test_file);
@@ -241,29 +244,47 @@ end
 // Core instance
 //------------------------------------------------------------------------------
 scr1_top_axi i_top (
-    // Control
-    .rst_n                  (rst_n          ),
-    .test_mode              ('0             ),
-    .clk                    (clk            ),
-    .rtc_clk                (rtc_clk        ),
-    .rst_n_out              (               ),
-    .fuse_mhartid           (fuse_mhartid   ),
-`ifdef SCR1_IPIC_EN
-    .irq_lines              (irq_lines      ),
-`else // SCR1_IPIC_EN
-    .ext_irq                (ext_irq        ),
-`endif // SCR1_IPIC_EN
-    .soft_irq               (soft_irq       ),
+    // Reset
+    .pwrup_rst_n            (rst_n                  ),
+    .rst_n                  (rst_n                  ),
+    .cpu_rst_n              (rst_n                  ),
 `ifdef SCR1_DBGC_EN
-    .trst_n                 (trst_n         ),
-    .tck                    (tck            ),
-    .tms                    (tms            ),
-    .tdi                    (tdi            ),
-    .tdo                    (tdo            ),
-    .tdo_en                 (tdo_en         ),
+    .ndm_rst_n_out          (),
 `endif // SCR1_DBGC_EN
 
-    // Instruction memory
+    // Clock
+    .clk                    (clk                    ),
+    .rtc_clk                (rtc_clk                ),
+
+    // Fuses
+    .fuse_mhartid           (fuse_mhartid           ),
+`ifdef SCR1_DBGC_EN
+    .fuse_idcode            (`SCR1_TAP_IDCODE       ),
+`endif // SCR1_DBGC_EN
+
+    // IRQ
+`ifdef SCR1_IPIC_EN
+    .irq_lines              (irq_lines              ),
+`else // SCR1_IPIC_EN
+    .ext_irq                (ext_irq                ),
+`endif // SCR1_IPIC_EN
+    .soft_irq               (soft_irq               ),
+
+    // DFT
+    .test_mode              (1'b0                   ),
+    .test_rst_n             (1'b1                   ),
+
+`ifdef SCR1_DBGC_EN
+    // JTAG
+    .trst_n                 (trst_n                 ),
+    .tck                    (tck                    ),
+    .tms                    (tms                    ),
+    .tdi                    (tdi                    ),
+    .tdo                    (tdo                    ),
+    .tdo_en                 (tdo_en                 ),
+`endif // SCR1_DBGC_EN
+
+    // Instruction memory interface
     .io_axi_imem_awid       (io_axi_imem_awid       ),
     .io_axi_imem_awaddr     (io_axi_imem_awaddr     ),
     .io_axi_imem_awlen      (io_axi_imem_awlen      ),
@@ -309,7 +330,7 @@ scr1_top_axi i_top (
     .io_axi_imem_rvalid     (io_axi_imem_rvalid     ),
     .io_axi_imem_rready     (io_axi_imem_rready     ),
 
-    // Data memory
+    // Data memory interface
     .io_axi_dmem_awid       (io_axi_dmem_awid       ),
     .io_axi_dmem_awaddr     (io_axi_dmem_awaddr     ),
     .io_axi_dmem_awlen      (io_axi_dmem_awlen      ),
@@ -356,16 +377,17 @@ scr1_top_axi i_top (
     .io_axi_dmem_rready     (io_axi_dmem_rready     )
 );
 
+
 //-------------------------------------------------------------------------------
 // Memory instance
 //-------------------------------------------------------------------------------
 scr1_memory_tb_axi #(
-    .SIZE    (1*1024*1024 ),
-    .N_IF    (2           ),
-    .W_ADR   (32          ),
-    .W_DATA  (32          )
+    .SIZE    (SCR1_MEM_SIZE),
+    .N_IF    (2            ),
+    .W_ADR   (32           ),
+    .W_DATA  (32           )
 ) i_memory_tb (
-    // System
+    // Common
     .rst_n          (rst_n),
     .clk            (clk),
 `ifdef SCR1_IPIC_EN

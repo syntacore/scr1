@@ -1,10 +1,13 @@
-/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2019. See LICENSE for details
 /// @file       <scr1_pipe_ifu.sv>
 /// @brief      Instruction Fetch Unit (IFU)
 ///
 
 `include "scr1_memif.svh"
 `include "scr1_arch_description.svh"
+`ifdef SCR1_DBGC_EN
+`include "scr1_hdu.svh"
+`endif // SCR1_DBGC_EN
 
 module scr1_pipe_ifu
 (
@@ -23,8 +26,11 @@ module scr1_pipe_ifu
     input   logic [`SCR1_XLEN-1:0]              new_pc,             // New PC
     input   logic                               stop_fetch,         // Stop IFU
 `ifdef SCR1_DBGC_EN
-    input   logic                               fetch_dbgc,         // Fetch instructions provided by DBGC
-    input   logic [`SCR1_IMEM_DWIDTH-1:0]       dbgc_instr,
+    input   logic                               fetch_pbuf,         // Fetch instructions provided by Program Buffer
+    output  logic                               ifu2hdu_pbuf_rdy,
+    input   logic                               hdu2ifu_pbuf_vd,
+    input   logic                               hdu2ifu_pbuf_err,
+    input   logic [SCR1_HDU_CORE_INSTR_WIDTH-1:0] hdu2ifu_pbuf_instr,
 `endif // SCR1_DBGC_EN
 `ifdef SCR1_CLKCTRL_EN
     output  logic                               imem_txns_pending,  // There are pending imem transactions
@@ -351,7 +357,7 @@ end
 // Instruction memory interface logic
 //-------------------------------------------------------------------------------
 
-assign imem_req = (new_pc_req & ~num_txns_pending_full) |
+assign imem_req = (new_pc_req & ~num_txns_pending_full & ~stop_fetch) |
 (
     (fsm == SCR1_FSM_FETCH) &
     ~num_txns_pending_full &
@@ -487,9 +493,9 @@ always_comb begin
         end // ~q_empty
     end
 `ifdef SCR1_DBGC_EN
-    if (fetch_dbgc) begin
-        ifu2idu_vd          = 1'b1;
-        ifu2idu_imem_err    = 1'b0;
+    if (fetch_pbuf) begin
+        ifu2idu_vd          = hdu2ifu_pbuf_vd;
+        ifu2idu_imem_err    = hdu2ifu_pbuf_err;
     end
 `endif // SCR1_DBGC_EN
 end
@@ -510,8 +516,8 @@ always_comb begin
         end
     endcase // instr_bypass
 `ifdef SCR1_DBGC_EN
-    if (fetch_dbgc) begin
-        ifu2idu_instr = dbgc_instr;
+    if (fetch_pbuf) begin
+        ifu2idu_instr = `SCR1_IMEM_DWIDTH'({'0, hdu2ifu_pbuf_instr});
     end
 `endif // SCR1_DBGC_EN
 end
@@ -533,9 +539,9 @@ always_comb begin
         end
     end // ~q_empty
 `ifdef SCR1_DBGC_EN
-    if (fetch_dbgc) begin
-        ifu2idu_vd          = 1'b1;
-        ifu2idu_imem_err    = 1'b0;
+    if (fetch_pbuf) begin
+        ifu2idu_vd          = hdu2ifu_pbuf_vd;
+        ifu2idu_imem_err    = hdu2ifu_pbuf_err;
     end
 `endif // SCR1_DBGC_EN
 end
@@ -543,14 +549,17 @@ end
 always_comb begin
     ifu2idu_instr = q_head_rvc ? `SCR1_IMEM_DWIDTH'(q_data_head) : {q_data_next, q_data_head};
 `ifdef SCR1_DBGC_EN
-    if (fetch_dbgc) begin
-        ifu2idu_instr = dbgc_instr;
+    if (fetch_pbuf) begin
+        ifu2idu_instr = `SCR1_IMEM_DWIDTH'({'0, hdu2ifu_pbuf_instr});
     end
 `endif // SCR1_DBGC_EN
 end
 
 `endif  // SCR1_IFU_QUEUE_BYPASS
 
+`ifdef SCR1_DBGC_EN
+assign ifu2hdu_pbuf_rdy = idu2ifu_rdy;
+`endif // SCR1_DBGC_EN
 
 `ifdef SCR1_SIM_ENV
 `ifndef VERILATOR

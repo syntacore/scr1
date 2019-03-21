@@ -27,7 +27,10 @@ test_elf      := $(addprefix $(dst_dir)/compliance_,$(filtered:%=%.elf))
 test_hex      := $(addprefix $(dst_dir)/compliance_,$(filtered:%=%.hex))
 test_dump     := $(addprefix $(bld_dir)/compliance_,$(filtered:%=%.dump))
 
-CFLAGS := -I$(inc_dir) -I$(src_dir) -DASM -Wa,-march=$(ARCH) -march=$(ARCH) -mabi=ilp32 -D__riscv_xlen=32
+compliance_macros_file := $(root_dir)/sim/tests/riscv_compliance/compliance_io.h
+compliance_output ?= true
+
+CFLAGS := -I$(inc_dir) -I$(src_dir) -DASM -Wa,-march=$(ARCH) -march=$(ARCH) -mabi=ilp32 -D__riscv_xlen=32 -w
 LDFLAGS := -static -fvisibility=hidden -nostdlib -nostartfiles -T$(inc_dir)/link.ld -march=$(ARCH) -mabi=ilp32
 VPATH += $(src_dir) $(bld_dir) $(obj_dir) $(asm_path) $(ref_path) $(RISCV_COMPLIANCE_TESTS)
 
@@ -35,6 +38,10 @@ change = $(shell    cp $(src_dir)/check.c $(2)/$(1).c; \
                     sed -i '6i \#include \"x\"' $(2)/$(1).c; \
                     sed -i '7d' $(2)/$(1).c; \
                     sed -i "6s@x@$(1)@" $(2)/$(1).c )
+
+ifeq ($(compliance_output), true)
+CFLAGS += -D_COMPLIANCE_OUTPUT
+endif
 
 default: clean check_version cp_asm ref_data ref_code $(test_elf) $(test_hex) $(test_dump)
 
@@ -84,7 +91,7 @@ cp_asm:
 	done
 
 riscv_compliance_tests_dir    := $(if $(RISCV_COMPLIANCE_TESTS), $(RISCV_COMPLIANCE_TESTS), ./undefined)
-riscv_tests_commit := 9273836251cc53069f9cc48543fa9c1417e98cb7
+riscv_tests_commit := 9f280717f26f50833357db9bfb77a8c79835f162
 ## commit hash readed from local copy of https://github.com/riscv/riscv-compliance
 tmp_commit = $(shell cd $(riscv_compliance_tests_dir) 2>/dev/null && git log -1 | grep "commit" | cut -f2 -d ' ')
 is_commit_good = $(if $(subst $(riscv_tests_commit),,$(tmp_commit)),false,true)

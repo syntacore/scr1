@@ -74,8 +74,8 @@ assign dmem_req_ack = 1'b1;
 //-------------------------------------------------------------------------------
 // Memory data composing
 //-------------------------------------------------------------------------------
-assign imem_rd  = 1'b1;
-assign dmem_rd  = 1'b1;
+assign imem_rd  = imem_req;
+assign dmem_rd  = dmem_req & (dmem_cmd == SCR1_MEM_CMD_RD);
 assign dmem_wr  = dmem_req & (dmem_cmd == SCR1_MEM_CMD_WR);
 
 always_comb begin

@@ -8,7 +8,7 @@
 //-------------------------------------------------------------------------------
 // Core fundamental parameters (READ-ONLY, do not modify)
 //-------------------------------------------------------------------------------
-`define SCR1_MIMPID             32'h18110700
+`define SCR1_MIMPID             32'h19031802
 `define SCR1_XLEN               32
 `define SCR1_FLEN               `SCR1_XLEN
 `define SCR1_IMEM_AWIDTH        `SCR1_XLEN
@@ -17,6 +17,10 @@
 `define SCR1_DMEM_DWIDTH        `SCR1_XLEN
 parameter int unsigned          SCR1_CSR_MTVEC_BASE_ZERO_BITS   = 6;
 parameter int unsigned          SCR1_CSR_MTVEC_BASE_VAL_BITS    = `SCR1_XLEN-SCR1_CSR_MTVEC_BASE_ZERO_BITS;
+
+// TAP_IDCODE - value of a specific Syntacore processor's TAP identifier:
+`define SCR1_TAP_IDCODE_WIDTH    32
+`define SCR1_TAP_IDCODE          `SCR1_TAP_IDCODE_WIDTH'hDEB11001
 
 //-------------------------------------------------------------------------------
 // Recommended core architecture configurations (modifiable)
@@ -98,6 +102,7 @@ parameter int unsigned          SCR1_CSR_MTVEC_BASE_VAL_BITS    = `SCR1_XLEN-SCR
   `define SCR1_DBGC_EN                // enables debug controller
   `define SCR1_BRKM_EN                // enables breakpoint module
   parameter int unsigned SCR1_BRKM_BRKPT_NUMBER = 2;        // number of hardware breakpoints
+  `define SCR1_BRKM_BRKPT_ICOUNT_EN   // Hardware Breakpoint on instruction counter Enable
 
   `define SCR1_IPIC_EN                // enables interrupt controller
   `define SCR1_IPIC_SYNC_EN           // enables IPIC synchronizer

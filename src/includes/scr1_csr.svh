@@ -59,7 +59,9 @@ parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_INSTRETH      = 'hC82;
 `endif // SCR1_CSR_REDUCED_CNT
 
 `ifdef SCR1_DBGC_EN
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_DBGC_SCRATCH  = 'h7C8;
+//parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_DBGC_SCRATCH  = 'h7C8;
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_HDU_MBASE    = 'h7B0;
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_HDU_MSPAN    = 'h004;    // must be power of 2
 `endif // SCR1_DBGC_EN
 
 //-------------------------------------------------------------------------------
@@ -70,8 +72,8 @@ parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MCOUNTEN      = 'h7E0;
 `endif // SCR1_CSR_MCOUNTEN_EN
 
 `ifdef SCR1_BRKM_EN
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_BRKM_MBASE    = 'h7C0;
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_BRKM_MSPAN    = 'h008;    // must be power of 2
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_TDU_MBASE    = 'h7A0;
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_TDU_MSPAN    = 'h008;    // must be power of 2
 `endif // SCR1_BRKM_EN
 
 `ifdef SCR1_IPIC_EN

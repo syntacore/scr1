@@ -76,7 +76,7 @@ Clone RISC-V Compliance tests to your preferred directory <RISCV_COMPLIANCE_TEST
 
     git clone https://github.com/riscv/riscv-compliance
     cd riscv-compliance
-    git checkout 9273836251cc53069f9cc48543fa9c1417e98cb7
+    git checkout 9f280717f26f50833357db9bfb77a8c79835f162
 
 Set the $RISCV_COMPLIANCE_TESTS environment variable accordingly:
 

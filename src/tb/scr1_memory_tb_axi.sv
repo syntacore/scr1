@@ -103,7 +103,13 @@ function automatic logic [W_DATA-1:0] mem_read (
     for(int i=byte_lane; i<bytes_max & bytes_num!=0; ++i) begin
 `ifdef SCR1_IPIC_EN
         if (adr[W_ADR-1:1]==IRQ_ADDR[W_ADR-1:1]) begin
-            mem_read[(i*8)+:8] = irq_lines[(i*8)+:8];
+            if( i*8 < SCR1_IRQ_LINES_NUM ) begin
+                if( SCR1_IRQ_LINES_NUM < 8 ) begin
+                    mem_read[(i*8)+:8] = irq_lines;
+                end else begin
+                    mem_read[(i*8)+:8] = irq_lines[(i*8)+:8];
+                end
+            end
         end else begin
             mem_read[(i*8)+:8] = memory[adr];
         end
@@ -136,7 +142,13 @@ function automatic void mem_write (
             $write("%c",data[(i*8)+:8]);
 `ifdef SCR1_IPIC_EN
         end else if(bytes_en[i] & adr[W_ADR-1:1]==IRQ_ADDR[W_ADR-1:1]) begin
-            irq_lines[(i*8)+:8] = data[(i*8)+:8];
+            if( i*8 < SCR1_IRQ_LINES_NUM ) begin
+                if( SCR1_IRQ_LINES_NUM < 8 ) begin
+                    irq_lines = data[SCR1_IRQ_LINES_NUM-1:0];
+                end else begin
+                    irq_lines[(i*8)+:8] = data[(i*8)+:8];
+                end
+            end
 `endif // SCR1_IPIC_EN
         end else if(bytes_en[i]) begin
             memory[adr] = data[(i*8)+:8];
