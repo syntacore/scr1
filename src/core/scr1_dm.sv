@@ -37,10 +37,7 @@ module scr1_dm (
     input  logic [`SCR1_XLEN-1:0]                           ro_pc,          // RO PC value for sampling
 
     // HART Abstract Command / Program Buffer i/f
-    input  logic                                            hart_pbuf_req,  // Program Buffer request 
     input  logic [SCR1_HDU_PBUF_ADDR_WIDTH-1:0]             hart_pbuf_addr, // Program Buffer address - so far request only for 1 instruction
-    output logic                                            hart_pbuf_resp, // Program Buffer response
-    output logic                                            hart_pbuf_rcode,// Program Buffer retrn code: 0b0 - normal; 0b1 - error
     output logic [SCR1_HDU_CORE_INSTR_WIDTH-1:0]            hart_pbuf_instr,// Program Buffer instruction
 
     // HART Abstract Data regs i/f
@@ -1188,9 +1185,6 @@ always_comb begin
     end else if( hart_pbuf_addr == 1'b0 ) hart_pbuf_instr = abs_exec_instr_ff;
 end
 
-always_comb hart_pbuf_rcode    = 1'b0;
-always_comb hart_pbuf_resp     = 1'b1;
-
 // Latch EBREAK condition when program buffer execution
 always_ff @(posedge clk) begin
     if( clk_en_dm_cmb ) begin
@@ -1216,9 +1210,9 @@ always_comb hart_dreg_rdata    = abs_fsm_ff == ABS_STATE_MEM_SAVE_XREG_FORADDR |
 SVA_DM_X_CONTROL :
     assert property (
         @(negedge clk) disable iff (~rst_n)
-        !$isunknown( {rst_n,clk,dmi_req,hart_pbuf_req,hart_dreg_req,hart_cmd_resp,hart_event} )
+        !$isunknown( {rst_n,clk,dmi_req,hart_dreg_req,hart_cmd_resp,hart_event} )
     )
-    else $error("DM error: control signals is X - %0b",{rst_n,clk,dmi_req,hart_pbuf_req,hart_dreg_req,hart_cmd_resp,hart_event});
+    else $error("DM error: control signals is X - %0b",{rst_n,clk,dmi_req,hart_dreg_req,hart_cmd_resp,hart_event});
 
 SVA_DM_X_DMI :
     assert property (
@@ -1230,7 +1224,7 @@ SVA_DM_X_DMI :
 SVA_DM_X_HART_PBUF :
     assert property (
         @(negedge clk) disable iff (~rst_n)
-        hart_pbuf_req |-> !$isunknown( hart_pbuf_addr )
+        !$isunknown( hart_pbuf_addr )
     )
     else $error("DM error: data signals is X on hart_pbuf");
 

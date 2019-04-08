@@ -10,7 +10,8 @@
 `include "scr1_riscv_isa_decoding.svh"
 `include "scr1_hdu.svh"
 
-module scr1_pipe_hdu (
+
+module scr1_pipe_hdu #( parameter HART_PBUF_INSTR_REGOUT_EN = 1'b1 ) (
     // Common signals
     input  logic                                            rst_n,          // HDU reset
     input  logic                                            clk,            // HDU clock
@@ -34,10 +35,7 @@ module scr1_pipe_hdu (
     output logic                                            dm_hart_event,  // DM-HART Event: 1 if HART debug state changed
     output type_scr1_hdu_hartstatus_s                       dm_hart_status, // DM-HART Status
     // Program Buffer - HART instruction execution i/f
-    output logic                                            dm_pbuf_req,    // Program Buffer request
     output logic [SCR1_HDU_PBUF_ADDR_WIDTH-1:0]             dm_pbuf_addr,   // Program Buffer address - so far request only for 1 instruction
-    input  logic                                            dm_pbuf_resp,   // Program Buffer response
-    input  logic                                            dm_pbuf_rcode,  // Program Buffer retrn code: 0b0 - normal; 0b1 - error
     input  logic [SCR1_HDU_CORE_INSTR_WIDTH-1:0]            dm_pbuf_instr,  // Program Buffer instruction
     // HART Abstract Data regs i/f
     output logic                                            dm_dreg_req,    // Abstract Data Register request
@@ -73,7 +71,9 @@ module scr1_pipe_hdu (
     output  logic                                           hart_dbg_run2halt,      // Transition to debug halted state
     output  logic                                           hart_dbg_halt2run,      // Transition to run state
     output  logic                                           hart_dbg_run_start,     // First cycle of run state
+`ifndef SCR1_BRKM_EN
     output logic                                            hart_cmd_rctl,
+`endif // SCR1_BRKM_EN
     input  logic [`SCR1_XLEN-1:0]                           hart_pc,                // Current PC
     output logic [`SCR1_XLEN-1:0]                           hart_new_pc,            // New PC for resume
     //
@@ -122,6 +122,9 @@ logic                                               hart_halt_req;
 logic                                               hart_halt_ack;
 logic                                               hart_resume_req;
 logic                                               hart_cmd_rcode;
+`ifdef SCR1_BRKM_EN
+logic                                               hart_cmd_rctl;
+`endif // SCR1_BRKM_EN
 type_scr1_hdu_runctrl_s                             hart_runctrl;
 logic                                               dmode_cause_sstep;
 logic                                               dmode_cause_except;
@@ -138,6 +141,7 @@ type_scr1_hdu_pbufstates_e                          pbuf_state;
 type_scr1_hdu_pbufstates_e                          pbuf_state_next;
 logic [SCR1_HDU_PBUF_ADDR_WIDTH-1:0]                pbuf_addr;
 logic [SCR1_HDU_PBUF_ADDR_WIDTH-1:0]                pbuf_addr_next;
+logic                                               pbuf_instr_wait_latching;
 
 // -- Run Control --------------------------------------------------------------
 
@@ -578,7 +582,6 @@ always_comb
 begin
     pbuf_state_next         = pbuf_state;
     pbuf_addr_next          = pbuf_addr;
-    dm_pbuf_req             = 1'b0;
     hart_pbuf_instr_vd      = 1'b0;
     hart_pbuf_instr_err     = 1'b0;
 
@@ -592,14 +595,11 @@ begin
         end
 
         SCR1_HDU_PBUFSTATE_FETCH: begin
-            hart_pbuf_instr_vd      = dm_pbuf_resp;
-            hart_pbuf_instr_err     = dm_pbuf_rcode;
+            hart_pbuf_instr_vd      = ~pbuf_instr_wait_latching;
             if (hart_exu_exc_req) begin
-                dm_pbuf_req         = 1'b0;
                 pbuf_state_next     = SCR1_HDU_PBUFSTATE_WAIT4END;
             end
             else begin
-                dm_pbuf_req         = 1'b1;
                 if (hart_pbuf_instr_vd & hart_pbuf_instr_rdy) begin
                     if (pbuf_addr == (SCR1_HDU_PBUF_ADDR_SPAN-1)) begin
                         pbuf_state_next = SCR1_HDU_PBUFSTATE_EXCINJECT;
@@ -612,14 +612,12 @@ begin
         end
 
         SCR1_HDU_PBUFSTATE_EXCINJECT: begin
-            hart_pbuf_instr_vd      = dm_pbuf_resp;
+            hart_pbuf_instr_vd      = ~pbuf_instr_wait_latching;
             hart_pbuf_instr_err     = 1'b1;
             if (hart_exu_exc_req) begin
-                dm_pbuf_req         = 1'b0;
                 pbuf_state_next     = SCR1_HDU_PBUFSTATE_WAIT4END;
             end
             else begin
-                dm_pbuf_req         = 1'b1;
                 if (hart_pbuf_instr_vd & hart_pbuf_instr_rdy) begin
                     pbuf_state_next = SCR1_HDU_PBUFSTATE_WAIT4END;
                 end
@@ -636,7 +634,23 @@ begin
         end
     endcase
 end
-assign hart_pbuf_instr = dm_pbuf_instr;
+
+// Pass instruction from debug program buffer to cpu pipeline with two options:
+// - through register, better for frequency
+// - through wires, better for area
+generate if( HART_PBUF_INSTR_REGOUT_EN == 1'b1  ) begin // Pass trhough register
+    always @(posedge clk, negedge rst_n) begin
+        if( ~rst_n ) pbuf_instr_wait_latching <= 1'b0;
+        else         pbuf_instr_wait_latching <= hart_pbuf_instr_vd & hart_pbuf_instr_rdy;
+    end
+
+    always @(posedge clk) begin
+        hart_pbuf_instr <= dm_pbuf_instr;
+    end
+end else begin // Pass trhough wires
+    assign pbuf_instr_wait_latching = 1'b0;
+    assign hart_pbuf_instr          = dm_pbuf_instr;
+end endgenerate
 
 // -----------------------------------------------------------------------------
 // CSRs :: Interface
@@ -839,21 +853,21 @@ end
 SVA_HDU_XCHECK_COMMON :
     assert property (
         @(negedge clk) disable iff (~rst_n)
-        !$isunknown( {rst_n,clk,clk_en,pipe_rst_n_qlfy} )
+        !$isunknown( {rst_n,clk,clk_en,csr_req,pipe_rst_n_qlfy} )
     )
     else $error("HDU Error: common signals are in X state");
 
 SVA_HDU_XCHECK_CSR_INTF :
     assert property (
         @(negedge clk) disable iff (~rst_n)
-        !$isunknown( {csr_req,csr_cmd,csr_addr,csr_wdata} )
+        csr_req |-> !$isunknown( {csr_cmd,csr_addr,csr_wdata} )
     )
     else $error("HDU Error: CSR i/f is in X state");
 
 SVA_HDU_XCHECK_DM_INTF :
     assert property (
         @(negedge clk) disable iff (~rst_n)
-        !$isunknown( {dm_cmd_req,dm_cmd,dm_pbuf_resp,dm_pbuf_rcode,dm_dreg_resp,
+        !$isunknown( {dm_cmd_req,dm_cmd,dm_dreg_resp,
         dm_dreg_fail} )
     )
     else $error("HDU Error: DM i/f is in X state");

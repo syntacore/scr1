@@ -58,10 +58,7 @@ module scr1_pipe_top (
     output logic                                        dm_hart_event,
     output type_scr1_hdu_hartstatus_s                   dm_hart_status,
     // DM <-> Pipeline: Program Buffer - HART instruction execution i/f
-    output logic                                        dm_pbuf_req,
     output logic [SCR1_HDU_PBUF_ADDR_WIDTH-1:0]         dm_pbuf_addr, // so far request only for 1 instruction
-    input  logic                                        dm_pbuf_resp,
-    input  logic                                        dm_pbuf_rcode, // rcode: 0b0 - normal; 0b1 - error
     input  logic [SCR1_HDU_CORE_INSTR_WIDTH-1:0]        dm_pbuf_instr,
     // DM <-> Pipeline: HART Abstract Data regs i/f
     output logic                                        dm_dreg_req,
@@ -94,13 +91,6 @@ module scr1_pipe_top (
     input   logic                                       clk_dbgc,
     input   logic                                       clk_pipe_en,
 `endif // SCR1_CLKCTRL_EN
-
-    // Block busy interface
-    output  logic                                       ifu_busy,
-    output  logic                                       idu_busy,
-    output  logic                                       exu_busy,
-    output  logic                                       lsu_busy,
-    output  logic                                       ialu_busy,
 
     // Fuse
     input   logic [`SCR1_XLEN-1:0]                      fuse_mhartid
@@ -261,6 +251,7 @@ logic [SCR1_HDU_CORE_INSTR_WIDTH-1:0]       hdu2ifu_pbuf_instr;
 
 // Qualified HDU input signals from pipe_rst_n reset domain:
 logic                                       ifu2hdu_pbuf_rdy_qlfy;
+logic                                       exu_busy;
 logic                                       exu_busy_qlfy;
 logic                                       instret_qlfy;
 logic                                       exu_init_pc_qlfy;
@@ -324,9 +315,7 @@ scr1_pipe_ifu i_pipe_ifu (
     .ifu2idu_instr      (ifu2idu_instr      ),
     .ifu2idu_imem_err   (ifu2idu_imem_err   ),
     .ifu2idu_err_rvi_hi (ifu2idu_err_rvi_hi ),
-    .ifu2idu_vd         (ifu2idu_vd         ),
-
-    .ifu_busy           (ifu_busy           )
+    .ifu2idu_vd         (ifu2idu_vd         )
 );
 
 //-------------------------------------------------------------------------------
@@ -349,9 +338,7 @@ scr1_pipe_idu i_pipe_idu (
     .idu2exu_use_rs2    (idu2exu_use_rs2    ),
     .idu2exu_use_rd     (idu2exu_use_rd     ),
     .idu2exu_use_imm    (idu2exu_use_imm    ),
-    .exu2idu_rdy        (exu2idu_rdy        ),
-
-    .idu_busy           (idu_busy           )
+    .exu2idu_rdy        (exu2idu_rdy        )
 );
 
 //-------------------------------------------------------------------------------
@@ -369,8 +356,10 @@ scr1_pipe_exu i_pipe_exu (
     .idu2exu_cmd            (idu2exu_cmd          ),
     .idu2exu_use_rs1        (idu2exu_use_rs1      ),
     .idu2exu_use_rs2        (idu2exu_use_rs2      ),
+`ifndef SCR1_EXU_STAGE_BYPASS
     .idu2exu_use_rd         (idu2exu_use_rd       ),
     .idu2exu_use_imm        (idu2exu_use_imm      ),
+`endif // SCR1_EXU_STAGE_BYPASS
 
     .exu2mprf_rs1_addr      (exu2mprf_rs1_addr    ),
     .mprf2exu_rs1_data      (mprf2exu_rs1_data    ),
@@ -427,7 +416,6 @@ scr1_pipe_exu i_pipe_exu (
     .tdu2lsu_d_match        (tdu2lsu_d_match      ),
     .tdu2lsu_d_x_req        (tdu2lsu_d_x_req      ),
     .exu2tdu_bp_retire      (exu2tdu_bp_retire    ),
-    .exu2tdu_bp_i_recover   (                     ),
     .brkpt_hw               (brkpt_hw             ),
 `endif // SCR1_BRKM_EN
     .brkpt                  (brkpt                ),
@@ -444,9 +432,7 @@ scr1_pipe_exu i_pipe_exu (
     .new_pc_req             (new_pc_req           ),
     .new_pc                 (new_pc               ),
 
-    .exu_busy               (exu_busy             ),
-    .lsu_busy               (lsu_busy             ),
-    .ialu_busy              (ialu_busy            )
+    .exu_busy               (exu_busy             )
 );
 
 //-------------------------------------------------------------------------------
@@ -597,7 +583,6 @@ scr1_pipe_tdu i_pipe_tdu (
     .tdu2exu_i_match        (tdu2exu_i_match       ),
     .tdu2exu_i_x_req        (tdu2exu_i_x_req       ),
     // LSU I/F
-    .tdu2lsu_brk_en         (                       ),
     .tdu2lsu_i_x_req        (tdu2lsu_i_x_req       ),
  `ifdef SCR1_DBGC_EN
     .tdu2lsu_d_mon          (lsu2tdu_d_mon_qlfy    ),
@@ -661,10 +646,7 @@ scr1_pipe_hdu i_pipe_hdu (
     .dm_hart_event          (dm_hart_event          ),
     .dm_hart_status         (dm_hart_status         ),
     // Program Buffer - HART instruction execution i/f
-    .dm_pbuf_req            (dm_pbuf_req            ),
     .dm_pbuf_addr           (dm_pbuf_addr           ),
-    .dm_pbuf_resp           (dm_pbuf_resp           ),
-    .dm_pbuf_rcode          (dm_pbuf_rcode          ),
     .dm_pbuf_instr          (dm_pbuf_instr          ),
     // HART Abstract Data regs i/f
     .dm_dreg_req            (dm_dreg_req            ),
@@ -700,7 +682,6 @@ scr1_pipe_hdu i_pipe_hdu (
     .hart_dbg_run2halt      (dbg_run2halt           ),
     .hart_dbg_halt2run      (dbg_halt2run           ),
     .hart_dbg_run_start     (dbg_run_start          ),
-    .hart_cmd_rctl          (                       ),
     .hart_pc                (curr_pc_qlfy           ),
     .hart_new_pc            (dbg_new_pc             ),
     //

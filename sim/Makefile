@@ -11,7 +11,7 @@ rtl_top_list := $(addprefix $(rtl_src_dir),$(shell cat $(rtl_src_dir)$(rtl_top_f
 rtl_tb_list := $(addprefix $(rtl_src_dir),$(shell cat $(rtl_src_dir)$(rtl_tb_files)))
 sv_list := $(rtl_core_list) $(rtl_top_list) $(rtl_tb_list)
 
-ifeq ($(MAKECMDGOALS), build_verilator)
+ifeq ($(MAKECMDGOALS), $(filter $(MAKECMDGOALS),build_verilator build_verilator_wf))
 ifeq ($(BUS),AHB)
 export scr1_wrapper  := $(root_dir)/sim/verilator_wrap/scr1_ahb_wrapper.c
 endif
@@ -21,7 +21,7 @@ endif
 export verilator_ver ?= $(shell  expr `verilator --version | cut -f2 -d' '`)
 endif
 
-.PHONY: build_modelsim build_vcs build_ncsim build_verilator
+.PHONY: build_modelsim build_vcs build_ncsim build_verilator build_verilator_wf
 
 default: build_modelsim
 
@@ -78,3 +78,28 @@ build_verilator: $(sv_list)
 	$(sv_list); \
 	cd verilator; \
 	$(MAKE) -f V$(top_module).mk;
+
+build_verilator_wf: $(sv_list)
+	cd $(bld_dir); \
+	verilator \
+	-cc \
+	-sv \
+	+1800-2017ext+sv \
+	-Wno-fatal \
+	--top-module $(top_module) \
+	-DSCR1_SIM_ENV \
+	-CFLAGS -DVCD_TRACE -CFLAGS -DTRACE_LVLV=20 \
+	-CFLAGS -DVCD_FNAME=simx.vcd \
+	--clk clk \
+	--exe $(scr1_wrapper) \
+	--trace \
+	--trace-params \
+    --trace-structs \
+    --trace-underscore \
+	--Mdir $(bld_dir)/verilator \
+	-I$(rtl_inc_dir) \
+	$(sv_list); \
+	cd verilator; \
+	$(MAKE) -f V$(top_module).mk;
+
+

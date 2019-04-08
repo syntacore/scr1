@@ -295,7 +295,7 @@ always_comb begin
                 // Start Of Interrupt
                 if (irr_priority_m.vd) begin
                     for (int unsigned i=0; i<SCR1_IRQ_VECT_NUM; ++i) begin
-                        if ($unsigned(irr_priority_m.idx) == i) begin
+                        if (irr_priority_m.idx == i) begin
                             soi_wr_m   |= 1'b1;
                             ipr_clr[i] |= 1'b1;
                         end
@@ -404,7 +404,7 @@ assign isvr_priority_eoi_m = scr1_search_one_16(isvr_eoi_m);
 always_comb begin
     isvr_eoi_m = isvr_m;
     for (int unsigned i=0; i<SCR1_IRQ_VECT_NUM; ++i) begin
-        if (i == $unsigned(cisv_m)) begin
+        if (i == cisv_m) begin
             isvr_eoi_m[i] = 1'b0;
         end
     end
@@ -418,7 +418,7 @@ always_comb begin
         if (~|isvr_m) begin                 // No serviced interrupts
             irq_m_req = 1'b1;
         end else begin                      // There are serviced interrupts
-            if ($unsigned(irr_priority_m.idx) < $unsigned(cisv_m)) begin
+            if (irr_priority_m.idx < cisv_m) begin
                 irq_m_req = 1'b1;
             end
         end
@@ -432,7 +432,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     end else begin
         if ((irq_m_req) & (soi_wr_m)) begin
             for (int unsigned i=0; i<SCR1_IRQ_VECT_NUM; ++i) begin
-                if (i == $unsigned(irr_priority_m.idx)) begin
+                if (i == irr_priority_m.idx) begin
                     isvr_m[i] <= 1'b1;
                 end
             end

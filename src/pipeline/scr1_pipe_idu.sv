@@ -29,9 +29,7 @@ module scr1_pipe_idu
     output  logic                           idu2exu_use_rs2,        // Instruction uses rs2
     output  logic                           idu2exu_use_rd,         // Instruction uses rd
     output  logic                           idu2exu_use_imm,        // Instruction uses immediate
-    input   logic                           exu2idu_rdy,            // EXU ready for new data
-
-    output  logic                           idu_busy                // IDU busy
+    input   logic                           exu2idu_rdy             // EXU ready for new data
 );
 
 //-------------------------------------------------------------------------------
@@ -66,7 +64,6 @@ logic                               rve_illegal;
 
 assign idu2ifu_rdy  = exu2idu_rdy;
 assign idu2exu_req  = ifu2idu_vd;
-assign idu_busy     = idu2exu_req;
 assign instr        = ifu2idu_instr;
 
 // RVI / RVC

@@ -40,9 +40,7 @@ module scr1_pipe_ifu
     output  logic [`SCR1_IMEM_DWIDTH-1:0]       ifu2idu_instr,      // IFU instruction
     output  logic                               ifu2idu_imem_err,   // Instruction access fault exception
     output  logic                               ifu2idu_err_rvi_hi, // 1 - imem fault when trying to fetch second half of an unaligned RVI instruction
-    output  logic                               ifu2idu_vd,         // IFU request
-
-    output  logic                               ifu_busy            // IFU busy
+    output  logic                               ifu2idu_vd          // IFU request
 );
 
 //-------------------------------------------------------------------------------
@@ -452,8 +450,6 @@ always_ff @(posedge clk, negedge rst_n) begin
         endcase // fsm
     end
 end
-
-assign ifu_busy = (fsm == SCR1_FSM_FETCH);
 
 always_ff @(posedge clk, negedge rst_n) begin
     if (~rst_n) begin

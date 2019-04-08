@@ -25,7 +25,6 @@ module scr1_pipe_lsu (
     output  logic [`SCR1_XLEN-1:0]              lsu2exu_l_data,         // Load data
     output  logic                               lsu2exu_exc,            // Exception from LSU
     output  type_scr1_exc_code_e                lsu2exu_exc_code,       // Exception code
-    output  logic                               lsu_busy,
 
     // TDU <-> LSU interface
 `ifdef SCR1_BRKM_EN
@@ -95,8 +94,6 @@ always_ff @(posedge clk, negedge rst_n) begin
     end
 end
 
-assign lsu_busy = (fsm == SCR1_FSM_BUSY);
-
 //-------------------------------------------------------------------------------
 // Load / store address misaligned exception
 //-------------------------------------------------------------------------------
@@ -160,9 +157,9 @@ always_comb begin
     case (lsu_cmd_r)
         SCR1_LSU_CMD_LW     : lsu2exu_l_data = dmem2lsu_rdata;
         SCR1_LSU_CMD_LH     : lsu2exu_l_data = $signed  (dmem2lsu_rdata[15:0]);
-        SCR1_LSU_CMD_LHU    : lsu2exu_l_data = $unsigned(dmem2lsu_rdata[15:0]);
+        SCR1_LSU_CMD_LHU    : lsu2exu_l_data = dmem2lsu_rdata[15:0];
         SCR1_LSU_CMD_LB     : lsu2exu_l_data = $signed  (dmem2lsu_rdata[7:0]);
-        SCR1_LSU_CMD_LBU    : lsu2exu_l_data = $unsigned(dmem2lsu_rdata[7:0]);
+        SCR1_LSU_CMD_LBU    : lsu2exu_l_data = dmem2lsu_rdata[7:0];
         default             : lsu2exu_l_data = '0;
     endcase // lsu_cmd_r
 end
@@ -218,6 +215,7 @@ assign lsu2tdu_d_mon.addr      = exu2lsu_addr;
 assign lsu2tdu_d_mon.load      = (lsu2dmem_cmd == SCR1_MEM_CMD_RD);
 assign lsu2tdu_d_mon.store     = (lsu2dmem_cmd == SCR1_MEM_CMD_WR);
 
+`ifndef SCR1_BRKM_EN
 always_comb begin
     case (lsu2dmem_width)
         SCR1_MEM_WIDTH_BYTE: begin
@@ -237,6 +235,7 @@ always_comb begin
         end
     endcase
 end
+`endif // SCR1_BRKM_EN
 
 assign lsu_hwbrk    = (exu2lsu_req & tdu2lsu_i_x_req) | tdu2lsu_d_x_req;
 

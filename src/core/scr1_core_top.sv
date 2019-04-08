@@ -28,7 +28,6 @@ module scr1_core_top #(
     input   logic                                   test_rst_n,
     input   logic                                   clk,
     output  logic                                   core_rst_n_out,
-    output  logic                                   core_rst_n_out_qlfy,
 `ifdef SCR1_DBGC_EN
     output  logic                                   ndm_rst_n_out,
 `endif // SCR1_DBGC_EN
@@ -148,12 +147,8 @@ logic                                           dm_hart_event_qlfy;
 type_scr1_hdu_hartstatus_s                      dm_hart_status;
 type_scr1_hdu_hartstatus_s                      dm_hart_status_qlfy;
 // Program Buffer - HART instruction execution i/f
-logic                                           dm_pbuf_req;
-logic                                           dm_pbuf_req_qlfy;
 logic [SCR1_HDU_PBUF_ADDR_WIDTH-1:0]            dm_pbuf_addr;
 logic [SCR1_HDU_PBUF_ADDR_WIDTH-1:0]            dm_pbuf_addr_qlfy;
-logic                                           dm_pbuf_resp;
-logic                                           dm_pbuf_rcode;
 logic [SCR1_HDU_CORE_INSTR_WIDTH-1:0]           dm_pbuf_instr;
 // HART Abstract Data regs i/f
 logic                                           dm_dreg_req;
@@ -208,17 +203,11 @@ scr1_scu #(
     .ndm_rst_n                  (ndm_rst_n),
     .hart_rst_n                 (hart_rst_n),
     // Generated resets and their attributes (qualifiers etc):
-    .sys_rst_n                  (),
-    .sys_rst_n_qlfy             (),
     .core_rst_n                 (core_rst_n),
     .core_rst_n_qlfy            (core_rst_n_qlfy),
     .dm_rst_n                   (dm_rst_n),
-    .dm_rst_n_qlfy              (),
     .hdu_rst_n                  (hdu_rst_n),
-    .hdu_rst_n_qlfy             (hdu_rst_n_qlfy),
-    // Reserved bits
-    .control_rsrv               (),
-    .mode_rsrv                  ()
+    .hdu_rst_n_qlfy             (hdu_rst_n_qlfy)
 );
 
 // TAPC reset
@@ -318,7 +307,6 @@ scr1_reset_buf_qlfy_cell i_core_rstn_buf_qlfy_cell (
 assign core_rst_n_sync      = rst_n_sync & cpu_rst_n_sync;
 `endif // SCR1_DBGC_EN
 assign core_rst_n_out       = core_rst_n;
-assign core_rst_n_out_qlfy  = core_rst_n_qlfy;
 
 //-------------------------------------------------------------------------------
 // SCR1 pipeline
@@ -367,10 +355,7 @@ scr1_pipe_top i_pipe_top (
     .dm_hart_event          (dm_hart_event      ),
     .dm_hart_status         (dm_hart_status     ),
     // DM <-> Pipeline: Program Buffer - HART instruction execution i/f
-    .dm_pbuf_req            (dm_pbuf_req        ),
     .dm_pbuf_addr           (dm_pbuf_addr       ),
-    .dm_pbuf_resp           (dm_pbuf_resp       ),
-    .dm_pbuf_rcode          (dm_pbuf_rcode      ),
     .dm_pbuf_instr          (dm_pbuf_instr      ),
     // DM <-> Pipeline: HART Abstract Data regs i/f
     .dm_dreg_req            (dm_dreg_req        ),
@@ -391,12 +376,7 @@ scr1_pipe_top i_pipe_top (
     .soft_irq               (soft_irq           ),
     .timer_irq              (timer_irq          ),
     .mtime_ext              (mtime_ext          ),
-    // Block busy interface
-    .ifu_busy               (                   ),
-    .idu_busy               (                   ),
-    .exu_busy               (                   ),
-    .lsu_busy               (                   ),
-    .ialu_busy              (                   ),
+
     // Fuse
     .fuse_mhartid           (fuse_mhartid       )
 );
@@ -489,12 +469,10 @@ scr1_dmi i_dmi (
 //-------------------------------------------------------------------------------
 // Debug Module (DM)
 //-------------------------------------------------------------------------------
-
 assign dm_cmd_resp_qlfy    = dm_cmd_resp   & {$bits(dm_cmd_resp){hdu_rst_n_qlfy}};
 assign dm_cmd_rcode_qlfy   = dm_cmd_rcode  & {$bits(dm_cmd_rcode){hdu_rst_n_qlfy}};
 assign dm_hart_event_qlfy  = dm_hart_event & {$bits(dm_hart_event){hdu_rst_n_qlfy}};
 assign dm_hart_status_qlfy = hdu_rst_n_qlfy ? dm_hart_status : '0;
-assign dm_pbuf_req_qlfy    = dm_pbuf_req   & {$bits(dm_pbuf_req){hdu_rst_n_qlfy}};
 assign dm_pbuf_addr_qlfy   = dm_pbuf_addr  & {$bits(dm_pbuf_addr){hdu_rst_n_qlfy}};
 assign dm_dreg_req_qlfy    = dm_dreg_req   & {$bits(dm_dreg_req){hdu_rst_n_qlfy}};
 assign dm_dreg_wr_qlfy     = dm_dreg_wr    & {$bits(dm_dreg_wr){hdu_rst_n_qlfy}};
@@ -526,10 +504,7 @@ scr1_dm i_dm (
     .ro_pc                  (dm_pc_sample_qlfy),
 
     // DM <-> Pipeline: HART Abstract Command / Program Buffer i/f
-    .hart_pbuf_req          (dm_pbuf_req_qlfy),
     .hart_pbuf_addr         (dm_pbuf_addr_qlfy),
-    .hart_pbuf_resp         (dm_pbuf_resp),
-    .hart_pbuf_rcode        (dm_pbuf_rcode),
     .hart_pbuf_instr        (dm_pbuf_instr),
 
     // DM <-> Pipeline: HART Abstract Data regs i/f

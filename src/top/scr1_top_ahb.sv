@@ -211,7 +211,6 @@ scr1_core_top i_core_top (
     .test_rst_n     (test_rst_n         ),
     .clk            (clk                ),
     .core_rst_n_out (core_rst_n_local   ),
-    .core_rst_n_out_qlfy (              ),
 `ifdef SCR1_DBGC_EN
     .ndm_rst_n_out  (ndm_rst_n_out      ),
 `endif // SCR1_DBGC_EN
@@ -268,7 +267,6 @@ scr1_tcm #(
     // Instruction interface to TCM
     .imem_req_ack   (tcm_imem_req_ack   ),
     .imem_req       (tcm_imem_req       ),
-    .imem_cmd       (tcm_imem_cmd       ),
     .imem_addr      (tcm_imem_addr      ),
     .imem_rdata     (tcm_imem_rdata     ),
     .imem_resp      (tcm_imem_resp      ),
@@ -431,7 +429,6 @@ scr1_imem_ahb i_imem_ahb (
     // Interface to imem router
     .imem_req_ack   (ahb_imem_req_ack   ),
     .imem_req       (ahb_imem_req       ),
-    .imem_cmd       (ahb_imem_cmd       ),
     .imem_addr      (ahb_imem_addr      ),
     .imem_rdata     (ahb_imem_rdata     ),
     .imem_resp      (ahb_imem_resp      ),

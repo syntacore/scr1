@@ -14,7 +14,6 @@ module scr1_imem_ahb (
     // Core Interface
     output  logic                           imem_req_ack,
     input   logic                           imem_req,
-    input   type_scr1_mem_cmd_e             imem_cmd,
     input   logic   [SCR1_AHB_WIDTH-1:0]    imem_addr,
     output  logic   [SCR1_AHB_WIDTH-1:0]    imem_rdata,
     output  type_scr1_mem_resp_e            imem_resp,
@@ -295,11 +294,6 @@ SCR1_SVA_IMEM_AHB_BRIDGE_REQ_XCHECK : assert property (
     !$isunknown(imem_req)
     ) else $error("IMEM AHB bridge Error: imem_req has unknown values");
 
-SCR1_IMEM_AHB_BRIDGE_CMD_XCHECK : assert property (
-    @(negedge clk) disable iff (~rst_n)
-    imem_req |-> !$isunknown(imem_cmd)
-    ) else $error("IMEM AHB bridge Error: imem_cmd has unknown values");
-
 SCR1_IMEM_AHB_BRIDGE_ADDR_XCHECK : assert property (
     @(negedge clk) disable iff (~rst_n)
     imem_req |-> !$isunknown(imem_addr)
@@ -309,11 +303,6 @@ SCR1_IMEM_AHB_BRIDGE_ADDR_ALLIGN : assert property (
     @(negedge clk) disable iff (~rst_n)
     imem_req |-> (imem_addr[1:0] == '0)
     ) else $error("IMEM AHB bridge Error: imem_addr has unalign values");
-
-SCR1_IMEM_AHB_BRIDGE_CMD_VD : assert property (
-    @(negedge clk) disable iff (~rst_n)
-    imem_req |-> (imem_cmd === SCR1_MEM_CMD_RD)
-    ) else $error("IMEM AHB bridge Error: imem_cmd has not valid command");
 
 // Check AHB interface
 SCR1_IMEM_AHB_BRIDGE_HREADY_XCHECK : assert property (

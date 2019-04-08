@@ -32,8 +32,10 @@ module scr1_pipe_exu (
     input   type_scr1_exu_cmd_s                 idu2exu_cmd,            // EXU command
     input   logic                               idu2exu_use_rs1,        // Clock gating on rs1_addr field
     input   logic                               idu2exu_use_rs2,        // Clock gating on rs2_addr field
+`ifndef SCR1_EXU_STAGE_BYPASS
     input   logic                               idu2exu_use_rd,         // Clock gating on rd_addr field
     input   logic                               idu2exu_use_imm,        // Clock gating on imm field
+`endif // SCR1_EXU_STAGE_BYPASS
 
     // EXU <-> MPRF interface
     output  logic [`SCR1_MPRF_ADDR_WIDTH-1:0]   exu2mprf_rs1_addr,      // MPRF rs1 read address
@@ -83,8 +85,6 @@ module scr1_pipe_exu (
     output  logic                               instret,                // Instruction retired (with or without exception)
     output  logic                               instret_nexc,           // Instruction retired (without exception)
     output  logic                               exu_busy,               // EXU busy
-    output  logic                               lsu_busy,               // LSU busy
-    output  logic                               ialu_busy,              // IALU busy
 
 `ifdef SCR1_DBGC_EN
     // EXU <-> HDU interface
@@ -110,7 +110,6 @@ module scr1_pipe_exu (
     input  logic [SCR1_TDU_MTRIG_NUM-1:0]       tdu2lsu_d_match,        // Data breakpoint(s) match
     input  logic                                tdu2lsu_d_x_req,        // Data breakpoint exception
     output logic [SCR1_TDU_ALLTRIG_NUM-1:0]     exu2tdu_bp_retire,      // Instruction with breakpoint flag retire
-    output logic                                exu2tdu_bp_i_recover,   // Instruction breakpoint state recover
     output logic                                brkpt_hw,               // Hardware breakpoint on current instruction
 `endif // SCR1_BRKM_EN
 
@@ -282,9 +281,6 @@ always_comb begin
         end
     end
 end
-
-assign exu2tdu_bp_i_recover = 1'b0;
-
 `endif // SCR1_BRKM_EN
 
 
@@ -342,7 +338,6 @@ scr1_pipe_ialu i_ialu(
     .ialu_vd            (ialu_vd),
     .ialu_rdy           (ialu_rdy),
 `endif // SCR1_RVM_EXT
-    .ialu_busy          (ialu_busy),
 
     // IALU
     .ialu_op1           (ialu_op1),
@@ -375,7 +370,6 @@ scr1_pipe_lsu i_lsu(
     .lsu2exu_l_data     (lsu_l_data),           // Loaded data form DMEM
     .lsu2exu_exc        (lsu_exc),              // LSU exception
     .lsu2exu_exc_code   (lsu_exc_code),         // LSU exception code
-    .lsu_busy           (lsu_busy),             // LSU busy
 
 `ifdef SCR1_BRKM_EN
     .lsu2tdu_d_mon      (lsu2tdu_d_mon),

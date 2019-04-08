@@ -8,7 +8,7 @@
 //-------------------------------------------------------------------------------
 // Core fundamental parameters (READ-ONLY, do not modify)
 //-------------------------------------------------------------------------------
-`define SCR1_MIMPID             32'h19031802
+`define SCR1_MIMPID             32'h19040301
 `define SCR1_XLEN               32
 `define SCR1_FLEN               `SCR1_XLEN
 `define SCR1_IMEM_AWIDTH        `SCR1_XLEN

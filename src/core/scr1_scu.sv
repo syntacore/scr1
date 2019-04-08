@@ -29,17 +29,11 @@ module scr1_scu #(
     input  logic                                      ndm_rst_n,        // Non-DM Reset input from DM
     input  logic                                      hart_rst_n,       // HART Reset from DM
     // Generated resets and their attributes (qualifiers etc):
-    output logic                                      sys_rst_n,        // System Reset
-    output logic                                      sys_rst_n_qlfy,   // System Reset Qualifier
     output logic                                      core_rst_n,       // Core Reset
     output logic                                      core_rst_n_qlfy,  // Core Reset Qualifier
     output logic                                      dm_rst_n,         // Debug Module Reset
-    output logic                                      dm_rst_n_qlfy,    // DM Reset Qualifier
     output logic                                      hdu_rst_n,        // HART Debug Unit Reset
-    output logic                                      hdu_rst_n_qlfy,   // HDU Reset Qualifier
-    // Reserved bits
-    output logic [2:0]                                control_rsrv,     // Reserved outputs
-    output logic [1:0]                                mode_rsrv
+    output logic                                      hdu_rst_n_qlfy    // HDU Reset Qualifier
 );
 
 //======================================================================================================================
@@ -107,8 +101,9 @@ logic [SCR1_SCU_DR_SYSCTRL_DATA_WIDTH-1:0]          reg_data;
 type_scr1_scu_sysctrl_control_reg_s                 control_reg;
 logic                                               control_reg_wr;
 type_scr1_scu_sysctrl_mode_reg_s                    mode_reg;
-type_scr1_scu_sysctrl_mode_reg_s                    mode_reg_next;
+type_scr1_scu_sysctrl_mode_reg_s                    mode_reg_r;
 logic                                               mode_reg_wr;
+logic                                               mode_reg_wr_r;
 type_scr1_scu_sysctrl_status_reg_s                  status_reg_data;
 type_scr1_scu_sysctrl_status_reg_s                  status_reg_data_dly;
 type_scr1_scu_sysctrl_status_reg_s                  status_reg_data_posedge;
@@ -119,10 +114,13 @@ logic                                               pwrup_rst_n_sync;
 logic                                               rst_n_sync;
 logic                                               cpu_rst_n_sync;
 //
+logic                                               sys_rst_n;
 logic                                               sys_rst_n_sync;
+logic                                               sys_rst_n_qlfy;
 logic                                               sys_rst_n_status;
 //
 logic                                               dm_rst_n_sync;
+logic                                               dm_rst_n_qlfy;
 logic                                               dm_rst_n_status;
 //
 logic                                               core_rst_n_sync;
@@ -257,27 +255,30 @@ always_ff @(posedge clk, negedge pwrup_rst_n_sync) begin
         end
     end
 end
-assign control_rsrv = control_reg.rsrv;
 
 // Mode Register
 always_ff @(posedge clk, negedge pwrup_rst_n_sync) begin
     if (~pwrup_rst_n_sync) begin
-        mode_reg <= '0;
+        mode_reg      <= '0;
+        mode_reg_r    <= '0;
+        mode_reg_wr_r <= '0;
     end
     else begin
         if (mode_reg_wr) begin
-            mode_reg <= mode_reg_next;
+            mode_reg <= cmd_data;
+        end
+        mode_reg_wr_r <= mode_reg_wr;
+        if (mode_reg_wr_r) begin
+            mode_reg_r <= mode_reg;
         end
     end
 end
-assign mode_reg_next    = cmd_data;
-assign mode_rsrv        = mode_reg.rsrv;
 
 // Status Register
-assign status_reg_data.sys_reset    = ~(sys_rst_n_status    & sys_rst_n_qlfy);
-assign status_reg_data.core_reset   = ~(core_rst_n_status   & core_rst_n_qlfy);
-assign status_reg_data.dm_reset     = ~(dm_rst_n_status     & dm_rst_n_qlfy);
-assign status_reg_data.hdu_reset    = ~(hdu_rst_n_status    & hdu_rst_n_qlfy);
+assign status_reg_data.sys_reset    = ~sys_rst_n_status ;
+assign status_reg_data.core_reset   = ~core_rst_n_status;
+assign status_reg_data.dm_reset     = ~dm_rst_n_status  ;
+assign status_reg_data.hdu_reset    = ~hdu_rst_n_status ;
 
 always_ff @(posedge clk, negedge pwrup_rst_n_sync) begin
     if (~pwrup_rst_n_sync) begin
@@ -379,10 +380,8 @@ scr1_reset_buf_cell i_dm_rstn_buf_cell (
     .reset_n_out        (dm_rst_n),
     .reset_n_status     (dm_rst_n_status)
 );
-assign dm_rst_n_sync = mode_reg.dm_rst_mux ? sys_rst_n      : pwrup_rst_n_sync;
-assign dm_rst_n_qlfy = mode_reg_wr ?
-                            (mode_reg_next.dm_rst_mux ? sys_rst_n_qlfy : 1'b1) :
-                            (mode_reg.dm_rst_mux      ? sys_rst_n_qlfy : 1'b1) ;
+assign dm_rst_n_sync = mode_reg_r.dm_rst_mux ? sys_rst_n      : pwrup_rst_n_sync;
+assign dm_rst_n_qlfy = mode_reg.dm_rst_mux   ? sys_rst_n_qlfy : 1'b1 ;
 
 // Core Reset: core_rst_n
 scr1_reset_buf_qlfy_cell i_core_rstn_buf_qlfy_cell (
@@ -410,11 +409,10 @@ scr1_reset_buf_cell i_hdu_rstn_buf_cell (
     .reset_n_out        (hdu_rst_n),
     .reset_n_status     (hdu_rst_n_status)
 );
-assign hdu_rst_n_sync = mode_reg.hdu_rst_mux ? pwrup_rst_n_sync : core_rst_n;
-assign hdu_rst_n_qlfy = mode_reg_wr ?
-                            (mode_reg_next.hdu_rst_mux ? 1'b1 : core_rst_n_qlfy) :
-                            (mode_reg.hdu_rst_mux      ? 1'b1 : core_rst_n_qlfy) ;
+assign hdu_rst_n_sync = mode_reg_r.hdu_rst_mux ? pwrup_rst_n_sync : core_rst_n;
+assign hdu_rst_n_qlfy = mode_reg.hdu_rst_mux   ? 1'b1             : core_rst_n_qlfy;
 
 endmodule : scr1_scu
 
 `endif // SCR1_DBGC_EN
+

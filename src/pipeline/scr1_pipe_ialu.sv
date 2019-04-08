@@ -16,7 +16,6 @@ module scr1_pipe_ialu (
     input   logic                           ialu_vd,
     output  logic                           ialu_rdy,
 `endif // SCR1_RVM_EXT
-    output  logic                           ialu_busy,
 
     // IALU input
     input   logic [`SCR1_XLEN-1:0]          ialu_op1,
@@ -175,11 +174,6 @@ always_comb begin
         end
     endcase
 end
-
-assign ialu_busy = ialu_vd & ~ialu_rdy;
-
-`else // SCR1_RVM_EXT
-assign ialu_busy = 1'b0;
 `endif // SCR1_RVM_EXT
 
 //-------------------------------------------------------------------------------
@@ -198,7 +192,7 @@ always_comb begin
                 SCR1_IALU_FSM_ITER : begin
                     sum1_sub    = 1'b1;
                     sum1_op1    = (curr_state == SCR1_IALU_FSM_IDLE)
-                                    ? ($signed(SCR1_DIV_INIT_CNT))
+                                    ? SCR1_DIV_INIT_CNT
                                     : ($signed({'0, cnt_res_reg}));
                     sum1_op2    = 32'sb1;
                 end
@@ -213,7 +207,7 @@ always_comb begin
         SCR1_IALU_MDU_MUL : begin
             sum1_sub    = 1'b1;
             if (curr_state == SCR1_IALU_FSM_IDLE) begin
-                sum1_op1    = ($signed(SCR1_MUL_INIT_CNT));
+                sum1_op1    = SCR1_MUL_INIT_CNT;
             end else begin
                 sum1_op1    = $signed({'0, cnt_res_reg});
             end

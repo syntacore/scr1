@@ -112,7 +112,9 @@ typedef struct packed {
     logic                                           vd;
     logic                                           load;
     logic                                           store;
+`ifndef SCR1_BRKM_EN
     type_scr1_op_width_e                            width;
+`endif // SCR1_BRKM_EN
     logic [`SCR1_XLEN-1:0]                          addr;
 } type_scr1_brkm_lsu_mon_s;
 

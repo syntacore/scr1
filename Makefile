@@ -79,10 +79,10 @@ ifeq (,$(findstring 0,$(IPIC)))
 # comment this target if you don't want to run the vectored_isr_sample
 TARGETS += vectored_isr_sample
 endif
-ifneq (,$(findstring m,$(ARCH_lowercase)))
+
 # comment this target if you don't want to run the riscv_isa
 TARGETS += riscv_isa
-endif
+
 # comment this target if you don't want to run the riscv_compliance
 TARGETS += riscv_compliance
 endif
@@ -94,7 +94,7 @@ TARGETS += dhrystone21
 
 
 # Targets
-.PHONY: tests run_modelsim run_vcs run_ncsim run_verilator
+.PHONY: tests run_modelsim run_vcs run_ncsim run_verilator run_verilator_wf
 
 default: run_verilator
 
@@ -163,6 +163,18 @@ run_ncsim: $(test_info)
 
 run_verilator: $(test_info)
 	$(MAKE) -C $(root_dir)/sim build_verilator;
+	printf "" > $(test_results);
+	cd $(bld_dir); \
+	echo $(top_module) ; \
+	$(bld_dir)/verilator/V$(top_module) \
+	+test_info=$(test_info) \
+	+test_results=$(test_results) \
+	+imem_pattern=$(imem_pattern) \
+	+dmem_pattern=$(dmem_pattern) \
+	$(VERILATOR_OPTS)
+
+run_verilator_wf: $(test_info)
+	$(MAKE) -C $(root_dir)/sim build_verilator_wf;
 	printf "" > $(test_results);
 	cd $(bld_dir); \
 	echo $(top_module) ; \

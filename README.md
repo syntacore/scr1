@@ -70,7 +70,7 @@ Set the $RISCV_TESTS environment variable accordingly:
 
     export RISCV_TESTS=<RISCV_TESTS_PATH>
 
-### Clone RISC-V Compliance tests to your preferred directory <RISCV_COMPLIANCE_TESTS_PATH>
+### Clone RISC-V Compliance tests
 
 Clone RISC-V Compliance tests to your preferred directory <RISCV_COMPLIANCE_TESTS_PATH>
 
@@ -82,38 +82,58 @@ Set the $RISCV_COMPLIANCE_TESTS environment variable accordingly:
 
     export RISCV_COMPLIANCE_TESTS=<RISCV_COMPLIANCE_TESTS_PATH>
 
-
 ### Prepare Coremark benchmark sources
 
-    Download CoreMark from EEMBC's web site and extract the archive from
-    http://www.eembc.org/coremark/download.php, or clone from https://github.com/eembc/coremark
+Download CoreMark from EEMBC's web site and extract the archive from
+http://www.eembc.org/coremark/download.php, or clone from https://github.com/eembc/coremark
 
-    Copy the following files from into the `tests/benchmarks/coremark/src` directory in this repository:
-    - `core_main.c`
-    - `core_list_join.c`
-    - `coremark.h`
-    - `core_matrix.c`
-    - `core_state.c`
-    - `core_util.c`
+Copy the following files from into the `sim/tests/benchmarks/coremark/src` directory in this repository:
 
-### Build RTL, compile and run tests
-`make run_<SIMULATOR> BUS=<AHB, AXI> ARCH=<I, IM, IMC, IC, EM, EMC, EC> IPIC=<0, 1>` will build RTL and tests, then run all tests with default parameters.
+* `core_main.c`
+* `core_list_join.c`
+* `coremark.h`
+* `core_matrix.c`
+* `core_state.c`
+* `core_util.c`
 
-Currently supported options:
-* run_modelsim
-* run_vcs
-* run_ncsim
-* run_verilator
+### Pre-made simulation script
+
+To build RTL, compile and run tests from the repo root folder:
+
+    make run_<SIMULATOR> BUS=<AHB, AXI> ARCH=<I, IM, IMC, IC, EM, EMC, EC> IPIC=<0, 1>
+
+Default options if not specified: BUS=AHB ARCH=IMC IPIC=0.
+
+Test build and run parameters can be configured in the *./Makefile*.
+
+#### Simulator selection
+
+Currently supported simulators:
+
+* run_modelsim - Mentor Graphics ModelSim
+* run_vcs - Synopsys VCS
+* run_ncsim - Cadence NCSim
+* run_verilator - Verilator (version >= 4.0)
+* run_verilator_wf - Verilator with waveforms support
 
 Please note that RTL simulator executables should be in your PATH variable.
 
-To run an arbitrary subset of tests, edit the *tests* target in the top Makefile, or the *rv32_tests.inc* in riscv_isa subfolder.
+For option run_verilator_wf the waveform is generated for the last test and stored in ./build/simx.vcd.
+
+#### Architectural configuration
+
+The RISC-V toolchain automatically uses the selected ARCH for code compilation.
+
+Please make sure that architectural configuration selected for the SCR1 RTL
+matches the one used for tests compilation. SCR1 core parameters can be
+configured in *./src/includes/scr1_arch_description.svh*
+
+#### Test subset
+
+To run an arbitrary subset of tests, edit the *tests* target in the ./Makefile.
+Edit the *./sim/tests/riscv_isa/rv32_tests.inc* to specify subset of RISC-V ISA tests.
+
 After all the tests have finished, the results can be found in *build/test_results.txt* (default location).
-
-* Test build and run parameters can be configured in the *Makefile*
-* SCR1 core parameters can be configured in *src/includes/scr1_arch_description.svh*
-
-Please make sure that architectural config selected for the SCR1 RTL matches the one used for tests compilation.
 
 ## Contacts
 <scr1@syntacore.com>

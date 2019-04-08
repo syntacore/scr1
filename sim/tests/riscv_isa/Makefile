@@ -1,6 +1,7 @@
-override ARCH := imfc
 
 include rv32_tests.inc
+
+override ARCH := imfc
 
 src_dir := $(CURDIR)
 obj_dir   := $(bld_dir)/riscv_objs

@@ -742,7 +742,7 @@ generate
             end
         end
     end else begin : mtvec_base_ro_rw
-        logic [(`SCR1_XLEN-1):(`SCR1_XLEN-1)-SCR1_CSR_MTVEC_BASE_RW_BITS]   csr_mtvec_base_reg;
+        logic [(`SCR1_XLEN-1):(`SCR1_XLEN-SCR1_CSR_MTVEC_BASE_RW_BITS)]   csr_mtvec_base_reg;
         always_ff @(negedge rst_n, posedge clk) begin
             if (~rst_n) begin
                 csr_mtvec_base_reg <= SCR1_CSR_MTVEC_BASE_RST_VAL[(`SCR1_XLEN-1)-:SCR1_CSR_MTVEC_BASE_RW_BITS] ;

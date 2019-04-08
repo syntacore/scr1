@@ -28,7 +28,9 @@ module scr1_pipe_tdu (
     output logic [SCR1_TDU_ALLTRIG_NUM-1 : 0]               tdu2exu_i_match,    // Instruction BP match
     output logic                                            tdu2exu_i_x_req,    // Instruction BP exception request
     // LSU I/F
+`ifndef SCR1_BRKM_EN
     output logic                                            tdu2lsu_brk_en,     // TDU-LSU Breakpoint enable
+`endif // SCR1_BRKM_EN
     output logic                                            tdu2lsu_i_x_req,    // TDU-LSU Instruction BP exception request
     input  type_scr1_brkm_lsu_mon_s                         tdu2lsu_d_mon,      // TDU-LSU Data address stream monitoring
     output logic [SCR1_TDU_MTRIG_NUM-1 : 0]                 tdu2lsu_d_match,    // TDU-LSU Data BP match
@@ -56,14 +58,10 @@ logic [MTRIG_NUM-1:0]                           clk_en_mcontrol_cmb;
 logic [MTRIG_NUM-1:0]                           mcontrol_dmode_ff;
 logic [MTRIG_NUM-1:0]                           mcontrol_execution_hit_cmb;
 logic [MTRIG_NUM-1:0]                           mcontrol_ldst_hit_cmb;
-logic [MTRIG_NUM-1:0]                           mcontrol_ldst_hit_chain_cmb;
 logic [MTRIG_NUM-1:0]                           mcontrol_action_ff;
 logic [MTRIG_NUM-1:0] [1:0]                     mcontrol_match_ff;
 logic [MTRIG_NUM-1:0]                           mcontrol_hit_ff;
-logic [MTRIG_NUM-1:0]                           mcontrol_chain_ff;
 logic [MTRIG_NUM-1:0]                           mcontrol_m_ff;
-//logic [MTRIG_NUM-1:0]                           mcontrol_s_ff;
-//logic [MTRIG_NUM-1:0]                           mcontrol_u_ff;
 logic [MTRIG_NUM-1:0]                           mcontrol_execution_ff;
 logic [MTRIG_NUM-1:0]                           mcontrol_load_ff;
 logic [MTRIG_NUM-1:0]                           mcontrol_store_ff;
@@ -82,8 +80,6 @@ logic                                           icount_dmode_ff;
 logic                                           icount_action_ff;
 logic                                           icount_hit_ff;
 logic                                           icount_m_ff;
-//logic                                           icount_s_ff;
-//logic                                           icount_u_ff;
 logic [SCR1_TDU_ICOUNT_COUNT_HI-SCR1_TDU_ICOUNT_COUNT_LO:0]
                                                 icount_count_ff;
 
@@ -142,9 +138,9 @@ always_comb begin
                     csr2tdu_rdata[ SCR1_TDU_MCONTROL_TIMING ]     = SCR1_TDU_MCONTROL_TIMING_VAL;
                     csr2tdu_rdata[ SCR1_TDU_MCONTROL_ACTION_HI:
                                    SCR1_TDU_MCONTROL_ACTION_LO ]  = mcontrol_action_ff[ i ];
-                    csr2tdu_rdata[ SCR1_TDU_MCONTROL_CHAIN ]      = mcontrol_chain_ff[ i ];
+                    csr2tdu_rdata[ SCR1_TDU_MCONTROL_CHAIN ]      = 1'b0;
                     csr2tdu_rdata[ SCR1_TDU_MCONTROL_MATCH_HI:
-                                   SCR1_TDU_MCONTROL_MATCH_LO ]   = mcontrol_match_ff[ i ];
+                                   SCR1_TDU_MCONTROL_MATCH_LO ]   = 1'b0;
                     csr2tdu_rdata[ SCR1_TDU_MCONTROL_M ]          = mcontrol_m_ff[ i ];
                     csr2tdu_rdata[ SCR1_TDU_MCONTROL_RESERVEDA ]  = SCR1_TDU_MCONTROL_RESERVEDA_VAL;
                     csr2tdu_rdata[ SCR1_TDU_MCONTROL_S ]          = 1'b0;
@@ -311,39 +307,10 @@ always_comb begin
 
     if( ~dsbl ) begin
         if( mcontrol_m_ff[gvar_trig] ) begin
-            if( tdu2lsu_d_mon.vd &
-                ((mcontrol_load_ff[gvar_trig] & tdu2lsu_d_mon.load) |
-                 (mcontrol_store_ff[gvar_trig] & tdu2lsu_d_mon.store)) ) begin
-
-                if( mcontrol_match_ff[gvar_trig] == 2'd0 ) begin
-                    mcontrol_ldst_hit_cmb[gvar_trig] = tdu2lsu_d_mon.addr == tdata2[gvar_trig];
-                end
-            end
-        end
-    end
-end
-
-// Watchpoint chained logic
-if( gvar_trig == 1'b0 ) begin : gblock_ldst_chain_zero
-    always_comb begin
-        mcontrol_ldst_hit_chain_cmb[gvar_trig] = 1'b0;
-
-        if( ~mcontrol_chain_ff[gvar_trig] ) begin
-            mcontrol_ldst_hit_chain_cmb[gvar_trig] = mcontrol_ldst_hit_cmb[gvar_trig];
-        end
-    end
-end else begin : gblock_ldst_chain_many
-    always_comb begin
-        mcontrol_ldst_hit_chain_cmb[gvar_trig] = 1'b0;
-
-        if( ~mcontrol_chain_ff[gvar_trig] ) begin
-            if( ~mcontrol_chain_ff[gvar_trig-1] |
-                (mcontrol_chain_ff[gvar_trig-1] &
-                 mcontrol_ldst_hit_cmb[gvar_trig-1] &
-                 tdata2[gvar_trig] != tdata2[gvar_trig-1]) ) begin
-
-                mcontrol_ldst_hit_chain_cmb[gvar_trig] = mcontrol_ldst_hit_cmb[gvar_trig];
-            end
+            mcontrol_ldst_hit_cmb[gvar_trig] =  tdu2lsu_d_mon.vd &
+                                                ((mcontrol_load_ff[gvar_trig] & tdu2lsu_d_mon.load) |
+                                                    (mcontrol_store_ff[gvar_trig] & tdu2lsu_d_mon.store)) &
+                                                tdu2lsu_d_mon.addr == tdata2[gvar_trig];
         end
     end
 end
@@ -367,9 +334,7 @@ always_ff @(negedge rst_n, posedge clk) begin
         mcontrol_execution_ff[gvar_trig] <= 1'b0;
         mcontrol_load_ff[gvar_trig]      <= 1'b0;
         mcontrol_store_ff[gvar_trig]     <= 1'b0;
-        mcontrol_match_ff[gvar_trig]     <= 1'b0;
         mcontrol_action_ff[gvar_trig]    <= 1'b0;
-        mcontrol_chain_ff[gvar_trig]     <= 1'b0;
         mcontrol_hit_ff[gvar_trig]       <= 1'b0;
     end else if( clk_en ) begin
         if( clk_en_mcontrol_cmb[gvar_trig] ) begin
@@ -387,21 +352,8 @@ always_ff @(negedge rst_n, posedge clk) begin
                 // Select action: dmode/exception
                 mcontrol_action_ff[gvar_trig]    <= csr_wr_data_cmb[SCR1_TDU_MCONTROL_ACTION_HI:SCR1_TDU_MCONTROL_ACTION_LO] == 1'b1;
 
-                // Select match type
-                if( csr_wr_data_cmb[SCR1_TDU_MCONTROL_EXECUTE] ) begin
-                    mcontrol_match_ff[gvar_trig] <= 1'b0;
-                end else if( csr_wr_data_cmb[SCR1_TDU_MCONTROL_LOAD] |
-                             csr_wr_data_cmb[SCR1_TDU_MCONTROL_STORE] ) begin
-
-                    mcontrol_match_ff[gvar_trig] <= csr_wr_data_cmb[SCR1_TDU_MCONTROL_MATCH_HI:
-                                                                    SCR1_TDU_MCONTROL_MATCH_LO] == 2'd2 ? 2'd2 :
-                                                    csr_wr_data_cmb[SCR1_TDU_MCONTROL_MATCH_HI:
-                                                                    SCR1_TDU_MCONTROL_MATCH_LO] == 2'd3 ? 2'd3 : 2'd0;
-                end
-
-                // Enable chain
-                // Watchpoint chain is not possible on last trigger
-                mcontrol_chain_ff[gvar_trig] <= gvar_trig != MTRIG_NUM-1 & csr_wr_data_cmb[SCR1_TDU_MCONTROL_CHAIN];
+                // Exact equality is supported only for match type of triggers (zero value)
+                // Chain is not supported
             end
 
             // Hit status
@@ -453,9 +405,9 @@ end
 // Watchpoint
 always_comb begin
     // Invalidate matching instruction in writeback
-    tdu2lsu_d_match = mcontrol_ldst_hit_chain_cmb;
+    tdu2lsu_d_match = mcontrol_ldst_hit_cmb;
     // Invalidate instruction in lsu
-    tdu2lsu_d_x_req = |mcontrol_ldst_hit_chain_cmb;
+    tdu2lsu_d_x_req = |mcontrol_ldst_hit_cmb;
 end
 
 // Debug mode request
@@ -473,9 +425,10 @@ always_comb begin
 `endif // SCR1_BRKM_BRKPT_ICOUNT_EN
 end
 
+`ifndef SCR1_BRKM_EN
 // LSU debug mode enable (2 clocks on each operation)
 always_comb tdu2lsu_brk_en = (|mcontrol_m_ff) | icount_m_ff;
-
+`endif // SCR1_BRKM_EN
 
 `ifdef SCR1_SIM_ENV
 `ifndef VERILATOR
@@ -514,7 +467,7 @@ SVA_TDU_X_IMON :
 SVA_TDU_X_DMON :
     assert property (
         @(negedge clk) disable iff (~rst_n)
-        tdu2lsu_d_mon.vd |-> !$isunknown( {tdu2lsu_d_mon.load,tdu2lsu_d_mon.store,tdu2lsu_d_mon.width,tdu2lsu_d_mon.addr} )
+        tdu2lsu_d_mon.vd |-> !$isunknown( {tdu2lsu_d_mon} )
     )
     else $error("TDU Error: dmonitor is X");
 

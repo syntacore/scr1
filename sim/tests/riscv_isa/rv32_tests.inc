@@ -1,4 +1,8 @@
-rv32_isa_tests := isa/rv32ui/add.S      \
+
+ARCH_lowercase = $(shell echo $(ARCH) | tr A-Z a-z)
+
+
+rv32_isa_tests += isa/rv32ui/add.S      \
               isa/rv32ui/addi.S         \
               isa/rv32ui/and.S          \
               isa/rv32ui/andi.S         \
@@ -25,14 +29,8 @@ rv32_isa_tests := isa/rv32ui/add.S      \
               isa/rv32mi/ma_addr.S      \
               isa/rv32mi/ma_fetch.S     \
               isa/rv32mi/mcsr.S         \
-              isa/rv32um/mul.S          \
-              isa/rv32um/mulh.S         \
-              isa/rv32um/mulhsu.S       \
-              isa/rv32um/mulhu.S        \
               isa/rv32ui/or.S           \
               isa/rv32ui/ori.S          \
-              isa/rv32um/rem.S          \
-              isa/rv32um/remu.S         \
               isa/rv32uc/rvc.S          \
               isa/rv32ui/sb.S           \
               isa/rv32mi/sbreak.S       \
@@ -55,5 +53,11 @@ rv32_isa_tests := isa/rv32ui/add.S      \
               isa/rv32ui/xor.S          \
               isa/rv32ui/xori.S
 
-
-
+ifneq (,$(findstring m,$(ARCH_lowercase)))
+rv32_isa_tests += isa/rv32um/mul.S      \
+              isa/rv32um/mulh.S         \
+              isa/rv32um/mulhsu.S       \
+              isa/rv32um/mulhu.S        \
+              isa/rv32um/rem.S          \
+              isa/rv32um/remu.S
+endif ## ifeq (m,$(findstring m,$(ARCH_lowercase)))

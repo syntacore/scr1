@@ -19,7 +19,6 @@ module scr1_tcm
     // Core instruction interface
     output  logic                           imem_req_ack,
     input   logic                           imem_req,
-    input   type_scr1_mem_cmd_e             imem_cmd,
     input   logic [`SCR1_IMEM_AWIDTH-1:0]   imem_addr,
     output  logic [`SCR1_IMEM_DWIDTH-1:0]   imem_rdata,
     output  type_scr1_mem_resp_e            imem_resp,

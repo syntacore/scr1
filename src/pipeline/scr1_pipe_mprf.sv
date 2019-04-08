@@ -36,8 +36,8 @@ type_scr1_mprf_v [1:31]     mprf_int;
 //-------------------------------------------------------------------------------
 // Read MPRF
 //-------------------------------------------------------------------------------
-assign mprf2exu_rs1_data = (|exu2mprf_rs1_addr) ? mprf_int[$unsigned(exu2mprf_rs1_addr)] : '0;
-assign mprf2exu_rs2_data = (|exu2mprf_rs2_addr) ? mprf_int[$unsigned(exu2mprf_rs2_addr)] : '0;
+assign mprf2exu_rs1_data = (|exu2mprf_rs1_addr) ? mprf_int[exu2mprf_rs1_addr] : '0;
+assign mprf2exu_rs2_data = (|exu2mprf_rs2_addr) ? mprf_int[exu2mprf_rs2_addr] : '0;
 
 //-------------------------------------------------------------------------------
 // Write MPRF
@@ -49,7 +49,7 @@ always_ff @(negedge rst_n, posedge clk) begin
         mprf_int <= '0;
     end else begin
         if (exu2mprf_w_req & |exu2mprf_rd_addr) begin
-            mprf_int[$unsigned(exu2mprf_rd_addr)] <= exu2mprf_rd_data;
+            mprf_int[exu2mprf_rd_addr] <= exu2mprf_rd_data;
         end
     end
 end
@@ -58,7 +58,7 @@ end
 
 always_ff @(posedge clk) begin
     if (exu2mprf_w_req & |exu2mprf_rd_addr) begin
-        mprf_int[$unsigned(exu2mprf_rd_addr)] <= exu2mprf_rd_data;
+        mprf_int[exu2mprf_rd_addr] <= exu2mprf_rd_data;
     end
 end
 
