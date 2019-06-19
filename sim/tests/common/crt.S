@@ -24,6 +24,13 @@ machine_trap_entry:
     .align 6
 
 _start:
+    # initialize Global Pointer
+    .option push
+    .option norelax
+1:  auipc   gp, %pcrel_hi(__global_pointer$)
+    addi    gp, gp, %pcrel_lo(1b)
+    .option pop
+
     # clear bss
     la      a1, __BSS_START__
     la      a2, __BSS_END__
@@ -31,8 +38,6 @@ _start:
 3:  sw      zero, 0(a1)
     add     a1, a1, 4
 4:  bne     a1, a2, 3b
-    auipc   gp, %hi(_gp)
-    addi    gp, gp, %lo(_gp)
     la      sp, __C_STACK_TOP__
 
     // Timer init
