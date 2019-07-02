@@ -24,13 +24,11 @@ machine_trap_entry:
     .align 6
 
 _start:
-    # initialize Global Pointer
+    # Global pointer init
     .option push
     .option norelax
-1:  auipc   gp, %pcrel_hi(__global_pointer$)
-    addi    gp, gp, %pcrel_lo(1b)
+    la    gp, __global_pointer$
     .option pop
-
     # clear bss
     la      a1, __BSS_START__
     la      a2, __BSS_END__

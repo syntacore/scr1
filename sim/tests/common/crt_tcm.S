@@ -23,29 +23,28 @@ machine_trap_entry:
 
     .align 6
 _start:
-    # initialize Global Pointer
+    # Global pointer init
     .option push
     .option norelax
-1:  auipc   gp, %pcrel_hi(__global_pointer$)
-    addi    gp, gp, %pcrel_lo(1b)
+    la    gp, __global_pointer$
     .option pop
     la    a0, __reloc_start
     la    a1, __TEXT_START__
     la    a2, __DATA_START__
-    beq   a0, a1, 31f
-    j     3f
-2:  lw    a3, 0(a0)
+    beq   a0, a1, 21f
+    j     2f
+1:  lw    a3, 0(a0)
     sw    a3, 0(a1)
     add   a0, a0, 4
     add   a1, a1, 4
-3:  bne   a1, a2, 2b
+2:  bne   a1, a2, 1b
     # clear bss
     la    a2, __BSS_START__
-31: la    a1, __BSS_END__
-    j     5f
-4:  sw    zero, 0(a2)
+21: la    a1, __BSS_END__
+    j     4f
+3:  sw    zero, 0(a2)
     add   a2, a2, 4
-5:  bne   a1, a2, 4b
+4:  bne   a1, a2, 3b
     // init stack
     la    sp, __C_STACK_TOP__
     // init hart0 TLS
@@ -57,17 +56,17 @@ _start:
     // init tdata
     mv    a1, tp
     la    a2, _tdata_end
-    j     7f
-6:  lw    a3, 0(a0)
+    j     6f
+5:  lw    a3, 0(a0)
     sw    a3, 0(a1)
     add   a0, a0, 4
     add   a1, a1, 4
-7:  bne   a0, a2, 6b
+6:  bne   a0, a2, 5b
     // clear tbss
-    j     9f
-8:  sw    zero, 0(a1)
+    j     8f
+7:  sw    zero, 0(a1)
     add   a1, a1, 4
-9:  bne   a1, a4, 8b
+8:  bne   a1, a4, 7b
 
     // Timer init
     li    t0, mtime_ctrl
@@ -83,8 +82,8 @@ _start:
 
     li    a0, 0
     li    a1, 0
-10: auipc t0, %pcrel_hi(main)
-    jalr  t0, %pcrel_lo(10b)
+9:  auipc t0, %pcrel_hi(main)
+    jalr  t0, %pcrel_lo(9b)
     j     sc_exit
 
 trap_entry:

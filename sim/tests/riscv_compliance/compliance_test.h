@@ -12,19 +12,6 @@
 //-----------------------------------------------------------------------
 
 #define RV_COMPLIANCE_HALT                                                   \
-        .global check;                                                       \
-        la a1, __BSS_START__;                                                \
-        la a2, __BSS_END__;                                                  \
-        j  4f;                                                               \
-        3: sw zero, 0(a1);                                                   \
-        add a1, a1, 4;                                                       \
-        4: bne     a1, a2, 3b;                                               \
-        la sp, __C_STACK_TOP__;                                              \
-        la t5, check;                                                        \
-        jalr x1, t5, 0;                                                      \
-        beqz a0, 1f;                                                         \
-        RVTEST_FAIL;                                                         \
-        1: RVTEST_PASS                                                       \
 
 #define RV_COMPLIANCE_RV32M                                                  \
         RVTEST_RV32M                                                         \

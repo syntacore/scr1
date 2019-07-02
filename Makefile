@@ -48,11 +48,16 @@ MODELSIM_OPTS  ?=
 NCSIM_OPTS     ?=
 VERILATOR_OPTS ?=
 
+current_goal := $(MAKECMDGOALS:run_%=%)
+ifeq ($(current_goal),)
+  current_goal := verilator
+endif
+
 # Paths
 export root_dir := $(shell pwd)
 export tst_dir  := $(root_dir)/sim/tests
 export inc_dir  := $(tst_dir)/common
-export bld_dir  := $(root_dir)/build
+export bld_dir  := $(root_dir)/build/$(current_goal)_$(BUS)_$(shell echo $(ARCH) | tr a-z A-Z)$(if $(findstring 1,$(IPIC)),_IPIC,)
 
 test_results := $(bld_dir)/test_results.txt
 test_info    := $(bld_dir)/test_info
@@ -91,7 +96,8 @@ endif
 TARGETS += coremark
 # comment this target if you don't want to run the dhrystone
 TARGETS += dhrystone21
-
+# comment this target if you don't want to run the hello test
+TARGETS += hello
 
 # Targets
 .PHONY: tests run_modelsim run_vcs run_ncsim run_verilator run_verilator_wf
@@ -114,10 +120,13 @@ coremark: | $(bld_dir)
 	-$(MAKE) -C $(tst_dir)/benchmarks/coremark EXT_CFLAGS="$(EXT_CFLAGS)" ARCH=$(ARCH)
 
 riscv_isa: | $(bld_dir)
-	$(MAKE) -C $(tst_dir)/riscv_isa
+	$(MAKE) -C $(tst_dir)/riscv_isa ARCH=$(ARCH)
 
 riscv_compliance: | $(bld_dir)
 	$(MAKE) -C $(tst_dir)/riscv_compliance ARCH=$(ARCH)
+
+hello: | $(bld_dir)
+	-$(MAKE) -C $(tst_dir)/hello EXT_CFLAGS="$(EXT_CFLAGS)" ARCH=$(ARCH)
 
 clean_hex: | $(bld_dir)
 	$(RM) $(bld_dir)/*.hex
@@ -189,5 +198,5 @@ clean:
 	$(MAKE) -C $(tst_dir)/benchmarks/dhrystone21 clean
 	$(MAKE) -C $(tst_dir)/riscv_isa clean
 	$(MAKE) -C $(tst_dir)/riscv_compliance clean
-	$(RM) -R $(bld_dir)/*
+	$(RM) -R $(root_dir)/build/*
 	$(RM) $(test_info)
