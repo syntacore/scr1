@@ -8,9 +8,10 @@
 `include "scr1_memif.svh"
 
 `ifdef SCR1_DBGC_EN
-`include "scr1_tapc.svh"
 `include "scr1_dm.svh"
 `include "scr1_hdu.svh"
+
+import scr1_tapc_pkg::*;
 `endif // SCR1_DBGC_EN
 
 `ifdef SCR1_IPIC_EN

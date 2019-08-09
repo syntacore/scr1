@@ -6,8 +6,9 @@
 `include "scr1_arch_description.svh"
 
 `ifdef SCR1_DBGC_EN
-`include "scr1_tapc.svh"
 `include "scr1_dm.svh"
+
+import scr1_tapc_pkg::*;
 
 module scr1_tapc (
     // JTAG signals
