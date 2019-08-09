@@ -8,8 +8,6 @@
 `ifdef SCR1_DBGC_EN
 `include "scr1_dm.svh"
 
-import scr1_tapc_pkg::*;
-
 module scr1_tapc (
     // JTAG signals
     input   logic                                   trst_n,         // Test Reset (TRSTn)
@@ -31,6 +29,11 @@ module scr1_tapc (
     output  logic                                   dmi_ch_tdi,     // DMI Chain TDI
     input   logic                                   dmi_ch_tdo      // DMI Chain TDO
 );
+
+//-------------------------------------------------------------------------------
+// package declaration
+//-------------------------------------------------------------------------------
+import scr1_tapc_pkg::*;
 
 //======================================================================================================================
 // Local Parameters

@@ -8,8 +8,6 @@
 `ifdef SCR1_DBGC_EN
 `include "scr1_dm.svh"
 
-import scr1_tapc_pkg::*;
-
 module scr1_tapc_synchronizer (
     // System common signals
     input   logic                                   pwrup_rst_n,        // Power-Up Reset
@@ -44,6 +42,11 @@ module scr1_tapc_synchronizer (
     output logic                                    dmi_ch_tdo,         // DMI Chain TDO output (TCK domain)
     input  logic                                    dmi_ch_tdo_core     // DMI Chain TDO input  (SysCLK domain)
 );
+
+//-------------------------------------------------------------------------------
+// package declaration
+//-------------------------------------------------------------------------------
+import scr1_tapc_pkg::*;
 
 //-------------------------------------------------------------------------------
 // Local signals declaration

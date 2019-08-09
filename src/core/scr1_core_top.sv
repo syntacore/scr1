@@ -10,8 +10,6 @@
 `ifdef SCR1_DBGC_EN
 `include "scr1_dm.svh"
 `include "scr1_hdu.svh"
-
-import scr1_tapc_pkg::*;
 `endif // SCR1_DBGC_EN
 
 `ifdef SCR1_IPIC_EN
@@ -79,6 +77,13 @@ module scr1_core_top #(
     input   logic [`SCR1_DMEM_DWIDTH-1:0]           dmem_rdata,
     input   type_scr1_mem_resp_e                    dmem_resp
 );
+
+//-------------------------------------------------------------------------------
+// package declaration
+//-------------------------------------------------------------------------------
+`ifdef SCR1_DBGC_EN
+import scr1_tapc_pkg::*;
+`endif // SCR1_DBGC_EN
 
 //-------------------------------------------------------------------------------
 // Local signals declaration
