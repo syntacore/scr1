@@ -12,6 +12,7 @@ pipeline/scr1_pipe_top.sv
 core/primitives/scr1_reset_cells.sv
 core/primitives/scr1_cg.sv
 core/scr1_clk_ctrl.sv
+core/scr1_tapc_pkg.sv
 core/scr1_tapc_shift_reg.sv
 core/scr1_tapc.sv
 core/scr1_tapc_synchronizer.sv
