@@ -1,7 +1,5 @@
-`ifndef SCR1_INCLUDE_TAPC_DEFS
-`define SCR1_INCLUDE_TAPC_DEFS
 /// Copyright by Syntacore LLC © 2016-2019. See LICENSE for details
-/// @file       <scr1_tapc.svh>
+/// @file       <scr1_tap_pkg.sv>
 /// @brief      TAPC header file
 ///
 
@@ -58,7 +56,4 @@ typedef enum logic [SCR1_TAP_INSTRUCTION_WIDTH - 1:0] {
 
 endpackage : scr1_tapc_pkg
 
-import scr1_tapc_pkg::*;
-
 `endif // SCR1_DBGC_EN
-`endif // SCR1_INCLUDE_TAPC_DEFS
