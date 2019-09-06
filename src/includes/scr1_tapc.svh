@@ -8,7 +8,6 @@
 `include "scr1_arch_description.svh"
 
 `ifdef SCR1_DBGC_EN
-package scr1_tapc_pkg;
 
 //==============================================================================
 // Parameters
@@ -55,10 +54,6 @@ typedef enum logic [SCR1_TAP_INSTRUCTION_WIDTH - 1:0] {
     SCR1_TAP_INSTR_BYPASS            = 5'h1F,
     SCR1_TAP_INSTR_XXX               = 'X
 } type_scr1_tap_instr_e;
-
-endpackage : scr1_tapc_pkg
-
-import scr1_tapc_pkg::*;
 
 `endif // SCR1_DBGC_EN
 `endif // SCR1_INCLUDE_TAPC_DEFS

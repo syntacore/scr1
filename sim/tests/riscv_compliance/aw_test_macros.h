@@ -14,7 +14,7 @@
 
 #define MASK_XLEN(x) ((x) & ((1 << (__riscv_xlen - 1) << 1) - 1))
 
-#define CHECK_XLEN li a0, 1; slli a0, a0, 31; bltz a0, 1f; RVTEST_PASS; 1: srli a0, a0, 31; la t0, begin_signature; sw a0, 0(t0) //bug in rv32ui reference data, so it's like a KOSTYL
+#define CHECK_XLEN li a0, 1; slli a0, a0, 31; bltz a0, 1f; RVTEST_PASS; 1: srli a0, a0, 31; la t0, begin_signature; sw a0, 0(t0)
 
 #define TESTNUM gp
 
