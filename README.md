@@ -1,4 +1,4 @@
-SCR1 is an open-source RISC-V compatible MCU core, designed and maintained by Syntacore.
+SCR1 is an open-source and free to use RISC-V compatible MCU core, designed and maintained by Syntacore. It is industry-grade and silicon-proven (including full-wafer production), works out of the box in all major EDA flows and Verilator, and comes with extensive collateral and documentation.
 
 ## Key features
 * RV32I|E[MC] ISA
