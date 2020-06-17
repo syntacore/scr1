@@ -146,7 +146,7 @@ vec_machine_tmr_handler:
     csrr            t1, mip
     li              t0, MIP_MTIP
     and             t0, t1, t0
-    beqz            t1, check_fail
+    beqz            t0, check_fail
     _reset_mtimecmp
     csrr            t1, mip
     andi            t1, t1, MIP_MTIP
@@ -162,7 +162,7 @@ vec_machine_ext_handler:
     csrr            t1, mip
     li              t0, MIP_MEIP
     and             t0, t1, t0
-    beqz            t1, check_fail
+    beqz            t0, check_fail
     csrw            IPIC_SOI, zero
     csrw            IPIC_EOI, zero
     csrr            t1, mip

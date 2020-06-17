@@ -69,7 +69,10 @@ src_dir       := $(CURDIR)
 obj_dir       := $(bld_dir)/riscv_compliance_objs
 cut_list      := I-EBREAK-01 I-ECALL-01 I-MISALIGN_JMP-01 I-MISALIGN_LDST-01
 cut_list      += scall csr shamt simple
-reference_src := $(wildcard $(RISCV_COMPLIANCE_TESTS)/riscv-test-suite/*/*/*.reference_output)
+reference_src += $(wildcard $(RISCV_COMPLIANCE_TESTS)/riscv-test-suite/rv32i*/*/*.reference_output)
+reference_src += $(wildcard $(RISCV_COMPLIANCE_TESTS)/riscv-test-suite/rv32mi/*/*.reference_output)
+reference_src += $(wildcard $(RISCV_COMPLIANCE_TESTS)/riscv-test-suite/rv32uc/*/*.reference_output)
+reference_src += $(wildcard $(RISCV_COMPLIANCE_TESTS)/riscv-test-suite/rv32ui/*/*.reference_output)
 testnames     := $(basename $(notdir $(compliance_set)))
 filtered      := $(filter-out $(cut_list),$(testnames))
 objs          := $(addprefix $(bld_dir)/,$(filtered:%=%.o))
@@ -93,6 +96,10 @@ filtered_imc      := $(filter-out $(cut_list),$(testnames_imc))
 # ARCH_FLAGS_C := -Wa,-march=rv32imc -march=rv32imc
 CFLAGS := -I$(inc_dir) -I$(src_dir) -DASM -mabi=ilp32 -D__riscv_xlen=32 -w
 LDFLAGS := -static -fvisibility=hidden -nostdlib -nostartfiles -T$(inc_dir)/link.ld -march=$(ARCH) -mabi=ilp32
+GCCVERSIONGT7 := $(shell expr `$(RISCV_GCC) -dumpfullversion | cut -f1 -d'.'` \> 7)
+ifeq "$(GCCVERSIONGT7)" "1"
+	LDFLAGS += -mno-relax
+endif
 VPATH += $(src_dir) $(bld_dir) $(obj_dir) $(asm_path) $(ref_path) $(RISCV_COMPLIANCE_TESTS)
 
 ifeq ($(compliance_output), true)

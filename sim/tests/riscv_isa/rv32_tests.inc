@@ -14,8 +14,6 @@ rv32_isa_tests += isa/rv32ui/add.S      \
               isa/rv32ui/bltu.S         \
               isa/rv32ui/bne.S          \
               isa/rv32mi/csr.S          \
-              isa/rv32um/div.S          \
-              isa/rv32um/divu.S         \
               isa/rv32ui/fence_i.S      \
               isa/rv32mi/illegal.S      \
               isa/rv32ui/jal.S          \
@@ -31,7 +29,6 @@ rv32_isa_tests += isa/rv32ui/add.S      \
               isa/rv32mi/mcsr.S         \
               isa/rv32ui/or.S           \
               isa/rv32ui/ori.S          \
-              isa/rv32uc/rvc.S          \
               isa/rv32ui/sb.S           \
               isa/rv32mi/sbreak.S       \
               isa/rv32mi/scall.S        \
@@ -54,10 +51,16 @@ rv32_isa_tests += isa/rv32ui/add.S      \
               isa/rv32ui/xori.S
 
 ifneq (,$(findstring m,$(ARCH_lowercase)))
-rv32_isa_tests += isa/rv32um/mul.S      \
+rv32_isa_tests += isa/rv32um/div.S      \
+              isa/rv32um/divu.S         \
+              isa/rv32um/mul.S          \
               isa/rv32um/mulh.S         \
               isa/rv32um/mulhsu.S       \
               isa/rv32um/mulhu.S        \
               isa/rv32um/rem.S          \
               isa/rv32um/remu.S
 endif ## ifeq (m,$(findstring m,$(ARCH_lowercase)))
+
+ifneq (,$(findstring c,$(ARCH_lowercase)))
+rv32_isa_tests += isa/rv32uc/rvc.S
+endif ## ifeq (m,$(findstring c,$(ARCH_lowercase)))

@@ -1,7 +1,13 @@
 
 include rv32_tests.inc
 
-override ARCH := imfc
+ARCH_tmp := imf
+
+ifneq (,$(findstring c,$(ARCH_lowercase)))
+	ARCH_tmp := $(ARCH_tmp)c
+endif
+
+override ARCH := $(ARCH_tmp)
 
 src_dir := $(CURDIR)
 obj_dir   := $(bld_dir)/riscv_objs

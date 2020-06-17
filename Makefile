@@ -61,6 +61,7 @@ export bld_dir  := $(root_dir)/build/$(current_goal)_$(BUS)_$(shell echo $(ARCH)
 
 test_results := $(bld_dir)/test_results.txt
 test_info    := $(bld_dir)/test_info
+sim_results  := $(bld_dir)/sim_results.txt
 
 # Environment
 export CROSS_PREFIX  ?= riscv64-unknown-elf-
@@ -78,6 +79,15 @@ export rtl_top_files := ahb_top.files
 export rtl_tb_files  := ahb_tb.files
 export top_module    := scr1_top_tb_ahb
 endif
+
+ifneq (,$(findstring e,$(ARCH_lowercase)))
+	#if gcc version 8.0.0 or higher
+	GCCVERSIONGT7 := $(shell expr `$(RISCV_GCC) -dumpfullversion | cut -f1 -d'.'` \> 7)
+	ifeq "$(GCCVERSIONGT7)" "1"
+		ABI := ilp32e
+	endif
+endif
+
 #--
 ifeq (,$(findstring e,$(ARCH_lowercase)))
 ifeq (,$(findstring 0,$(IPIC)))
@@ -143,7 +153,7 @@ run_vcs: $(test_info)
 	+test_results=$(test_results) \
 	+imem_pattern=$(imem_pattern) \
 	+dmem_pattern=$(dmem_pattern) \
-	$(VCS_OPTS)
+	$(VCS_OPTS) | tee $(sim_results)
 
 run_modelsim: $(test_info)
 	$(MAKE) -C $(root_dir)/sim build_modelsim; \
@@ -155,7 +165,7 @@ run_modelsim: $(test_info)
 	+imem_pattern=$(imem_pattern) \
 	+dmem_pattern=$(dmem_pattern) \
 	work.$(top_module) \
-	$(MODELSIM_OPTS)
+	$(MODELSIM_OPTS) | tee $(sim_results)
 
 run_ncsim: $(test_info)
 	$(MAKE) -C $(root_dir)/sim build_ncsim;
@@ -168,31 +178,31 @@ run_ncsim: $(test_info)
 	+test_results=$(test_results) \
 	+imem_pattern=$(imem_pattern) \
 	+dmem_pattern=$(dmem_pattern) \
-	$(NCSIM_OPTS)
+	$(NCSIM_OPTS) | tee $(sim_results)
 
 run_verilator: $(test_info)
 	$(MAKE) -C $(root_dir)/sim build_verilator;
 	printf "" > $(test_results);
 	cd $(bld_dir); \
-	echo $(top_module) ; \
+	echo $(top_module) | tee $(sim_results); \
 	$(bld_dir)/verilator/V$(top_module) \
 	+test_info=$(test_info) \
 	+test_results=$(test_results) \
 	+imem_pattern=$(imem_pattern) \
 	+dmem_pattern=$(dmem_pattern) \
-	$(VERILATOR_OPTS)
+	$(VERILATOR_OPTS) | tee -a $(sim_results)
 
 run_verilator_wf: $(test_info)
 	$(MAKE) -C $(root_dir)/sim build_verilator_wf;
 	printf "" > $(test_results);
 	cd $(bld_dir); \
-	echo $(top_module) ; \
+	echo $(top_module) | tee $(sim_results); \
 	$(bld_dir)/verilator/V$(top_module) \
 	+test_info=$(test_info) \
 	+test_results=$(test_results) \
 	+imem_pattern=$(imem_pattern) \
 	+dmem_pattern=$(dmem_pattern) \
-	$(VERILATOR_OPTS)
+	$(VERILATOR_OPTS) | tee -a $(sim_results)
 
 clean:
 	$(MAKE) -C $(tst_dir)/benchmarks/dhrystone21 clean

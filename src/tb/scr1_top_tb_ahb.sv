@@ -109,9 +109,9 @@ function logic [255:0] get_filename (logic [255:0] testname);
 logic [255:0] res;
 int i, j;
 begin
-    testname[15:8] = 8'h66;
-    testname[23:16] = 8'h6C;
-    testname[31:24] = 8'h65;
+    testname[7:0] = 8'h66;
+    testname[15:8] = 8'h6C;
+    testname[23:16] = 8'h65;
 
     for (i = 0; i <= 248; i += 8) begin
         if (testname[i+:8] == 0) begin
@@ -119,7 +119,7 @@ begin
         end
     end
     i -= 8;
-    for (j = 255; i > 0;i -= 8) begin
+    for (j = 255; i >= 0;i -= 8) begin
         res[j-:8] = testname[i+:8];
         j -= 8;
     end
@@ -149,7 +149,7 @@ begin
         if(testname[i+:8] == 0) break;
     end
     i -= 8;
-    for(j = 255; i > 32;i -= 8) begin
+    for(j = 255; i > 24; i -= 8) begin
         res[j-:8] = testname[i+:8];
         j -= 8;
     end
@@ -322,6 +322,7 @@ always_ff @(posedge clk) begin
     end else begin
 `ifdef VERILATOR
         if ($fgets(test_file,f_info)) begin
+            test_file = test_file >> 8; // < Removing trailing LF symbol ('\n')
 `else // VERILATOR
         if (!$feof(f_info)) begin
             $fscanf(f_info, "%s\n", test_file);
