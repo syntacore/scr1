@@ -261,12 +261,12 @@ SCR1_SVA_LSU_XCHECK_CTRL : assert property (
 SCR1_SVA_LSU_XCHECK_CMD : assert property (
     @(negedge clk) disable iff (~rst_n)
     exu2lsu_req |-> !$isunknown({exu2lsu_cmd, exu2lsu_addr})
-    ) else $error("LSU Error: exception code undefined");
+    ) else $error("LSU Error: undefined CMD or address");
 
 SCR1_SVA_LSU_XCHECK_SDATA : assert property (
     @(negedge clk) disable iff (~rst_n)
     (exu2lsu_req & (lsu2dmem_cmd == SCR1_MEM_CMD_WR)) |-> !$isunknown({exu2lsu_s_data})
-    ) else $error("LSU Error: exception code undefined");
+    ) else $error("LSU Error: undefined store data");
 
 SCR1_SVA_LSU_XCHECK_EXC : assert property (
     @(negedge clk) disable iff (~rst_n)

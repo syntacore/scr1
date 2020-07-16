@@ -1,3 +1,619 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="551px" height="491px" viewBox="-0.5 -0.5 551 491" content="&lt;mxfile host=&quot;www.draw.io&quot; modified=&quot;2019-12-13T18:00:51.050Z&quot; agent=&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Safari/537.36&quot; etag=&quot;xpT4jK4wWvVjDBtwwUHi&quot; version=&quot;12.4.1&quot; type=&quot;device&quot; pages=&quot;1&quot;&gt;&lt;diagram id=&quot;ZaYXdkjkLsFjD84WWfmD&quot; name=&quot;Page-1&quot;&gt;7Z1bV6s4FIB/jY/jAsKlfezFas86zjhWHX3EkraMtOnQaO359SdIUi6hltJCohNfhA0EyLfZtwR6Bnrz98vQXc6ukQeDM0Pz3s9A/8wwDNOwyb9IsoklOtC0WDINfY/KEsHI/wWpkO326ntwldkRIxRgf5kVjtFiAcc4I3PDEK2zu01QkD3r0p1CTjAauwEv/cf38CyWtgwnkV9BfzpjZ9btdrxl7rKd6Z2sZq6H1ikRuDgDvRAhHC/N33swiHqP9Ut83GDH1u2FhXCByxzwct9fv0xv74HZMe7/NAfdvzbwD9OKm3lzg1d6x/Rq8YZ1QYheFx6MWtHPQHc98zEcLd1xtHVNqBPZDM8DunmCFphS1Mktdt1wTFfNaKsfBD0UoPCjZdDvXfQHHSJf4RC9wNQWwwSOqdH2dskH7twPIsV6gKHnLlx2enrp0eW4gT9dkOUx6SRI2ujyvUY78g2GGL6nRLQXLyGaQxxuyC5Mq5luUp0GgK6vEwUBbSqbpZTDtKjQpUo53badcCMLFN0hGG2RGJ91z5toXw6jkcNoF2B0CjDqrbowGjVTzHdrnqMGAbRPybEWbiDLzWzz3FpFT19d1ICitp8aMCSjZipq+6mZumTU6g5XvgU1S5OMWt3RybegxllIUzA1R1GrEI2IptZS1Cr4NdHUgMNRgt4Uso5GIZ6hKVq4wUUi7SYco+5L9vmJ0JLS+RdivKH43FeMsmzhu48f6eHR8lO0fG7Rtf57alN/Q1dW2A1xJ6qsEMFzgMYvTDjwA9ZwDJ8VTIwCNYILVuyx2PGpdbI1fwoiSp1A4gx0hV7DMfyENS0QRXw/1dUQBi7237KFqCLNo4feIJ9cylbH9XZOx3XtHKT+rGyDhMAUYtpGTpu3F1VdwdvKLB3uTIDowI2ZSYXtoHhbtDfRdYXt8IBb+NMGbJFBAFtWQUATQYBuNBMF2PmsUmgUwO5aGaZD/Ilww6SrEneFpFI8NtF1t5Mb5FrCgFzQbbVsDptuFXBzauMmuvL2Nbjl8lvb5rkVjsLXNnrbFhm+aecOi9meUpuK4zfS6+HmMb2Sivqi1eSwjzV2XF6RjokDU/onexx4yriP1mfjQKuE8T5dgHhcbmKKVe60bmsldTtR5+0T8YlunyinUbq9X7dPnvsc525LDJmsZu4yWsTEt8JfKGqvu4ShT64g6rREfpMI/5deOV/CtApmVTVbVNE4mI0aLqOCV96aqnJeWVmuoy1XW5hX/jiU9KS7Se2wjAowq1TLuaqOlavq2PQMyYMSt3ja4k2JMRxlJyvWeMTbSUueAK9s8pIN8BLDqMxkPWbSKmslTz7EfZxq6yJV+5BxFZW7CIsAnC+q27wPFhfelk7MDaXdjWo3Cxf3a3dLKu1m160q4Yfk3I5eLpas7XW07S0obAekAMKxASDWl1QawKBHqSRAuloJa1ESX2LyvuTHXeeSSIakvQGn+uQpxllNzdJYoAXMoaMirrMjm+CP3aBDN8x9z/t4eIrMXvaBKlK8ijOYtBPYLG46kcbbLLvAZhl12SyTdzXD278V1EOg6vl3WIRDNTionatuVNV8HCq0x7zk3ipAq2tNsgUtsUFG+RjjZJNcq5UrZQ8papwcWzpdZYai7lm027leLFRvi5xFa/LTMZV5rGQezbZ05lHwJDJlHr+AeWQfwtprHkEz5tEypTKP/PTZUe+W3JQ2Dl5XUed/SdvY0jp6t1NO4UANoeMWY9o26o2mBfxELQYWhbAGqgGc4FqZmj3HaTXJNP+CqV3AtC5/5/3QHtaP7VX3Zfw0WT/8B58ms6JS8fBm2JP4Ed2F6bPy9A7XsQNfAeTdRK39ubvZKFA+dx/17hXPkjyBKRtPPtnoXyucJXGaJUprzeLkv3t217lR9rYs0PzMS/FA+U+i9Ua3Muf/JYHuyrUS0DV4T0swTcDTvOt9A3PbBEzQsjIwbfYZDGEw+fdv7/y51PmnRDhNPYfT4d/vbBRnwQDysP8NIttGns1cWGuJdpsF48YXjwpmpaBWPEw+5/w5UjArBbTiYfIJ550ysxXTTdHxrFViJuiUdOly583TH/Zwn9nuu8b9Sgf5jlGuU9gr76fXcD4HH15fqCgf71UknvEehnptVopP1FJj8ArkwSDpw8m+ECaMK5+zPYd+NH6qoFaGyoqOoqBafHzYuBfKx1nCvZBVVNhXXuhzPTfk8kIWH0koL3QMSEm8kMVHF8oLHQtVtBdivwwoUy5kOSUTRKOuTuEna6lcaI+ex4okjxey+XlZpNvknmgnL0VJXBAzDDLFzMKtlcOXs1TMvEfPY2byWCuHTwaVtapMURZrxSez1zdqFkzFOYeiRw0cPv25UkNAFSeoCYfJV1SHAwWzWrpW3+AsWU1+iz5+FYd00OwaeTDa4zc=&lt;/diagram&gt;&lt;/mxfile&gt;"><defs/><g><rect x="80" y="0" width="390" height="450" rx="15.6" ry="15.6" fill="#dcedfa" stroke="#243740" pointer-events="all"/><rect x="90" y="30" width="370" height="180" rx="7.2" ry="7.2" fill="#b1ddf0" stroke="#243740" pointer-events="all"/><rect x="100" y="160" width="80" height="40" rx="6" ry="6" fill="#b0e3e6" stroke="#243740" pointer-events="all"/><rect x="190" y="160" width="80" height="40" rx="6" ry="6" fill="#b0e3e6" stroke="#243740" pointer-events="all"/><rect x="280" y="160" width="80" height="40" rx="6" ry="6" fill="#b0e3e6" stroke="#243740" pointer-events="all"/><rect x="370" y="160" width="80" height="40" rx="6" ry="6" fill="#b0e3e6" stroke="#243740" pointer-events="all"/><rect x="190" y="110" width="80" height="40" rx="6" ry="6" fill="#b0e3e6" stroke="#243740" pointer-events="all"/><rect x="100" y="110" width="80" height="40" rx="6" ry="6" fill="#b0e3e6" stroke="#243740" pointer-events="all"/><rect x="280" y="110" width="80" height="40" rx="6" ry="6" fill="#b0e3e6" stroke="#243740" pointer-events="all"/><path d="M 91.23 80.59 L 80.47 80.59 L 69.24 80.45" fill="none" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/><path d="M 98.23 80.59 L 91.23 84.09 L 91.23 77.09 Z" fill="#243740" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/><path d="M 62.24 80.36 L 69.28 76.95 L 69.19 83.95 Z" fill="#243740" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/><rect x="100" y="60" width="80" height="40" rx="6" ry="6" fill="#b0e3e6" stroke="#243740" pointer-events="all"/><rect x="370" y="110" width="80" height="40" rx="6" ry="6" fill="#b0e3e6" stroke="#243740" pointer-events="all"/><rect x="190" y="60" width="80" height="40" rx="6" ry="6" fill="#b0e3e6" stroke="#243740" pointer-events="all"/><path d="M 459.12 80.59 L 469.88 80.59 L 480.76 80.45" fill="none" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/><path d="M 452.12 80.59 L 459.12 77.09 L 459.12 84.09 Z" fill="#243740" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/><path d="M 487.76 80.36 L 480.81 83.95 L 480.72 76.95 Z" fill="#243740" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/><rect x="370" y="60" width="80" height="40" rx="6" ry="6" fill="#b0e3e6" stroke="#243740" pointer-events="all"/><rect x="280" y="60" width="80" height="40" rx="6" ry="6" fill="#b0e3e6" stroke="#243740" pointer-events="all"/><rect x="200" y="256" width="150" height="70" rx="10.5" ry="10.5" fill="#b1ddf0" stroke="#243740" pointer-events="all"/><rect x="260" y="336" width="90" height="40" rx="6" ry="6" fill="#b1ddf0" stroke="#243740" pointer-events="all"/><path d="M 160.47 279.24 L 160.47 291.18 L 191.23 291.18" fill="none" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/><path d="M 160.47 272.24 L 163.97 279.24 L 156.97 279.24 Z" fill="#243740" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/><path d="M 198.23 291.18 L 191.23 294.68 L 191.23 287.68 Z" fill="#243740" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/><path d="M 140.47 220.76 L 140.47 209.82" fill="none" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/><path d="M 140.47 227.76 L 136.97 220.76 L 143.97 220.76 Z" fill="#243740" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/><path d="M 140.47 202.82 L 143.97 209.82 L 136.97 209.82 Z" fill="#243740" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/><path d="M 100 270 L 116 230 L 164 230 L 180 270 Z" fill="#b1ddf0" stroke="#243740" stroke-miterlimit="10" pointer-events="all"/><path d="M 389.88 279.24 L 389.88 291.18 L 359.12 291.18" fill="none" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/><path d="M 389.88 272.24 L 393.38 279.24 L 386.38 279.24 Z" fill="#243740" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/><path d="M 352.12 291.18 L 359.12 287.68 L 359.12 294.68 Z" fill="#243740" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/><path d="M 370 270 L 386 230 L 434 230 L 450 270 Z" fill="#b1ddf0" stroke="#243740" stroke-miterlimit="10" pointer-events="all"/><path d="M 409.88 209.82 L 409.88 220.76" fill="none" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/><path d="M 409.88 202.82 L 413.38 209.82 L 406.38 209.82 Z" fill="#243740" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/><path d="M 409.88 227.76 L 406.38 220.76 L 413.38 220.76 Z" fill="#243740" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/><path d="M 359.12 355.88 L 409.88 355.88 L 409.88 279.24" fill="none" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/><path d="M 352.12 355.88 L 359.12 352.38 L 359.12 359.38 Z" fill="#243740" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/><path d="M 409.88 272.24 L 413.38 279.24 L 406.38 279.24 Z" fill="#243740" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/><path d="M 120.47 371.35 L 120.47 279.24" fill="none" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/><path d="M 120.47 378.35 L 116.97 371.35 L 123.97 371.35 Z" fill="#243740" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/><path d="M 120.47 272.24 L 123.97 279.24 L 116.97 279.24 Z" fill="#243740" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/><rect x="100" y="380" width="80" height="50" rx="7.5" ry="7.5" fill="#b1ddf0" stroke="#243740" pointer-events="all"/><rect x="370" y="380" width="80" height="50" rx="7.5" ry="7.5" fill="#b1ddf0" stroke="#243740" pointer-events="all"/><path d="M 429.88 279.24 L 429.88 371.35" fill="none" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/><path d="M 429.88 272.24 L 433.38 279.24 L 426.38 279.24 Z" fill="#243740" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/><path d="M 429.88 378.35 L 426.38 371.35 L 433.38 371.35 Z" fill="#243740" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/><rect x="490" y="70" width="60" height="20" fill="none" stroke="none" pointer-events="all"/><g transform="translate(493.5,73.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="52" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 52px; white-space: nowrap; overflow-wrap: normal; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">JTAG I/F</div></div></foreignObject><text x="26" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana">JTAG I/F</text></switch></g><rect x="0" y="70" width="60" height="20" fill="none" stroke="none" pointer-events="all"/><g transform="translate(7.5,73.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="44" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 46px; white-space: nowrap; overflow-wrap: normal; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">IRQ I/F</div></div></foreignObject><text x="22" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana">IRQ I/F</text></switch></g><rect x="90" y="470" width="100" height="20" fill="none" stroke="none" pointer-events="all"/><g transform="translate(102.5,473.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="74" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 75px; white-space: nowrap; overflow-wrap: normal; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">AHB/AXI I/F</div></div></foreignObject><text x="37" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana">AHB/AXI I/F</text></switch></g><path d="M 140.47 439.24 L 140.47 460.76" fill="none" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/><path d="M 140.47 432.24 L 143.97 439.24 L 136.97 439.24 Z" fill="#243740" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/><path d="M 140.47 467.76 L 136.97 460.76 L 143.97 460.76 Z" fill="#243740" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/><rect x="360" y="470" width="100" height="20" fill="none" stroke="none" pointer-events="all"/><g transform="translate(372.5,473.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="74" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 75px; white-space: nowrap; overflow-wrap: normal; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">AHB/AXI I/F</div></div></foreignObject><text x="37" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana">AHB/AXI I/F</text></switch></g><path d="M 409.88 439.24 L 409.88 460.76" fill="none" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="stroke"/><path d="M 409.88 432.24 L 413.38 439.24 L 406.38 439.24 Z" fill="#243740" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/><path d="M 409.88 467.76 L 406.38 460.76 L 413.38 460.76 Z" fill="#243740" stroke="#243740" stroke-width="2" stroke-miterlimit="10" pointer-events="all"/><rect x="90" y="5" width="110" height="20" fill="none" stroke="none" pointer-events="all"/><g transform="translate(101.5,8.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="86" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(128, 161, 186); line-height: 1.2; vertical-align: top; width: 86px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; font-style: italic; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">SCR1 cluster</div></div></foreignObject><text x="43" y="12" fill="#80A1BA" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold" font-style="italic">SCR1 cluster</text></switch></g><rect x="100" y="35" width="100" height="20" fill="none" stroke="none" pointer-events="all"/><g transform="translate(101.5,38.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="68" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(76, 119, 138); line-height: 1.2; vertical-align: top; width: 69px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; font-style: italic; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">SCR1 core</div></div></foreignObject><text x="34" y="12" fill="#4C778A" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold" font-style="italic">SCR1 core</text></switch></g><rect x="120" y="70" width="40" height="20" fill="none" stroke="none" pointer-events="all"/><g transform="translate(124.5,73.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="30" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 32px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">IPIC</div></div></foreignObject><text x="15" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">IPIC</text></switch></g><rect x="210" y="70" width="40" height="20" fill="none" stroke="none" pointer-events="all"/><g transform="translate(216.5,73.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="26" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 28px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">SCU</div></div></foreignObject><text x="13" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">SCU</text></switch></g><rect x="300" y="70" width="40" height="20" fill="none" stroke="none" pointer-events="all"/><g transform="translate(308.5,73.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="22" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 22px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">DM</div></div></foreignObject><text x="11" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">DM</text></switch></g><rect x="390" y="70" width="40" height="20" fill="none" stroke="none" pointer-events="all"/><g transform="translate(392.5,73.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="34" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 36px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">TAPC</div></div></foreignObject><text x="17" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">TAPC</text></switch></g><rect x="120" y="120" width="40" height="20" fill="none" stroke="none" pointer-events="all"/><g transform="translate(122.5,123.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="34" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 36px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">CSRF</div></div></foreignObject><text x="17" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">CSRF</text></switch></g><rect x="255" y="281" width="40" height="20" fill="none" stroke="none" pointer-events="all"/><g transform="translate(260.5,284.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="28" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 30px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">TCM</div></div></foreignObject><text x="14" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">TCM</text></switch></g><rect x="285" y="346" width="40" height="20" fill="none" stroke="none" pointer-events="all"/><g transform="translate(285.5,349.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="38" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 40px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">Timer</div></div></foreignObject><text x="19" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">Timer</text></switch></g><rect x="210" y="170" width="40" height="20" fill="none" stroke="none" pointer-events="all"/><g transform="translate(216.5,173.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="26" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 28px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">IDU</div></div></foreignObject><text x="13" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">IDU</text></switch></g><rect x="300" y="170" width="40" height="20" fill="none" stroke="none" pointer-events="all"/><g transform="translate(305.5,173.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="28" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 28px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">EXU</div></div></foreignObject><text x="14" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">EXU</text></switch></g><rect x="390" y="170" width="40" height="20" fill="none" stroke="none" pointer-events="all"/><g transform="translate(396.5,173.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="26" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 26px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">LSU</div></div></foreignObject><text x="13" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">LSU</text></switch></g><rect x="300" y="120" width="40" height="20" fill="none" stroke="none" pointer-events="all"/><g transform="translate(305.5,123.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="28" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 28px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">TDU</div></div></foreignObject><text x="14" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">TDU</text></switch></g><rect x="120" y="390" width="40" height="10" fill="none" stroke="none" pointer-events="all"/><g transform="translate(121.5,388.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="37" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 39px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">IMEM</div></div></foreignObject><text x="19" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">IMEM</text></switch></g><rect x="120" y="402" width="40" height="10" fill="none" stroke="none" pointer-events="all"/><g transform="translate(109.5,400.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="61" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 63px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">AHB/AXI</div></div></foreignObject><text x="31" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">AHB/AXI</text></switch></g><rect x="120" y="414" width="40" height="10" fill="none" stroke="none" pointer-events="all"/><g transform="translate(117.5,412.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="44" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 44px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">bridge</div></div></foreignObject><text x="22" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">bridge</text></switch></g><rect x="390" y="390" width="40" height="10" fill="none" stroke="none" pointer-events="all"/><g transform="translate(389.5,388.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="40" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 42px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">DMEM</div></div></foreignObject><text x="20" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">DMEM</text></switch></g><rect x="390" y="402" width="40" height="10" fill="none" stroke="none" pointer-events="all"/><g transform="translate(379.5,400.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="61" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 63px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">AHB/AXI</div></div></foreignObject><text x="31" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">AHB/AXI</text></switch></g><rect x="390" y="414" width="40" height="10" fill="none" stroke="none" pointer-events="all"/><g transform="translate(387.5,412.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="44" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 44px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">bridge</div></div></foreignObject><text x="22" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">bridge</text></switch></g><rect x="120" y="240" width="40" height="10" fill="none" stroke="none" pointer-events="all"/><g transform="translate(121.5,238.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="37" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 39px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">IMEM</div></div></foreignObject><text x="19" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">IMEM</text></switch></g><rect x="120" y="252" width="40" height="10" fill="none" stroke="none" pointer-events="all"/><g transform="translate(118.5,250.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="43" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 43px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">router</div></div></foreignObject><text x="22" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">router</text></switch></g><rect x="390" y="240" width="40" height="10" fill="none" stroke="none" pointer-events="all"/><g transform="translate(389.5,238.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="40" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 42px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">DMEM</div></div></foreignObject><text x="20" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">DMEM</text></switch></g><rect x="390" y="252" width="40" height="10" fill="none" stroke="none" pointer-events="all"/><g transform="translate(388.5,250.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="43" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 43px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">router</div></div></foreignObject><text x="22" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">router</text></switch></g><rect x="210" y="120" width="40" height="20" fill="none" stroke="none" pointer-events="all"/><g transform="translate(210.5,123.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="38" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 38px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">MPRF</div></div></foreignObject><text x="19" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">MPRF</text></switch></g><rect x="390" y="120" width="40" height="20" fill="none" stroke="none" pointer-events="all"/><g transform="translate(394.5,123.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="30" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 30px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">HDU</div></div></foreignObject><text x="15" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">HDU</text></switch></g><rect x="120" y="170" width="40" height="20" fill="none" stroke="none" pointer-events="all"/><g transform="translate(127.5,173.5)"><switch><foreignObject style="overflow:visible;" pointer-events="all" width="24" height="12" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; font-size: 12px; font-family: Verdana; color: rgb(36, 55, 64); line-height: 1.2; vertical-align: top; width: 26px; white-space: nowrap; overflow-wrap: normal; font-weight: bold; text-align: center;"><div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">IFU</div></div></foreignObject><text x="12" y="12" fill="#243740" text-anchor="middle" font-size="12px" font-family="Verdana" font-weight="bold">IFU</text></switch></g></g></svg>
+<!-- Создано Microsoft Visio, экспорт SVG scr1_cluster.svg scr1_cluster -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events"
+		xmlns:v="http://schemas.microsoft.com/visio/2003/SVGExtensions/" width="5.73958in" height="5.11458in"
+		viewBox="0 0 413.25 368.25" xml:space="preserve" color-interpolation-filters="sRGB" class="st12">
+	<v:documentProperties v:langID="2057" v:viewMarkup="false"/>
+
+	<style type="text/css">
+	<![CDATA[
+		.st1 {fill:#dcedfa;stroke:#243740;stroke-linecap:butt;stroke-width:0.75}
+		.st2 {fill:#b1ddf0;stroke:#243740;stroke-linecap:butt;stroke-width:0.75}
+		.st3 {fill:#b0e3e6;stroke:#243740;stroke-linecap:butt;stroke-width:0.75}
+		.st4 {fill:none}
+		.st5 {stroke:#243740;stroke-linecap:butt;stroke-width:1.5}
+		.st6 {fill:#243740;stroke:#243740;stroke-linecap:butt;stroke-width:1.5}
+		.st7 {fill:none;stroke:none;stroke-linecap:butt;stroke-width:0.75}
+		.st8 {fill:#243740;font-family:Calibri;font-size:0.75em;font-weight:bold}
+		.st9 {fill:#243740;font-family:Calibri;font-size:0.833336em;font-weight:bold}
+		.st10 {fill:#0c0c0c;font-family:Calibri;font-size:0.833336em;font-weight:bold}
+		.st11 {font-size:1em}
+		.st12 {fill:none;fill-rule:evenodd;font-size:12px;overflow:visible;stroke-linecap:square;stroke-miterlimit:3}
+	]]>
+	</style>
+
+	<g v:mID="0" v:index="1" v:groupContext="foregroundPage">
+		<title>scr1_cluster</title>
+		<v:pageProperties v:drawingScale="1" v:pageScale="1" v:drawingUnits="19" v:shadowOffsetX="9" v:shadowOffsetY="-9"/>
+		<g id="shape2-1" v:mID="2" v:groupContext="shape" transform="translate(60.375,-30.375)">
+			<title>Лист.2</title>
+			<path d="M0 356.55 A11.7003 11.7003 -180 0 0 11.7 368.25 L280.8 368.25 A11.7003 11.7003 -180 0 0 292.5 356.55 L292.5
+						 42.45 A11.7003 11.7003 -180 0 0 280.8 30.75 L11.7 30.75 A11.7003 11.7003 -180 0 0 0 42.45 L0 356.55 Z"
+					class="st1"/>
+		</g>
+		<g id="shape3-3" v:mID="3" v:groupContext="shape" transform="translate(67.875,-210.375)">
+			<title>Лист.3</title>
+			<path d="M0 362.85 A5.40013 5.40013 -180 0 0 5.4 368.25 L272.1 368.25 A5.40013 5.40013 -180 0 0 277.5 362.85 L277.5 238.65
+						 A5.40013 5.40013 -180 0 0 272.1 233.25 L5.4 233.25 A5.40013 5.40013 -180 0 0 0 238.65 L0 362.85 Z"
+					class="st2"/>
+		</g>
+		<g id="shape4-5" v:mID="4" v:groupContext="shape" transform="translate(75.375,-217.875)">
+			<title>Лист.4</title>
+			<path d="M0 363.75 A4.5001 4.5001 -180 0 0 4.5 368.25 L55.5 368.25 A4.5001 4.5001 -180 0 0 60 363.75 L60 342.75 A4.5001
+						 4.5001 -180 0 0 55.5 338.25 L4.5 338.25 A4.5001 4.5001 -180 0 0 0 342.75 L0 363.75 Z" class="st3"/>
+		</g>
+		<g id="shape5-7" v:mID="5" v:groupContext="shape" transform="translate(142.875,-217.875)">
+			<title>Лист.5</title>
+			<path d="M0 363.75 A4.5001 4.5001 -180 0 0 4.5 368.25 L55.5 368.25 A4.5001 4.5001 -180 0 0 60 363.75 L60 342.75 A4.5001
+						 4.5001 -180 0 0 55.5 338.25 L4.5 338.25 A4.5001 4.5001 -180 0 0 0 342.75 L0 363.75 Z" class="st3"/>
+		</g>
+		<g id="shape6-9" v:mID="6" v:groupContext="shape" transform="translate(210.375,-217.875)">
+			<title>Лист.6</title>
+			<path d="M0 363.75 A4.5001 4.5001 -180 0 0 4.5 368.25 L55.5 368.25 A4.5001 4.5001 -180 0 0 60 363.75 L60 342.75 A4.5001
+						 4.5001 -180 0 0 55.5 338.25 L4.5 338.25 A4.5001 4.5001 -180 0 0 0 342.75 L0 363.75 Z" class="st3"/>
+		</g>
+		<g id="shape7-11" v:mID="7" v:groupContext="shape" transform="translate(277.875,-217.875)">
+			<title>Лист.7</title>
+			<path d="M0 363.75 A4.5001 4.5001 -180 0 0 4.5 368.25 L55.5 368.25 A4.5001 4.5001 -180 0 0 60 363.75 L60 342.75 A4.5001
+						 4.5001 -180 0 0 55.5 338.25 L4.5 338.25 A4.5001 4.5001 -180 0 0 0 342.75 L0 363.75 Z" class="st3"/>
+		</g>
+		<g id="shape8-13" v:mID="8" v:groupContext="shape" transform="translate(142.875,-255.375)">
+			<title>Лист.8</title>
+			<path d="M0 363.75 A4.5001 4.5001 -180 0 0 4.5 368.25 L55.5 368.25 A4.5001 4.5001 -180 0 0 60 363.75 L60 342.75 A4.5001
+						 4.5001 -180 0 0 55.5 338.25 L4.5 338.25 A4.5001 4.5001 -180 0 0 0 342.75 L0 363.75 Z" class="st3"/>
+		</g>
+		<g id="shape9-15" v:mID="9" v:groupContext="shape" transform="translate(75.375,-255.375)">
+			<title>Лист.9</title>
+			<path d="M0 363.75 A4.5001 4.5001 -180 0 0 4.5 368.25 L55.5 368.25 A4.5001 4.5001 -180 0 0 60 363.75 L60 342.75 A4.5001
+						 4.5001 -180 0 0 55.5 338.25 L4.5 338.25 A4.5001 4.5001 -180 0 0 0 342.75 L0 363.75 Z" class="st3"/>
+		</g>
+		<g id="shape10-17" v:mID="10" v:groupContext="shape" transform="translate(210.375,-255.375)">
+			<title>Лист.10</title>
+			<path d="M0 363.75 A4.5001 4.5001 -180 0 0 4.5 368.25 L55.5 368.25 A4.5001 4.5001 -180 0 0 60 363.75 L60 342.75 A4.5001
+						 4.5001 -180 0 0 55.5 338.25 L4.5 338.25 A4.5001 4.5001 -180 0 0 0 342.75 L0 363.75 Z" class="st3"/>
+		</g>
+		<g id="shape11-19" v:mID="11" v:groupContext="shape" transform="translate(52.305,-307.635)">
+			<title>Лист.11</title>
+			<path d="M16.14 368.01 L8.07 368.01 L8.07 368.23 L0 368.25 L16.14 368.01 Z" class="st4"/>
+			<path d="M16.14 368.01 L8.07 368.01 L8.07 368.23 L0 368.25" class="st5"/>
+		</g>
+		<g id="shape12-22" v:mID="12" v:groupContext="shape" transform="translate(68.445,-305.25)">
+			<title>Лист.12</title>
+			<path d="M5.25 365.62 L0 368.25 L0 363 L5.25 365.62 Z" class="st6"/>
+		</g>
+		<g id="shape13-24" v:mID="13" v:groupContext="shape" transform="translate(47.055,-305.01)">
+			<title>Лист.13</title>
+			<path d="M0 365.63 L5.24 363 L5.25 368.25 L0 365.63 Z" class="st6"/>
+		</g>
+		<g id="shape14-26" v:mID="14" v:groupContext="shape" transform="translate(75.375,-292.875)">
+			<title>Лист.14</title>
+			<path d="M0 363.75 A4.5001 4.5001 -180 0 0 4.5 368.25 L55.5 368.25 A4.5001 4.5001 -180 0 0 60 363.75 L60 342.75 A4.5001
+						 4.5001 -180 0 0 55.5 338.25 L4.5 338.25 A4.5001 4.5001 -180 0 0 -0 342.75 L0 363.75 Z" class="st3"/>
+		</g>
+		<g id="shape15-28" v:mID="15" v:groupContext="shape" transform="translate(277.875,-255.375)">
+			<title>Лист.15</title>
+			<path d="M0 363.75 A4.5001 4.5001 -180 0 0 4.5 368.25 L55.5 368.25 A4.5001 4.5001 -180 0 0 60 363.75 L60 342.75 A4.5001
+						 4.5001 -180 0 0 55.5 338.25 L4.5 338.25 A4.5001 4.5001 -180 0 0 0 342.75 L0 363.75 Z" class="st3"/>
+		</g>
+		<g id="shape16-30" v:mID="16" v:groupContext="shape" transform="translate(142.875,-292.875)">
+			<title>Лист.16</title>
+			<path d="M0 363.75 A4.5001 4.5001 -180 0 0 4.5 368.25 L55.5 368.25 A4.5001 4.5001 -180 0 0 60 363.75 L60 342.75 A4.5001
+						 4.5001 -180 0 0 55.5 338.25 L4.5 338.25 A4.5001 4.5001 -180 0 0 -0 342.75 L0 363.75 Z" class="st3"/>
+		</g>
+		<g id="shape17-32" v:mID="17" v:groupContext="shape" transform="translate(344.805,-307.635)">
+			<title>Лист.17</title>
+			<path d="M0 368.01 L8.07 368.01 L8.07 368.23 L16.14 368.25 L0 368.01 Z" class="st4"/>
+			<path d="M0 368.01 L8.07 368.01 L8.07 368.23 L16.14 368.25" class="st5"/>
+		</g>
+		<g id="shape18-35" v:mID="18" v:groupContext="shape" transform="translate(339.555,-305.25)">
+			<title>Лист.18</title>
+			<path d="M0 365.62 L5.25 363 L5.25 368.25 L0 365.62 Z" class="st6"/>
+		</g>
+		<g id="shape19-37" v:mID="19" v:groupContext="shape" transform="translate(360.945,-305.01)">
+			<title>Лист.19</title>
+			<path d="M5.25 365.63 L0 368.25 L0.01 363 L5.25 365.63 Z" class="st6"/>
+		</g>
+		<g id="shape20-39" v:mID="20" v:groupContext="shape" transform="translate(277.875,-292.875)">
+			<title>Лист.20</title>
+			<path d="M-0 363.75 A4.5001 4.5001 -180 0 0 4.5 368.25 L55.5 368.25 A4.5001 4.5001 -180 0 0 60 363.75 L60 342.75 A4.5001
+						 4.5001 -180 0 0 55.5 338.25 L4.5 338.25 A4.5001 4.5001 -180 0 0 -0 342.75 L0 363.75 Z" class="st3"/>
+		</g>
+		<g id="shape21-41" v:mID="21" v:groupContext="shape" transform="translate(210.375,-292.875)">
+			<title>Лист.21</title>
+			<path d="M-0 363.75 A4.5001 4.5001 -180 0 0 4.5 368.25 L55.5 368.25 A4.5001 4.5001 -180 0 0 60 363.75 L60 342.75 A4.5001
+						 4.5001 -180 0 0 55.5 338.25 L4.5 338.25 A4.5001 4.5001 -180 0 0 -0 342.75 L0 363.75 Z" class="st3"/>
+		</g>
+		<g id="shape22-43" v:mID="22" v:groupContext="shape" transform="translate(150.375,-123.375)">
+			<title>Лист.22</title>
+			<path d="M0 360.37 A7.87518 7.87518 -180 0 0 7.87 368.25 L104.62 368.25 A7.87518 7.87518 -180 0 0 112.5 360.37 L112.5
+						 323.63 A7.87518 7.87518 -180 0 0 104.62 315.75 L7.87 315.75 A7.87518 7.87518 -180 0 0 0 323.63 L0 360.37
+						 Z" class="st2"/>
+		</g>
+		<g id="shape23-45" v:mID="23" v:groupContext="shape" transform="translate(195.375,-85.875)">
+			<title>Лист.23</title>
+			<path d="M-0 363.75 A4.5001 4.5001 -180 0 0 4.5 368.25 L63 368.25 A4.5001 4.5001 -180 0 0 67.5 363.75 L67.5 342.75 A4.5001
+						 4.5001 -180 0 0 63 338.25 L4.5 338.25 A4.5001 4.5001 -180 0 0 -0 342.75 L0 363.75 Z" class="st2"/>
+		</g>
+		<g id="shape24-47" v:mID="24" v:groupContext="shape" transform="translate(120.375,-149.625)">
+			<title>Лист.24</title>
+			<path d="M0 359.43 L0 368.25 L23.07 368.25 L0 359.43 Z" class="st4"/>
+			<path d="M0 359.43 L0 368.25 L23.07 368.25" class="st5"/>
+		</g>
+		<g id="shape25-50" v:mID="25" v:groupContext="shape" transform="translate(117.75,-158.445)">
+			<title>Лист.25</title>
+			<path d="M2.63 363 L5.25 368.25 L0 368.25 L2.63 363 Z" class="st6"/>
+		</g>
+		<g id="shape26-52" v:mID="26" v:groupContext="shape" transform="translate(143.445,-147)">
+			<title>Лист.26</title>
+			<path d="M5.25 365.63 L0 368.25 L0 363 L5.25 365.63 Z" class="st6"/>
+		</g>
+		<g id="shape27-54" v:mID="27" v:groupContext="shape" transform="translate(105.375,-202.305)">
+			<title>Лист.27</title>
+			<path d="M0 368.25 L0 359.61 L0 368.25 Z" class="st4"/>
+			<path d="M0 368.25 L0 359.61" class="st5"/>
+		</g>
+		<g id="shape28-57" v:mID="28" v:groupContext="shape" transform="translate(102.75,-197.055)">
+			<title>Лист.28</title>
+			<path d="M2.63 368.25 L0 363 L5.25 363 L2.63 368.25 Z" class="st6"/>
+		</g>
+		<g id="shape29-59" v:mID="29" v:groupContext="shape" transform="translate(102.75,-210.945)">
+			<title>Лист.29</title>
+			<path d="M2.63 363 L5.25 368.25 L0 368.25 L2.63 363 Z" class="st6"/>
+		</g>
+		<g id="shape30-61" v:mID="30" v:groupContext="shape" transform="translate(75.375,-165.375)">
+			<title>Лист.30</title>
+			<path d="M0 368.25 L12 338.25 L48 338.25 L60 368.25 L0 368.25 Z" class="st2"/>
+		</g>
+		<g id="shape31-63" v:mID="31" v:groupContext="shape" transform="translate(269.805,-149.625)">
+			<title>Лист.31</title>
+			<path d="M23.07 359.43 L23.07 368.25 L0 368.25 L23.07 359.43 Z" class="st4"/>
+			<path d="M23.07 359.43 L23.07 368.25 L0 368.25" class="st5"/>
+		</g>
+		<g id="shape32-66" v:mID="32" v:groupContext="shape" transform="translate(290.25,-158.445)">
+			<title>Лист.32</title>
+			<path d="M2.63 363 L5.25 368.25 L0 368.25 L2.63 363 Z" class="st6"/>
+		</g>
+		<g id="shape33-68" v:mID="33" v:groupContext="shape" transform="translate(264.555,-147)">
+			<title>Лист.33</title>
+			<path d="M0 365.63 L5.25 363 L5.25 368.25 L0 365.63 Z" class="st6"/>
+		</g>
+		<g id="shape34-70" v:mID="34" v:groupContext="shape" transform="translate(277.875,-165.375)">
+			<title>Лист.34</title>
+			<path d="M0 368.25 L12 338.25 L48 338.25 L60 368.25 L0 368.25 Z" class="st2"/>
+		</g>
+		<g id="shape35-72" v:mID="35" v:groupContext="shape" transform="translate(307.875,-202.305)">
+			<title>Лист.35</title>
+			<path d="M0 359.61 L0 368.25 L0 359.61 Z" class="st4"/>
+			<path d="M0 359.61 L0 368.25" class="st5"/>
+		</g>
+		<g id="shape36-75" v:mID="36" v:groupContext="shape" transform="translate(305.25,-210.945)">
+			<title>Лист.36</title>
+			<path d="M2.63 363 L5.25 368.25 L0 368.25 L2.63 363 Z" class="st6"/>
+		</g>
+		<g id="shape37-77" v:mID="37" v:groupContext="shape" transform="translate(305.25,-197.055)">
+			<title>Лист.37</title>
+			<path d="M2.63 368.25 L0 363 L5.25 363 L2.63 368.25 Z" class="st6"/>
+		</g>
+		<g id="shape38-79" v:mID="38" v:groupContext="shape" transform="translate(269.805,-100.875)">
+			<title>Лист.38</title>
+			<path d="M0 368.25 L38.07 368.25 L38.07 310.68 L0 368.25 Z" class="st4"/>
+			<path d="M0 368.25 L38.07 368.25 L38.07 310.68" class="st5"/>
+		</g>
+		<g id="shape39-82" v:mID="39" v:groupContext="shape" transform="translate(264.555,-98.25)">
+			<title>Лист.39</title>
+			<path d="M0 365.62 L5.25 363 L5.25 368.25 L0 365.62 Z" class="st6"/>
+		</g>
+		<g id="shape40-84" v:mID="40" v:groupContext="shape" transform="translate(305.25,-158.445)">
+			<title>Лист.40</title>
+			<path d="M2.63 363 L5.25 368.25 L0 368.25 L2.63 363 Z" class="st6"/>
+		</g>
+		<g id="shape41-86" v:mID="41" v:groupContext="shape" transform="translate(90.375,-89.805)">
+			<title>Лист.41</title>
+			<path d="M0 368.25 L0 299.61 L0 368.25 Z" class="st4"/>
+			<path d="M0 368.25 L0 299.61" class="st5"/>
+		</g>
+		<g id="shape42-89" v:mID="42" v:groupContext="shape" transform="translate(87.75,-84.555)">
+			<title>Лист.42</title>
+			<path d="M2.63 368.25 L0 363 L5.25 363 L2.63 368.25 Z" class="st6"/>
+		</g>
+		<g id="shape43-91" v:mID="43" v:groupContext="shape" transform="translate(87.75,-158.445)">
+			<title>Лист.43</title>
+			<path d="M2.63 363 L5.25 368.25 L0 368.25 L2.63 363 Z" class="st6"/>
+		</g>
+		<g id="shape44-93" v:mID="44" v:groupContext="shape" transform="translate(75.375,-45.375)">
+			<title>Лист.44</title>
+			<path d="M0 362.62 A5.62513 5.62513 -180 0 0 5.63 368.25 L54.38 368.25 A5.62513 5.62513 -180 0 0 60 362.62 L60 336.38
+						 A5.62513 5.62513 -180 0 0 54.38 330.75 L5.62 330.75 A5.62513 5.62513 -180 0 0 0 336.38 L0 362.62 Z"
+					class="st2"/>
+		</g>
+		<g id="shape45-95" v:mID="45" v:groupContext="shape" transform="translate(277.875,-45.375)">
+			<title>Лист.45</title>
+			<path d="M0 362.62 A5.62513 5.62513 -180 0 0 5.63 368.25 L54.38 368.25 A5.62513 5.62513 -180 0 0 60 362.62 L60 336.38
+						 A5.62513 5.62513 -180 0 0 54.38 330.75 L5.62 330.75 A5.62513 5.62513 -180 0 0 0 336.38 L0 362.62 Z"
+					class="st2"/>
+		</g>
+		<g id="shape46-97" v:mID="46" v:groupContext="shape" transform="translate(322.875,-89.805)">
+			<title>Лист.46</title>
+			<path d="M0 299.61 L0 368.25 L0 299.61 Z" class="st4"/>
+			<path d="M0 299.61 L0 368.25" class="st5"/>
+		</g>
+		<g id="shape47-100" v:mID="47" v:groupContext="shape" transform="translate(320.25,-158.445)">
+			<title>Лист.47</title>
+			<path d="M2.63 363 L5.25 368.25 L0 368.25 L2.63 363 Z" class="st6"/>
+		</g>
+		<g id="shape48-102" v:mID="48" v:groupContext="shape" transform="translate(320.25,-84.555)">
+			<title>Лист.48</title>
+			<path d="M2.63 368.25 L0 363 L5.25 363 L2.63 368.25 Z" class="st6"/>
+		</g>
+		<g id="shape49-104" v:mID="49" v:groupContext="shape" transform="translate(367.875,-300.375)">
+			<title>Лист.49</title>
+			<rect x="0" y="353.25" width="45" height="15" class="st7"/>
+		</g>
+		<g id="shape50-106" v:mID="50" v:groupContext="shape" transform="translate(354.35,-302.925)">
+			<title>Лист.50</title>
+			<desc>JTAG I/F</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="36.025" cy="362.85" width="72.06" height="10.8"/>
+			<rect x="0" y="357.45" width="72.05" height="10.8" class="st7"/>
+			<text x="20.5" y="365.55" class="st8" v:langID="2057"><v:paragraph v:horizAlign="1"/><v:tabList/>JTAG I/F</text>		</g>
+		<g id="shape51-109" v:mID="51" v:groupContext="shape" transform="translate(0.375,-300.375)">
+			<title>Лист.51</title>
+			<rect x="0" y="353.25" width="45" height="15" class="st7"/>
+		</g>
+		<g id="shape52-111" v:mID="52" v:groupContext="shape" transform="translate(-8.65,-302.925)">
+			<title>Лист.52</title>
+			<desc>IRQ I/F</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="31.525" cy="362.85" width="63.05" height="10.8"/>
+			<rect x="0" y="357.45" width="63.05" height="10.8" class="st7"/>
+			<text x="18.49" y="365.55" class="st8" v:langID="2057"><v:paragraph v:horizAlign="1"/><v:tabList/>IRQ I/F</text>		</g>
+		<g id="shape53-114" v:mID="53" v:groupContext="shape" transform="translate(67.875,-0.375)">
+			<title>Лист.53</title>
+			<rect x="0" y="353.25" width="75" height="15" class="st7"/>
+		</g>
+		<g id="shape54-116" v:mID="54" v:groupContext="shape" transform="translate(55.85,-2.925)">
+			<title>Лист.54</title>
+			<desc>AHB/AXI I/F</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="49.525" cy="362.85" width="99.05" height="10.8"/>
+			<rect x="0" y="357.45" width="99.05" height="10.8" class="st7"/>
+			<text x="24.37" y="365.85" class="st9" v:langID="2057"><v:paragraph v:horizAlign="1"/><v:tabList/>AHB/AXI I/F</text>		</g>
+		<g id="shape55-119" v:mID="55" v:groupContext="shape" transform="translate(105.375,-22.305)">
+			<title>Лист.55</title>
+			<path d="M0 352.11 L0 368.25 L0 352.11 Z" class="st4"/>
+			<path d="M0 352.11 L0 368.25" class="st5"/>
+		</g>
+		<g id="shape56-122" v:mID="56" v:groupContext="shape" transform="translate(102.75,-38.445)">
+			<title>Лист.56</title>
+			<path d="M2.63 363 L5.25 368.25 L0 368.25 L2.63 363 Z" class="st6"/>
+		</g>
+		<g id="shape57-124" v:mID="57" v:groupContext="shape" transform="translate(102.75,-17.055)">
+			<title>Лист.57</title>
+			<path d="M2.63 368.25 L0 363 L5.25 363 L2.63 368.25 Z" class="st6"/>
+		</g>
+		<g id="shape58-126" v:mID="58" v:groupContext="shape" transform="translate(270.375,-0.375)">
+			<title>Лист.58</title>
+			<rect x="0" y="353.25" width="75" height="15" class="st7"/>
+		</g>
+		<g id="shape59-128" v:mID="59" v:groupContext="shape" transform="translate(258.35,-2.925)">
+			<title>Лист.59</title>
+			<desc>AHB/AXI I/F</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="49.525" cy="362.85" width="99.06" height="10.8"/>
+			<rect x="0" y="357.45" width="99.05" height="10.8" class="st7"/>
+			<text x="24.37" y="365.85" class="st9" v:langID="2057"><v:paragraph v:horizAlign="1"/><v:tabList/>AHB/AXI I/F</text>		</g>
+		<g id="shape60-131" v:mID="60" v:groupContext="shape" transform="translate(307.875,-22.305)">
+			<title>Лист.60</title>
+			<path d="M0 352.11 L0 368.25 L0 352.11 Z" class="st4"/>
+			<path d="M0 352.11 L0 368.25" class="st5"/>
+		</g>
+		<g id="shape61-134" v:mID="61" v:groupContext="shape" transform="translate(305.25,-38.445)">
+			<title>Лист.61</title>
+			<path d="M2.63 363 L5.25 368.25 L0 368.25 L2.63 363 Z" class="st6"/>
+		</g>
+		<g id="shape62-136" v:mID="62" v:groupContext="shape" transform="translate(305.25,-17.055)">
+			<title>Лист.62</title>
+			<path d="M2.63 368.25 L0 363 L5.25 363 L2.63 368.25 Z" class="st6"/>
+		</g>
+		<g id="shape63-138" v:mID="63" v:groupContext="shape" transform="translate(67.875,-349.125)">
+			<title>Лист.63</title>
+			<rect x="0" y="353.25" width="82.5" height="15" class="st7"/>
+		</g>
+		<g id="shape64-140" v:mID="64" v:groupContext="shape" transform="translate(82.675,-351.45)">
+			<title>Лист.64</title>
+			<desc>SCR1 cluster</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="43.325" cy="362.85" width="86.65" height="10.8"/>
+			<rect x="0" y="357.45" width="86.65" height="10.8" class="st7"/>
+			<text x="0" y="365.85" class="st10" v:langID="2057"><v:paragraph/><v:tabList/>SCR1 cluster</text>		</g>
+		<g id="shape65-143" v:mID="65" v:groupContext="shape" transform="translate(75.375,-326.625)">
+			<title>Лист.65</title>
+			<rect x="0" y="353.25" width="75" height="15" class="st7"/>
+		</g>
+		<g id="shape66-145" v:mID="66" v:groupContext="shape" transform="translate(76.85,-329.175)">
+			<title>Лист.66</title>
+			<desc>SCR1 core</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="40.525" cy="362.85" width="81.06" height="10.8"/>
+			<rect x="0" y="357.45" width="81.05" height="10.8" class="st7"/>
+			<text x="0" y="365.85" class="st10" v:langID="2057"><v:paragraph/><v:tabList/>SCR1 core</text>		</g>
+		<g id="shape67-148" v:mID="67" v:groupContext="shape" transform="translate(90.375,-300.375)">
+			<title>Лист.67</title>
+			<rect x="0" y="353.25" width="30" height="15" class="st7"/>
+		</g>
+		<g id="shape68-150" v:mID="68" v:groupContext="shape" transform="translate(64.125,-301.95)">
+			<title>Лист.68</title>
+			<desc>Interrupt Controller</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="40.525" cy="362.85" width="81.05" height="10.8"/>
+			<rect x="0" y="357.45" width="81.05" height="10.8" class="st7"/>
+			<text x="23.5" y="360.15" class="st8" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>Interrupt <v:lf/><tspan
+						x="21.65" dy="1.2em" class="st11">Controller</tspan></text>		</g>
+		<g id="shape69-154" v:mID="69" v:groupContext="shape" transform="translate(157.875,-300.375)">
+			<title>Лист.69</title>
+			<rect x="0" y="353.25" width="30" height="15" class="st7"/>
+		</g>
+		<g id="shape70-156" v:mID="70" v:groupContext="shape" transform="translate(132.35,-302.925)">
+			<title>Лист.70</title>
+			<desc>System Control Unit</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="40.525" cy="362.85" width="81.06" height="10.8"/>
+			<rect x="0" y="357.45" width="81.05" height="10.8" class="st7"/>
+			<text x="26.99" y="360.15" class="st8" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>System <v:lf/><tspan
+						x="17.59" dy="1.2em" class="st11">Control Unit</tspan></text>		</g>
+		<g id="shape71-160" v:mID="71" v:groupContext="shape" transform="translate(225.375,-300.375)">
+			<title>Лист.71</title>
+			<rect x="0" y="353.25" width="30" height="15" class="st7"/>
+		</g>
+		<g id="shape72-162" v:mID="72" v:groupContext="shape" transform="translate(204.35,-302.925)">
+			<title>Лист.72</title>
+			<desc>Debug Module</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="36.025" cy="362.85" width="72.06" height="10.8"/>
+			<rect x="0" y="357.45" width="72.05" height="10.8" class="st7"/>
+			<text x="23.96" y="360.15" class="st8" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>Debug <v:lf/><tspan
+						x="21.47" dy="1.2em" class="st11">Module</tspan></text>		</g>
+		<g id="shape73-166" v:mID="73" v:groupContext="shape" transform="translate(292.875,-300.375)">
+			<title>Лист.73</title>
+			<rect x="0" y="353.25" width="30" height="15" class="st7"/>
+		</g>
+		<g id="shape74-168" v:mID="74" v:groupContext="shape" transform="translate(267.35,-302.925)">
+			<title>Лист.74</title>
+			<desc>TAP Controller</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="40.525" cy="362.85" width="81.06" height="10.8"/>
+			<rect x="0" y="357.45" width="81.05" height="10.8" class="st7"/>
+			<text x="33.18" y="360.15" class="st8" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>TAP<v:lf/><tspan
+						x="21.65" dy="1.2em" class="st11">Controller</tspan></text>		</g>
+		<g id="shape75-172" v:mID="75" v:groupContext="shape" transform="translate(90.375,-262.875)">
+			<title>Лист.75</title>
+			<rect x="0" y="353.25" width="30" height="15" class="st7"/>
+		</g>
+		<g id="shape76-174" v:mID="76" v:groupContext="shape" transform="translate(64.85,-265.425)">
+			<title>Лист.76</title>
+			<desc>Control-Status Register File</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="40.525" cy="362.85" width="81.05" height="10.8"/>
+			<rect x="0" y="357.45" width="81.05" height="10.8" class="st7"/>
+			<text x="13.57" y="360.15" class="st8" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>Control-Status <v:lf/><tspan
+						x="17.71" dy="1.2em" class="st11">Register File</tspan></text>		</g>
+		<g id="shape77-178" v:mID="77" v:groupContext="shape" transform="translate(191.625,-142.125)">
+			<title>Лист.77</title>
+			<rect x="0" y="353.25" width="30" height="15" class="st7"/>
+		</g>
+		<g id="shape78-180" v:mID="78" v:groupContext="shape" transform="translate(162,-144)">
+			<title>Лист.78</title>
+			<desc>Tightly-Coupled Memory</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="45" cy="362.85" width="90" height="10.8"/>
+			<rect x="0" y="357.45" width="90" height="10.8" class="st7"/>
+			<text x="12.25" y="359.85" class="st9" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>Tightly-Coupled <tspan
+						x="27.21" dy="1.2em" class="st11">Memory</tspan></text>		</g>
+		<g id="shape79-184" v:mID="79" v:groupContext="shape" transform="translate(214.125,-93.375)">
+			<title>Лист.79</title>
+			<rect x="0" y="353.25" width="30" height="15" class="st7"/>
+		</g>
+		<g id="shape80-186" v:mID="80" v:groupContext="shape" transform="translate(206.6,-95.925)">
+			<title>Лист.80</title>
+			<desc>Timer</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="22.525" cy="362.85" width="45.05" height="10.8"/>
+			<rect x="0" y="357.45" width="45.05" height="10.8" class="st7"/>
+			<text x="10.46" y="365.85" class="st9" v:langID="2057"><v:paragraph v:horizAlign="1"/><v:tabList/>Timer</text>		</g>
+		<g id="shape81-189" v:mID="81" v:groupContext="shape" transform="translate(157.875,-225.375)">
+			<title>Лист.81</title>
+			<rect x="0" y="353.25" width="30" height="15" class="st7"/>
+		</g>
+		<g id="shape82-191" v:mID="82" v:groupContext="shape" transform="translate(132.35,-227.925)">
+			<title>Лист.82</title>
+			<desc>Instruction Decode Unit</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="40.525" cy="362.85" width="81.06" height="10.8"/>
+			<rect x="0" y="357.45" width="81.05" height="10.8" class="st7"/>
+			<text x="20.16" y="360.15" class="st8" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>Instruction <v:lf/><tspan
+						x="17.41" dy="1.2em" class="st11">Decode Unit</tspan></text>		</g>
+		<g id="shape83-195" v:mID="83" v:groupContext="shape" transform="translate(225.375,-225.375)">
+			<title>Лист.83</title>
+			<rect x="0" y="353.25" width="30" height="15" class="st7"/>
+		</g>
+		<g id="shape84-197" v:mID="84" v:groupContext="shape" transform="translate(199.85,-227.925)">
+			<title>Лист.84</title>
+			<desc>Execution Unit</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="40.525" cy="362.85" width="81.06" height="10.8"/>
+			<rect x="0" y="357.45" width="81.05" height="10.8" class="st7"/>
+			<text x="22.2" y="360.15" class="st8" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>Execution <v:lf/><tspan
+						x="32.51" dy="1.2em" class="st11">Unit</tspan></text>		</g>
+		<g id="shape85-201" v:mID="85" v:groupContext="shape" transform="translate(292.875,-225.375)">
+			<title>Лист.85</title>
+			<rect x="0" y="353.25" width="30" height="15" class="st7"/>
+		</g>
+		<g id="shape86-203" v:mID="86" v:groupContext="shape" transform="translate(267.35,-227.925)">
+			<title>Лист.86</title>
+			<desc>Load-Store Unit</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="40.525" cy="362.85" width="81.06" height="10.8"/>
+			<rect x="0" y="357.45" width="81.05" height="10.8" class="st7"/>
+			<text x="20.22" y="360.15" class="st8" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>Load-Store <v:lf/><tspan
+						x="32.51" dy="1.2em" class="st11">Unit</tspan></text>		</g>
+		<g id="shape87-207" v:mID="87" v:groupContext="shape" transform="translate(225.375,-262.875)">
+			<title>Лист.87</title>
+			<rect x="0" y="353.25" width="30" height="15" class="st7"/>
+		</g>
+		<g id="shape88-209" v:mID="88" v:groupContext="shape" transform="translate(199.85,-265.425)">
+			<title>Лист.88</title>
+			<desc>Trigger Debug Unit</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="40.525" cy="362.85" width="81.06" height="10.8"/>
+			<rect x="0" y="357.45" width="81.05" height="10.8" class="st7"/>
+			<text x="27.46" y="360.15" class="st8" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>Trigger <v:lf/><tspan
+						x="19.42" dy="1.2em" class="st11">Debug Unit</tspan></text>		</g>
+		<g id="shape89-213" v:mID="89" v:groupContext="shape" transform="translate(90.375,-67.875)">
+			<title>Лист.89</title>
+			<rect x="0" y="360.75" width="30" height="7.5" class="st7"/>
+		</g>
+		<g id="shape90-215" v:mID="90" v:groupContext="shape" transform="translate(87.35,-66.675)">
+			<title>Лист.90</title>
+			<desc>IMEM</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="18.025" cy="362.85" width="36.05" height="10.8"/>
+			<rect x="0" y="357.45" width="36.05" height="10.8" class="st7"/>
+			<text x="5.51" y="365.85" class="st9" v:langID="2057"><v:paragraph v:horizAlign="1"/><v:tabList/>IMEM</text>		</g>
+		<g id="shape91-218" v:mID="91" v:groupContext="shape" transform="translate(90.375,-58.875)">
+			<title>Лист.91</title>
+			<rect x="0" y="360.75" width="30" height="7.5" class="st7"/>
+		</g>
+		<g id="shape92-220" v:mID="92" v:groupContext="shape" transform="translate(73.85,-57.675)">
+			<title>Лист.92</title>
+			<desc>AHB/AXI</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="31.525" cy="362.85" width="63.05" height="10.8"/>
+			<rect x="0" y="357.45" width="63.05" height="10.8" class="st7"/>
+			<text x="13.27" y="365.85" class="st9" v:langID="2057"><v:paragraph v:horizAlign="1"/><v:tabList/>AHB/AXI</text>		</g>
+		<g id="shape93-223" v:mID="93" v:groupContext="shape" transform="translate(90.375,-49.875)">
+			<title>Лист.93</title>
+			<rect x="0" y="360.75" width="30" height="7.5" class="st7"/>
+		</g>
+		<g id="shape94-225" v:mID="94" v:groupContext="shape" transform="translate(78.35,-48.675)">
+			<title>Лист.94</title>
+			<desc>bridge</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="27.025" cy="362.85" width="54.05" height="10.8"/>
+			<rect x="0" y="357.45" width="54.05" height="10.8" class="st7"/>
+			<text x="13.77" y="365.85" class="st9" v:langID="2057"><v:paragraph v:horizAlign="1"/><v:tabList/>bridge</text>		</g>
+		<g id="shape95-228" v:mID="95" v:groupContext="shape" transform="translate(292.875,-67.875)">
+			<title>Лист.95</title>
+			<rect x="0" y="360.75" width="30" height="7.5" class="st7"/>
+		</g>
+		<g id="shape96-230" v:mID="96" v:groupContext="shape" transform="translate(289.85,-66.675)">
+			<title>Лист.96</title>
+			<desc>DMEM</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="18.025" cy="362.85" width="36.05" height="10.8"/>
+			<rect x="0" y="357.45" width="36.05" height="10.8" class="st7"/>
+			<text x="3.69" y="365.85" class="st9" v:langID="2057"><v:paragraph v:horizAlign="1"/><v:tabList/>DMEM</text>		</g>
+		<g id="shape97-233" v:mID="97" v:groupContext="shape" transform="translate(292.875,-58.875)">
+			<title>Лист.97</title>
+			<rect x="0" y="360.75" width="30" height="7.5" class="st7"/>
+		</g>
+		<g id="shape98-235" v:mID="98" v:groupContext="shape" transform="translate(276.35,-57.675)">
+			<title>Лист.98</title>
+			<desc>AHB/AXI</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="31.525" cy="362.85" width="63.05" height="10.8"/>
+			<rect x="0" y="357.45" width="63.05" height="10.8" class="st7"/>
+			<text x="13.27" y="365.85" class="st9" v:langID="2057"><v:paragraph v:horizAlign="1"/><v:tabList/>AHB/AXI</text>		</g>
+		<g id="shape99-238" v:mID="99" v:groupContext="shape" transform="translate(292.875,-49.875)">
+			<title>Лист.99</title>
+			<rect x="0" y="360.75" width="30" height="7.5" class="st7"/>
+		</g>
+		<g id="shape100-240" v:mID="100" v:groupContext="shape" transform="translate(280.85,-48.675)">
+			<title>Лист.100</title>
+			<desc>bridge</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="27.025" cy="362.85" width="54.05" height="10.8"/>
+			<rect x="0" y="357.45" width="54.05" height="10.8" class="st7"/>
+			<text x="13.77" y="365.85" class="st9" v:langID="2057"><v:paragraph v:horizAlign="1"/><v:tabList/>bridge</text>		</g>
+		<g id="shape101-243" v:mID="101" v:groupContext="shape" transform="translate(90.375,-180.375)">
+			<title>Лист.101</title>
+			<rect x="0" y="360.75" width="30" height="7.5" class="st7"/>
+		</g>
+		<g id="shape102-245" v:mID="102" v:groupContext="shape" transform="translate(87.35,-179.175)">
+			<title>Лист.102</title>
+			<desc>IMEM</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="18.025" cy="362.85" width="36.05" height="10.8"/>
+			<rect x="0" y="357.45" width="36.05" height="10.8" class="st7"/>
+			<text x="5.51" y="365.85" class="st9" v:langID="2057"><v:paragraph v:horizAlign="1"/><v:tabList/>IMEM</text>		</g>
+		<g id="shape103-248" v:mID="103" v:groupContext="shape" transform="translate(90.375,-171.375)">
+			<title>Лист.103</title>
+			<rect x="0" y="360.75" width="30" height="7.5" class="st7"/>
+		</g>
+		<g id="shape104-250" v:mID="104" v:groupContext="shape" transform="translate(78.35,-170.175)">
+			<title>Лист.104</title>
+			<desc>router</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="27.025" cy="362.85" width="54.05" height="10.8"/>
+			<rect x="0" y="357.45" width="54.05" height="10.8" class="st7"/>
+			<text x="13.85" y="365.85" class="st9" v:langID="2057"><v:paragraph v:horizAlign="1"/><v:tabList/>router</text>		</g>
+		<g id="shape105-253" v:mID="105" v:groupContext="shape" transform="translate(292.875,-180.375)">
+			<title>Лист.105</title>
+			<rect x="0" y="360.75" width="30" height="7.5" class="st7"/>
+		</g>
+		<g id="shape106-255" v:mID="106" v:groupContext="shape" transform="translate(289.85,-179.175)">
+			<title>Лист.106</title>
+			<desc>DMEM</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="18.025" cy="362.85" width="36.05" height="10.8"/>
+			<rect x="0" y="357.45" width="36.05" height="10.8" class="st7"/>
+			<text x="3.69" y="365.85" class="st9" v:langID="2057"><v:paragraph v:horizAlign="1"/><v:tabList/>DMEM</text>		</g>
+		<g id="shape107-258" v:mID="107" v:groupContext="shape" transform="translate(292.875,-171.375)">
+			<title>Лист.107</title>
+			<rect x="0" y="360.75" width="30" height="7.5" class="st7"/>
+		</g>
+		<g id="shape108-260" v:mID="108" v:groupContext="shape" transform="translate(280.85,-170.175)">
+			<title>Лист.108</title>
+			<desc>router</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="27.025" cy="362.85" width="54.05" height="10.8"/>
+			<rect x="0" y="357.45" width="54.05" height="10.8" class="st7"/>
+			<text x="13.85" y="365.85" class="st9" v:langID="2057"><v:paragraph v:horizAlign="1"/><v:tabList/>router</text>		</g>
+		<g id="shape109-263" v:mID="109" v:groupContext="shape" transform="translate(157.875,-262.875)">
+			<title>Лист.109</title>
+			<rect x="0" y="353.25" width="30" height="15" class="st7"/>
+		</g>
+		<g id="shape110-265" v:mID="110" v:groupContext="shape" transform="translate(132.35,-265.425)">
+			<title>Лист.110</title>
+			<desc>Multi-Port Register File</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="40.525" cy="362.85" width="81.06" height="10.8"/>
+			<rect x="0" y="357.45" width="81.05" height="10.8" class="st7"/>
+			<text x="21.06" y="360.15" class="st8" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>Multi-Port <v:lf/><tspan
+						x="17.71" dy="1.2em" class="st11">Register File</tspan></text>		</g>
+		<g id="shape111-269" v:mID="111" v:groupContext="shape" transform="translate(292.875,-262.875)">
+			<title>Лист.111</title>
+			<rect x="0" y="353.25" width="30" height="15" class="st7"/>
+		</g>
+		<g id="shape112-271" v:mID="112" v:groupContext="shape" transform="translate(267.35,-265.425)">
+			<title>Лист.112</title>
+			<desc>Hart Debug Unit</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="40.525" cy="362.85" width="81.06" height="10.8"/>
+			<rect x="0" y="357.45" width="81.05" height="10.8" class="st7"/>
+			<text x="32.31" y="360.15" class="st8" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>Hart <v:lf/><tspan
+						x="19.42" dy="1.2em" class="st11">Debug Unit</tspan></text>		</g>
+		<g id="shape113-275" v:mID="113" v:groupContext="shape" transform="translate(90.375,-225.375)">
+			<title>Лист.113</title>
+			<rect x="0" y="353.25" width="30" height="15" class="st7"/>
+		</g>
+		<g id="shape114-277" v:mID="114" v:groupContext="shape" transform="translate(64.85,-227.925)">
+			<title>Лист.114</title>
+			<desc>Instruction Fetch Unit</desc>
+			<v:textBlock v:margins="rect(0,0,0,0)"/>
+			<v:textRect cx="40.525" cy="362.85" width="81.05" height="10.8"/>
+			<rect x="0" y="357.45" width="81.05" height="10.8" class="st7"/>
+			<text x="20.16" y="360.15" class="st8" v:langID="1033"><v:paragraph v:horizAlign="1"/><v:tabList/>Instruction<v:newlineChar/><tspan
+						x="21.3" dy="1.2em" class="st11">Fetch Unit</tspan></text>		</g>
+	</g>
+</svg>

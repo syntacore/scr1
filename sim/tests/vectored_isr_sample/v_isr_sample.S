@@ -20,18 +20,21 @@
 #define IPIC_ICSR_IS                (1 << 4)
 
 #include "timer.h"
+#include "reloc.h"
 
 .macro jmp_sc_exit
     la  t0, sc_exit
     jr  t0
 .endm
 
+    .section .text.init
+    .option norvc
+    .globl _start
 //  -----------------------------------------------------------------
 // Trap handlers
-// 0x100
-    .text
+// 0xXXXXXX00
     .option norvc
-    .align 6
+    .balign 64
 user_trap_entry:
     csrr  a5, instret
     csrr  a1, mcause
@@ -41,8 +44,8 @@ user_trap_entry:
     li    a0, 0x100
     jmp_sc_exit
 
-//0x140
-    .align 6
+//0xXXXXXX40
+    .balign 64
 supervisor_trap_entry:
     csrr  a5, instret
     csrr  a1, mcause
@@ -52,8 +55,8 @@ supervisor_trap_entry:
     li    a0, 0x140
     jmp_sc_exit
 
-//0x180
-    .align 6
+//0xXXXXXX80
+    .balign 64
 hypervisor_trap_entry:
     csrr  a5, instret
     csrr  a1, mcause
@@ -63,10 +66,29 @@ hypervisor_trap_entry:
     li    a0, 0x180
     jmp_sc_exit
 
-//0x1C0
-    .align 6
+//0xXXXXXXC0
+    .balign 64
+machine_trap_entry:
+    la   t0, _trap_fail
+    jr   (t0)
+
+    .balign 64
+_start:
+    la                  t0, machine_trap_entry
+    csrw                mtvec, t0
+
+    RELOC_PROC;
+
+    la                  t0,  test_start
+    jr                  (t0)
+
+//  -----------------------------------------------------------------
+// Test trap handlers
+// 0xXXXXXX00
+    .text
+    .option norvc
+    .balign 64
 vec_usr_soft:
-// machine_trap_entry:
 trap_entry:
     j    _trap_fail
 vec_supervisor_soft:
@@ -96,10 +118,10 @@ vec_reserved4:
     j    _trap_fail
     j    _trap_fail
     j    _trap_fail
-
-//0x200
-    .globl _start
-_start:
+    
+test_start:
+    la                  t0, trap_entry
+    csrw                mtvec, t0
     // vectored mode
     csrsi               mtvec, 1
     _reset_mtimecmp;

@@ -119,7 +119,7 @@ Clone RISC-V Compliance tests to your preferred directory `<RISCV_COMPLIANCE_TES
 ```
     git clone https://github.com/riscv/riscv-compliance
     cd riscv-compliance
-    git checkout 9f280717f26f50833357db9bfb77a8c79835f162
+    git checkout de98a9da780b417ec581ffb812a9586da7b3953b
 ```
 
 Set the $RISCV_COMPLIANCE_TESTS environment variable accordingly:
@@ -149,10 +149,10 @@ Copy the following files from the root of `<COREMARK_PATH>` into SCR1 directory 
 To build RTL, compile and run tests from the repo root folder:
 
 ```
-    make run_<SIMULATOR> BUS=<AHB, AXI> ARCH=<I, IM, IMC, IC, E, EM, EMC, EC> IPIC=<0, 1>
+    make run_<SIMULATOR> BUS=<AHB, AXI> ARCH=<I, IM, IMC, IC, E, EM, EMC, EC> IPIC=<0, 1> TCM=<0, 1>
 ```
 
-By default, if not specified, the following parameters are used: `BUS=AHB ARCH=IMC IPIC=0`.
+By default, if not specified, the following parameters are used: `BUS=AHB ARCH=IMC IPIC=0 TCM=1`.
 
 Build and run parameters can be configured in the `./Makefile`.
 
@@ -178,7 +178,9 @@ The RISC-V toolchain automatically uses the selected ARCH for code compilation.
 
 If IPIC option is set to 1, then the test for vectored interrupts will be used in the simulation.
 
-Please make sure that selected ARCH and IPIC matches architectural configuration of SCR1 RTL.
+Setting TCM option to 1 allows some tests to be executed from tightly coupled memory.
+
+Please make sure that selected ARCH, IPIC and TCM matches architectural configuration of SCR1 RTL.
 Architectural parameters of SCR1 core can be configured in `./src/includes/scr1_arch_description.svh`
 
 ## SCR1 SDKs

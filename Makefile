@@ -6,6 +6,7 @@
 
 ARCH ?=IMC
 IPIC ?=0
+TCM ?=1
 export BUS  ?=AHB
 
 ARCH_lowercase = $(shell echo $(ARCH) | tr A-Z a-z)
@@ -57,7 +58,7 @@ endif
 export root_dir := $(shell pwd)
 export tst_dir  := $(root_dir)/sim/tests
 export inc_dir  := $(tst_dir)/common
-export bld_dir  := $(root_dir)/build/$(current_goal)_$(BUS)_$(shell echo $(ARCH) | tr a-z A-Z)$(if $(findstring 1,$(IPIC)),_IPIC,)
+export bld_dir  := $(root_dir)/build/$(current_goal)_$(BUS)_$(shell echo $(ARCH) | tr a-z A-Z)$(if $(findstring 1,$(IPIC)),_IPIC,)$(if $(findstring 1,$(TCM)),_TCM,)
 
 test_results := $(bld_dir)/test_results.txt
 test_info    := $(bld_dir)/test_info

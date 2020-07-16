@@ -8,7 +8,7 @@
 ARCH ?=im
 override ARCH:=rv32$(ARCH)
 
-#I IM IMC IC 
+#I IM IMC IC
 #EM EMC EC
 
 ifeq (rv32e,$(findstring rv32e,$(ARCH)))
@@ -19,12 +19,10 @@ else ## ifdef SCR_BASE_RVE_EXT
     $(info >>> I32 TESTS)
     included_i += $(filter %.S,\
                         $(wildcard $(RISCV_COMPLIANCE_TESTS)/riscv-test-suite/rv32i/src/*))
-    $(info >>> UI32 TESTS)
-    included_i += $(filter %.S,\
-                        $(wildcard $(RISCV_COMPLIANCE_TESTS)/riscv-test-suite/rv32ui/src/*))
-    $(info >>> M32 TESTS)
-    included_i += $(filter %.S,\
-                        $(wildcard $(RISCV_COMPLIANCE_TESTS)/riscv-test-suite/rv32mi/src/*))
+	included_i += $(filter %.S,\
+                        $(wildcard $(RISCV_COMPLIANCE_TESTS)/riscv-test-suite/rv32Zicsr/src/*))
+	included_i += $(filter %.S,\
+                        $(wildcard $(RISCV_COMPLIANCE_TESTS)/riscv-test-suite/rv32Zifencei/src/*))
     compliance_set += $(included_i)
   endif
 
@@ -34,15 +32,7 @@ else ## ifdef SCR_BASE_RVE_EXT
     included_im += $(filter %.S,\
                         $(wildcard $(RISCV_COMPLIANCE_TESTS)/riscv-test-suite/rv32im/src/*))
     compliance_set += $(included_im)
-  endif ## 
-
-  #ifeq $(or (rv32imc,$(findstring rv32imc,$(ARCH))), (rv32ic,$(findstring rv32ic,$(ARCH))))
-  ifeq ($(ARCH),$(filter $(ARCH), rv32ic rv32imc))
-    $(info >>> UC32 TESTS)
-    included_ic += $(filter %.S,\
-                        $(wildcard $(RISCV_COMPLIANCE_TESTS)/riscv-test-suite/rv32uc/src/*))
-    compliance_set += $(included_ic)
-  endif ## ifdef 
+  endif ##
 
   ifeq (rv32imc,$(findstring rv32imc,$(ARCH)))
     $(info >>> IMC32 TESTS)
@@ -51,7 +41,7 @@ else ## ifdef SCR_BASE_RVE_EXT
     compliance_set += $(included_imc)
   endif ## ifeq (rv32imc,$(findstring rv32imc,$(ARCH)))
 
-endif ## 
+endif ##
 
 
 $(info >>>$(ARCH) set included)
@@ -68,11 +58,9 @@ bld_dir       := $(addprefix $(dst_dir)/, $(test_name))
 src_dir       := $(CURDIR)
 obj_dir       := $(bld_dir)/riscv_compliance_objs
 cut_list      := I-EBREAK-01 I-ECALL-01 I-MISALIGN_JMP-01 I-MISALIGN_LDST-01
-cut_list      += scall csr shamt simple
+#cut_list      += scall csr shamt simple
 reference_src += $(wildcard $(RISCV_COMPLIANCE_TESTS)/riscv-test-suite/rv32i*/*/*.reference_output)
-reference_src += $(wildcard $(RISCV_COMPLIANCE_TESTS)/riscv-test-suite/rv32mi/*/*.reference_output)
-reference_src += $(wildcard $(RISCV_COMPLIANCE_TESTS)/riscv-test-suite/rv32uc/*/*.reference_output)
-reference_src += $(wildcard $(RISCV_COMPLIANCE_TESTS)/riscv-test-suite/rv32ui/*/*.reference_output)
+reference_src += $(wildcard $(RISCV_COMPLIANCE_TESTS)/riscv-test-suite/rv32Zi*/*/*.reference_output)
 testnames     := $(basename $(notdir $(compliance_set)))
 filtered      := $(filter-out $(cut_list),$(testnames))
 objs          := $(addprefix $(bld_dir)/,$(filtered:%=%.o))
@@ -85,14 +73,12 @@ compliance_output ?= true
 
 testnames_i     := $(basename $(notdir $(included_i)))
 testnames_im     := $(basename $(notdir $(included_im)))
-testnames_ic     := $(basename $(notdir $(included_ic)))
 testnames_imc     := $(basename $(notdir $(included_imc)))
 filtered_i      := $(filter-out $(cut_list),$(testnames_i))
 filtered_im      := $(filter-out $(cut_list),$(testnames_im))
-filtered_ic      := $(filter-out $(cut_list),$(testnames_ic))
 filtered_imc      := $(filter-out $(cut_list),$(testnames_imc))
 
-# ARCH_FLAGS := -Wa,-march=rv32im -march=rv32im 
+# ARCH_FLAGS := -Wa,-march=rv32im -march=rv32im
 # ARCH_FLAGS_C := -Wa,-march=rv32imc -march=rv32imc
 CFLAGS := -I$(inc_dir) -I$(src_dir) -DASM -mabi=ilp32 -D__riscv_xlen=32 -w
 LDFLAGS := -static -fvisibility=hidden -nostdlib -nostartfiles -T$(inc_dir)/link.ld -march=$(ARCH) -mabi=ilp32
@@ -126,8 +112,7 @@ endef
 
 $(foreach SRC,$(filtered_i),$(eval $(call compile_template,$(SRC),-march=rv32i)))
 $(foreach SRC,$(filtered_im),$(eval $(call compile_template,$(SRC),-march=rv32im)))
-$(foreach SRC,$(filtered_ic),$(eval $(call compile_template,$(SRC),-march=rv32iac)))
-$(foreach SRC,$(filtered_imc),$(eval $(call compile_template,$(SRC),-march=rv32imac)))
+$(foreach SRC,$(filtered_imc),$(eval $(call compile_template,$(SRC),-march=rv32imc)))
 
 $(bld_dir) :
 	mkdir -p $(bld_dir)
@@ -159,12 +144,11 @@ cp_asm:
 	mkdir -p $(bld_dir)/compliance_asm
 	$(call preprocessing,$(included_i),-march=rv32i)
 	$(call preprocessing,$(included_im),-march=rv32im)
-	$(call preprocessing,$(included_ic),-march=rv32iac)
-	$(call preprocessing,$(included_imc),-march=rv32imac)
+	$(call preprocessing,$(included_imc),-march=rv32imc)
 
 
 riscv_compliance_tests_dir    := $(if $(RISCV_COMPLIANCE_TESTS), $(RISCV_COMPLIANCE_TESTS), ./undefined)
-riscv_tests_commit := 9f280717f26f50833357db9bfb77a8c79835f162
+riscv_tests_commit := de98a9da780b417ec581ffb812a9586da7b3953b
 ## commit hash readed from local copy of https://github.com/riscv/riscv-compliance
 tmp_commit = $(shell cd $(riscv_compliance_tests_dir) 2>/dev/null && git log -1 | grep "commit" | cut -f2 -d ' ')
 is_commit_good = $(if $(subst $(riscv_tests_commit),,$(tmp_commit)),false,true)
