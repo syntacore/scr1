@@ -1,0 +1,9 @@
+[submodule "dependencies/riscv-tests"]
+	path = dependencies/riscv-tests
+	url = https://github.com/riscv/riscv-tests
+[submodule "dependencies/riscv-compliance"]
+	path = dependencies/riscv-compliance
+	url = https://github.com/riscv/riscv-compliance
+[submodule "dependencies/coremark"]
+	path = dependencies/coremark
+	url = https://github.com/eembc/coremark
