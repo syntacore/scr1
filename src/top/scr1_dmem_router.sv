@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
 /// @file       <scr1_dmem_router.sv>
 /// @brief      Data memory router
 ///
@@ -242,8 +242,7 @@ assign port2_width  = (port_sel == SCR1_SEL_PORT2) ? dmem_width : SCR1_MEM_WIDTH
 assign port2_addr   = (port_sel == SCR1_SEL_PORT2) ? dmem_addr  : 'x;
 assign port2_wdata  = (port_sel == SCR1_SEL_PORT2) ? dmem_wdata : 'x;
 
-`ifdef SCR1_SIM_ENV
-`ifndef VERILATOR
+`ifdef SCR1_TRGT_SIMULATION
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -253,7 +252,6 @@ SCR1_SVA_DMEM_RT_XCHECK : assert property (
     dmem_req |-> !$isunknown({port_sel, dmem_cmd, dmem_width})
     ) else $error("DMEM router Error: unknown values");
 
-`endif // VERILATOR
-`endif // SCR1_SIM_ENV
+`endif // SCR1_TRGT_SIMULATION
 
 endmodule : scr1_dmem_router

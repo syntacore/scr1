@@ -19,10 +19,11 @@ test_dump := $(addprefix $(bld_dir)/,$(test_list:%=%.dump))
 
 CFLAGS := -I$(inc_dir) -I$(src_dir) -DASM -Wa,-march=rv32$(ARCH) -march=rv32$(ARCH) -mabi=ilp32f -D__riscv_xlen=32 
 LDFLAGS := -static -fvisibility=hidden -nostdlib -nostartfiles -T$(inc_dir)/link.ld -march=rv32$(ARCH) -mabi=ilp32f
+RISCV_TESTS := $(src_dir)/../../../dependencies/riscv-tests/
 
 VPATH += $(src_dir) $(bld_dir) $(obj_dir) $(RISCV_TESTS)
 
-default: check_riscv_tests $(test_elf) $(test_hex) $(test_dump)
+default: log_requested_tgt check_riscv_tests $(test_elf) $(test_hex) $(test_dump) 
 
 define compile_template
 $(obj_dir)/$$(basename $(notdir $(SRC))).o: $$(SRC) | $(obj_dir)
@@ -30,6 +31,9 @@ $(obj_dir)/$$(basename $(notdir $(SRC))).o: $$(SRC) | $(obj_dir)
  endef
 
 $(foreach SRC,$(rv32_isa_tests), $(eval $(compile_template)))
+
+log_requested_tgt:
+	$(foreach test_name, $(test_list), $(eval $(shell echo $(test_name).hex >> $(bld_dir)/test_info)))
 
 $(obj_dir) :
 	mkdir -p $(obj_dir)
@@ -51,7 +55,7 @@ clean:
 .PHONY: check_riscv_tests
 
 riscv_tests_dir    := $(if $(RISCV_TESTS), $(RISCV_TESTS), ./undefined)
-riscv_tests_commit := a9433c4daa287fbe101025f2a079261a10149225
+riscv_tests_commit := f68760e7e0295a03ccf3147571f4254cc352e4fc
 ## commit hash readed from local copy of https://github.com/riscv/riscv-tests
 tmp_commit = $(shell cd $(riscv_tests_dir) 2>/dev/null && git log -1 | grep "commit" | cut -f2 -d ' ')
 is_commit_good = $(if $(subst $(riscv_tests_commit),,$(tmp_commit)),false,true)
@@ -67,18 +71,13 @@ check_riscv_tests : $(riscv_tests_dir)
 		echo "      directory not exist!" && \
 		echo "==========================================================================$(NC)" ; \
 	fi
-ifneq (,$(is_repo_changed))
-	@echo -e "$(RED)=========================================================================="
-	@echo "   Error! Repo '$(riscv_tests_dir)' "
-	@echo "     must be unchanged!"
-	@echo -e "==========================================================================$(NC)"
-	exit 1
-endif
 ifneq ($(is_commit_good),true)
 	@echo -e "$(RED)=========================================================================="
-	@echo "   Error! riscv-tests must point to commit $(riscv_tests_commit)"
+	@echo "   Warning! Execution of test code is not guaranteed "
+	@echo "   while using the current commit of repositorylocated at : $(riscv_tests_dir) ."
+	@echo "   "
+	@echo "   Riscv-tests repository must point to commit $(riscv_tests_commit)!"
 	@echo -e "==========================================================================$(NC)"
-	exit 1
 endif
 
 $(riscv_tests_dir) :.

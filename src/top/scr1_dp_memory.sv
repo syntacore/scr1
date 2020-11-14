@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
 /// @file       <scr1_dp_memory.sv>
 /// @brief      Dual-port synchronous memory with byte enable inputs
 ///
@@ -27,11 +27,15 @@ module scr1_dp_memory
     output  logic [SCR1_WIDTH-1:0]          qb
 );
 
-`ifdef SCR1_TARGET_FPGA_INTEL
+`ifdef SCR1_TRGT_FPGA_INTEL
 //-------------------------------------------------------------------------------
 // Local signal declaration
 //-------------------------------------------------------------------------------
-logic [SCR1_NBYTES-1:0][7:0] memory_array [0:(SCR1_SIZE/SCR1_NBYTES)-1];
+ `ifdef SCR1_TRGT_FPGA_INTEL_MAX10
+(* ramstyle = "M9K" *)    logic [SCR1_NBYTES-1:0][7:0]  memory_array  [0:(SCR1_SIZE/SCR1_NBYTES)-1];
+ `elsif SCR1_TRGT_FPGA_INTEL_ARRIAV
+(* ramstyle = "M10K" *)   logic [SCR1_NBYTES-1:0][7:0]  memory_array  [0:(SCR1_SIZE/SCR1_NBYTES)-1];
+ `endif
 logic [3:0] wenbb;
 //-------------------------------------------------------------------------------
 // Port B memory behavioral description
@@ -61,17 +65,20 @@ always_ff @(posedge clk) begin
     qa <= memory_array[addra];
 end
 
-`else // SCR1_TARGET_FPGA_INTEL
+`else // SCR1_TRGT_FPGA_INTEL
 
-// CASE: OTHERS - SCR1_TARGET_FPGA_XILINX, SIMULATION, ASIC etc
+// CASE: OTHERS - SCR1_TRGT_FPGA_XILINX, SIMULATION, ASIC etc
 
 localparam int unsigned RAM_SIZE_WORDS = SCR1_SIZE/SCR1_NBYTES;
 
 //-------------------------------------------------------------------------------
 // Local signal declaration
 //-------------------------------------------------------------------------------
-logic [SCR1_WIDTH-1:0]                  ram_block [RAM_SIZE_WORDS-1:0];
-
+ `ifdef SCR1_TRGT_FPGA_XILINX
+(* ram_style = "block" *)  logic  [SCR1_WIDTH-1:0]  ram_block  [RAM_SIZE_WORDS-1:0];
+ `else  // ASIC or SIMULATION
+logic  [SCR1_WIDTH-1:0]  ram_block  [RAM_SIZE_WORDS-1:0];
+ `endif
 //-------------------------------------------------------------------------------
 // Port A memory behavioral description
 //-------------------------------------------------------------------------------
@@ -97,7 +104,7 @@ always_ff @(posedge clk) begin
     end
 end
 
-`endif // SCR1_TARGET_FPGA_INTEL
+`endif // SCR1_TRGT_FPGA_INTEL
 
 endmodule : scr1_dp_memory
 

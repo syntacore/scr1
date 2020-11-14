@@ -1,47 +1,48 @@
-/// Copyright by Syntacore LLC © 2016-2019. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
 /// @file       <scr1_tapc_synchronizer.sv>
 /// @brief      TAPC clock domain crossing synchronizer
 ///
 
 `include "scr1_arch_description.svh"
 
-`ifdef SCR1_DBGC_EN
+`ifdef SCR1_DBG_EN
 `include "scr1_tapc.svh"
 `include "scr1_dm.svh"
 
 module scr1_tapc_synchronizer (
     // System common signals
-    input   logic                                   pwrup_rst_n,        // Power-Up Reset
-    input   logic                                   dm_rst_n,           // Debug Module Reset
-    input   logic                                   clk,                // System Clock (SysCLK)
+    input   logic                                   pwrup_rst_n,                // Power-Up Reset
+    input   logic                                   dm_rst_n,                   // Debug Module Reset
+    input   logic                                   clk,                        // System Clock (SysCLK)
+
     // JTAG common signals
-    input   logic                                   trst_n,             // JTAG Test Reset (TRSTn)
-    input   logic                                   tck,                // JTAG Test Clock (TCK)
-    // System Control/Status signals
-    input  logic                                    scu_ch_sel,         // SCU Chain Select input  (TCK domain)
-    output logic                                    scu_ch_sel_core,    // SCU Chain Select output (SysCLK domain)
+    input   logic                                   tapc_trst_n,                // JTAG Test Reset (TRSTn)
+    input   logic                                   tapc_tck,                   // JTAG Test Clock (TCK)
 
-    // DMI scan-chains
-    input  logic                                    dmi_ch_sel,         // DMI Chain Select input  (TCK domain)
-    output logic                                    dmi_ch_sel_core,    // DMI Chain Select output (SysCLK domain)
 
-    input  logic [SCR1_DBG_DMI_CH_ID_WIDTH-1:0]     dmi_ch_id,          // DMI Chain Identifier input  (TCK domain)
-    output logic [SCR1_DBG_DMI_CH_ID_WIDTH-1:0]     dmi_ch_id_core,     // DMI Chain Identifier output (SysCLK domain)
+    // DMI/SCU scan-chains
+    input  logic                                    tapc2tapcsync_scu_ch_sel_i, // SCU Chain Select input  (TCK domain)
+    output logic                                    tapcsync2scu_ch_sel_o,      // SCU Chain Select output (SysCLK domain)
+    input  logic                                    tapc2tapcsync_dmi_ch_sel_i, // DMI Chain Select input  (TCK domain)
+    output logic                                    tapcsync2dmi_ch_sel_o,      // DMI Chain Select output (SysCLK domain)
 
-    input  logic                                    dmi_ch_capture,     // DMI Chain Capture input  (TCK domain)
-    output logic                                    dmi_ch_capture_core,// DMI Chain Capture output (SysCLK domain)
+    input  logic [SCR1_DBG_DMI_CH_ID_WIDTH-1:0]     tapc2tapcsync_ch_id_i,      // DMI/SCU Chain Identifier input  (TCK domain)
+    output logic [SCR1_DBG_DMI_CH_ID_WIDTH-1:0]     tapcsync2core_ch_id_o,      // DMI/SCU Chain Identifier output (SysCLK domain)
 
-    input  logic                                    dmi_ch_shift,       // DMI Chain Shift input  (TCK domain)
-    output logic                                    dmi_ch_shift_core,  // DMI Chain Shift output (SysCLK domain)
+    input  logic                                    tapc2tapcsync_ch_capture_i, // DMI/SCU Chain Capture input  (TCK domain)
+    output logic                                    tapcsync2core_ch_capture_o, // DMI/SCU Chain Capture output (SysCLK domain)
 
-    input  logic                                    dmi_ch_update,      // DMI Chain Update input  (TCK domain)
-    output logic                                    dmi_ch_update_core, // DMI Chain Update output (SysCLK domain)
+    input  logic                                    tapc2tapcsync_ch_shift_i,   // DMI/SCU Chain Shift input  (TCK domain)
+    output logic                                    tapcsync2core_ch_shift_o,   // DMI/SCU Chain Shift output (SysCLK domain)
 
-    input  logic                                    dmi_ch_tdi,         // DMI Chain TDI input  (TCK domain)
-    output logic                                    dmi_ch_tdi_core,    // DMI Chain TDI output (SysCLK domain)
+    input  logic                                    tapc2tapcsync_ch_update_i,  // DMI/SCU Chain Update input  (TCK domain)
+    output logic                                    tapcsync2core_ch_update_o,  // DMI/SCU Chain Update output (SysCLK domain)
 
-    output logic                                    dmi_ch_tdo,         // DMI Chain TDO output (TCK domain)
-    input  logic                                    dmi_ch_tdo_core     // DMI Chain TDO input  (SysCLK domain)
+    input  logic                                    tapc2tapcsync_ch_tdi_i,     // DMI/SCU Chain TDI input  (TCK domain)
+    output logic                                    tapcsync2core_ch_tdi_o,     // DMI/SCU Chain TDI output (SysCLK domain)
+
+    output logic                                    tapc2tapcsync_ch_tdo_i,     // DMI/SCU Chain TDO output (TCK domain)
+    input  logic                                    tapcsync2core_ch_tdo_o      // DMI/SCU Chain TDO input  (SysCLK domain)
 );
 
 //-------------------------------------------------------------------------------
@@ -64,16 +65,16 @@ logic [2:0]     dmi_ch_tdi_sync;
 // Logic
 //-------------------------------------------------------------------------------
 
-always_ff @(posedge tck, negedge trst_n) begin
-    if (~trst_n) begin
+always_ff @(posedge tapc_tck, negedge tapc_trst_n) begin
+    if (~tapc_trst_n) begin
         tck_divpos      <= 1'b0;
     end else begin
         tck_divpos      <= ~tck_divpos;
     end
 end
 
-always_ff @(negedge tck, negedge trst_n) begin
-    if (~trst_n) begin
+always_ff @(negedge tapc_tck, negedge tapc_trst_n) begin
+    if (~tapc_trst_n) begin
         tck_divneg      <= 1'b0;
     end else begin
         tck_divneg      <= ~tck_divneg;
@@ -97,23 +98,23 @@ assign tck_fall_reset = tck_divneg_sync[3] ^ tck_divneg_sync[2];
 
 always_ff @(posedge clk, negedge pwrup_rst_n) begin
     if (~pwrup_rst_n) begin
-            dmi_ch_update_core   <= '0;
+            tapcsync2core_ch_update_o   <= '0;
     end else begin
         if  (tck_fall_load) begin
-            dmi_ch_update_core   <= dmi_ch_update;
+            tapcsync2core_ch_update_o   <= tapc2tapcsync_ch_update_i;
         end else if (tck_fall_reset) begin
-            dmi_ch_update_core   <= '0;
+            tapcsync2core_ch_update_o   <= '0;
         end
     end
 end
 
-always_ff @(negedge tck, negedge trst_n) begin
-    if (~trst_n) begin
+always_ff @(negedge tapc_tck, negedge tapc_trst_n) begin
+    if (~tapc_trst_n) begin
         dmi_ch_capture_sync[0] <= '0;
         dmi_ch_shift_sync[0]   <= '0;
     end else begin
-        dmi_ch_capture_sync[0] <= dmi_ch_capture;
-        dmi_ch_shift_sync[0]   <= dmi_ch_shift;
+        dmi_ch_capture_sync[0] <= tapc2tapcsync_ch_capture_i;
+        dmi_ch_shift_sync[0]   <= tapc2tapcsync_ch_shift_i;
     end
 end
 
@@ -131,52 +132,52 @@ always_ff @(posedge clk, negedge pwrup_rst_n) begin
     if (~pwrup_rst_n) begin
         dmi_ch_tdi_sync     <= '0;
     end else begin
-        dmi_ch_tdi_sync     <= {dmi_ch_tdi_sync[1:0], dmi_ch_tdi};
+        dmi_ch_tdi_sync     <= {dmi_ch_tdi_sync[1:0], tapc2tapcsync_ch_tdi_i};
     end
 end
 
 always_ff @(posedge clk, negedge pwrup_rst_n) begin
     if (~pwrup_rst_n) begin
-            dmi_ch_capture_core <= '0;
-            dmi_ch_shift_core   <= '0;
-            dmi_ch_tdi_core     <= '0;
+            tapcsync2core_ch_capture_o <= '0;
+            tapcsync2core_ch_shift_o   <= '0;
+            tapcsync2core_ch_tdi_o     <= '0;
     end else begin
         if (tck_rise_load) begin
-            dmi_ch_capture_core <= dmi_ch_capture_sync[2];
-            dmi_ch_shift_core   <= dmi_ch_shift_sync[2];
-            dmi_ch_tdi_core     <= dmi_ch_tdi_sync[2];
+            tapcsync2core_ch_capture_o <= dmi_ch_capture_sync[2];
+            tapcsync2core_ch_shift_o   <= dmi_ch_shift_sync[2];
+            tapcsync2core_ch_tdi_o     <= dmi_ch_tdi_sync[2];
         end else if (tck_rise_reset) begin
-            dmi_ch_capture_core <= '0;
-            dmi_ch_shift_core   <= '0;
-            dmi_ch_tdi_core     <= '0;
+            tapcsync2core_ch_capture_o <= '0;
+            tapcsync2core_ch_shift_o   <= '0;
+            tapcsync2core_ch_tdi_o     <= '0;
         end
     end
 end
 
 always_ff @(posedge clk, negedge dm_rst_n) begin
     if (~dm_rst_n) begin
-            dmi_ch_sel_core     <= '0;
-            dmi_ch_id_core      <= '0;
+            tapcsync2dmi_ch_sel_o     <= '0;
+            tapcsync2core_ch_id_o      <= '0;
     end else begin
         if (tck_rise_load) begin
-            dmi_ch_sel_core     <= dmi_ch_sel;
-            dmi_ch_id_core      <= dmi_ch_id;
+            tapcsync2dmi_ch_sel_o     <= tapc2tapcsync_dmi_ch_sel_i;
+            tapcsync2core_ch_id_o      <= tapc2tapcsync_ch_id_i;
         end
     end
 end
 
 always_ff @(posedge clk, negedge pwrup_rst_n) begin
     if (~pwrup_rst_n) begin
-            scu_ch_sel_core     <= '0;
+            tapcsync2scu_ch_sel_o     <= '0;
     end else begin
         if (tck_rise_load) begin
-            scu_ch_sel_core     <= scu_ch_sel;
+            tapcsync2scu_ch_sel_o     <= tapc2tapcsync_scu_ch_sel_i;
         end
     end
 end
 
-assign dmi_ch_tdo = dmi_ch_tdo_core;
+assign tapc2tapcsync_ch_tdo_i = tapcsync2core_ch_tdo_o;
 
 endmodule : scr1_tapc_synchronizer
 
-`endif // SCR1_DBGC_EN
+`endif // SCR1_DBG_EN

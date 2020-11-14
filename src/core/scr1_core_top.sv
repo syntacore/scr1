@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2019. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
 /// @file       <scr1_core_top.sv>
 /// @brief      SCR1 core top
 ///
@@ -7,94 +7,104 @@
 `include "scr1_arch_types.svh"
 `include "scr1_memif.svh"
 
-`ifdef SCR1_DBGC_EN
+`ifdef SCR1_DBG_EN
 `include "scr1_tapc.svh"
 `include "scr1_dm.svh"
 `include "scr1_hdu.svh"
-`endif // SCR1_DBGC_EN
+`endif // SCR1_DBG_EN
 
 `ifdef SCR1_IPIC_EN
 `include "scr1_ipic.svh"
 `endif // SCR1_IPIC_EN
 
-module scr1_core_top #(
-    parameter bit SCR1_RESET_INPUTS_SYNC = 1 // Reset inputs are: 1 - synchronous, 0 -asynchronous
-) (
+module scr1_core_top (
     // Common
-    input   logic                                   pwrup_rst_n,
-    input   logic                                   rst_n,
-    input   logic                                   cpu_rst_n,
-    input   logic                                   test_mode,
-    input   logic                                   test_rst_n,
-    input   logic                                   clk,
-    output  logic                                   core_rst_n_out,
-`ifdef SCR1_DBGC_EN
-    output  logic                                   ndm_rst_n_out,
-`endif // SCR1_DBGC_EN
-    
+    input   logic                                   pwrup_rst_n,                // Power-Up reset
+    input   logic                                   rst_n,                      // Regular reset
+    input   logic                                   cpu_rst_n,                  // CPU reset
+    input   logic                                   test_mode,                  // DFT Test Mode
+    input   logic                                   test_rst_n,                 // DFT Test Reset
+    input   logic                                   clk,                        // Core clock
+    output  logic                                   core_rst_n_o,               // Core reset
+    output  logic                                   core_rdc_qlfy_o,            // Core RDC qualifier
+`ifdef SCR1_DBG_EN
+    output  logic                                   sys_rst_n_o,                // System reset
+    output  logic                                   sys_rdc_qlfy_o,             // System RDC qualifier
+`endif // SCR1_DBG_EN
+
     // Fuses
-    input   logic [`SCR1_XLEN-1:0]                  fuse_mhartid,
-`ifdef SCR1_DBGC_EN
-    input   logic [31:0]                            fuse_idcode,
-`endif // SCR1_DBGC_EN
+    input   logic [`SCR1_XLEN-1:0]                  core_fuse_mhartid_i,        // Fuse MHARTID value
+`ifdef SCR1_DBG_EN
+    input   logic [31:0]                            tapc_fuse_idcode_i,         // Fuse IDCODE value
+`endif // SCR1_DBG_EN
 
     // IRQ
 `ifdef SCR1_IPIC_EN
-    input   logic [SCR1_IRQ_LINES_NUM-1:0]          irq_lines,
+    input   logic [SCR1_IRQ_LINES_NUM-1:0]          core_irq_lines_i,           // External interrupt request lines
 `else
-    input   logic                                   ext_irq,
+    input   logic                                   core_irq_ext_i,             // External interrupt request
 `endif // SCR1_IPIC_EN
-    input   logic                                   soft_irq,
+    input   logic                                   core_irq_soft_i,            // Software generated interrupt request
+    input   logic                                   core_irq_mtimer_i,          // Machine timer interrupt request
 
     // Memory-mapped external timer
-    input   logic                                   timer_irq,
-    input   logic [63:0]                            mtime_ext,
+    input   logic [63:0]                            core_mtimer_val_i,          // Machine timer value
 
-`ifdef SCR1_DBGC_EN
+`ifdef SCR1_DBG_EN
     // Debug Interface
-    input   logic                                   trst_n,
-    input   logic                                   tck,
-    input   logic                                   tms,
-    input   logic                                   tdi,
-    output  logic                                   tdo,
-    output  logic                                   tdo_en,
-`endif // SCR1_DBGC_EN
+    input   logic                                   tapc_trst_n,                // Test Reset (TRSTn)
+    input   logic                                   tapc_tck,                   // Test Clock (TCK)
+    input   logic                                   tapc_tms,                   // Test Mode Select (TMS)
+    input   logic                                   tapc_tdi,                   // Test Data Input (TDI)
+    output  logic                                   tapc_tdo,                   // Test Data Output (TDO)
+    output  logic                                   tapc_tdo_en,                // TDO Enable, signal for TDO buffer control
+`endif // SCR1_DBG_EN
 
     // Instruction Memory Interface
-    input   logic                                   imem_req_ack,
-    output  logic                                   imem_req,
-    output  type_scr1_mem_cmd_e                     imem_cmd,
-    output  logic [`SCR1_IMEM_AWIDTH-1:0]           imem_addr,
-    input   logic [`SCR1_IMEM_DWIDTH-1:0]           imem_rdata,
-    input   type_scr1_mem_resp_e                    imem_resp,
+    input   logic                                   imem2core_req_ack_i,        // IMEM request acknowledge
+    output  logic                                   core2imem_req_o,            // IMEM request
+    output  type_scr1_mem_cmd_e                     core2imem_cmd_o,            // IMEM command
+    output  logic [`SCR1_IMEM_AWIDTH-1:0]           core2imem_addr_o,           // IMEM address
+    input   logic [`SCR1_IMEM_DWIDTH-1:0]           imem2core_rdata_i,          // IMEM read data
+    input   type_scr1_mem_resp_e                    imem2core_resp_i,           // IMEM response
 
     // Data Memory Interface
-    input   logic                                   dmem_req_ack,
-    output  logic                                   dmem_req,
-    output  type_scr1_mem_cmd_e                     dmem_cmd,
-    output  type_scr1_mem_width_e                   dmem_width,
-    output  logic [`SCR1_DMEM_AWIDTH-1:0]           dmem_addr,
-    output  logic [`SCR1_DMEM_DWIDTH-1:0]           dmem_wdata,
-    input   logic [`SCR1_DMEM_DWIDTH-1:0]           dmem_rdata,
-    input   type_scr1_mem_resp_e                    dmem_resp
+    input   logic                                   dmem2core_req_ack_i,        // DMEM request acknowledge
+    output  logic                                   core2dmem_req_o,            // DMEM request
+    output  type_scr1_mem_cmd_e                     core2dmem_cmd_o,            // DMEM command
+    output  type_scr1_mem_width_e                   core2dmem_width_o,          // DMEM data width
+    output  logic [`SCR1_DMEM_AWIDTH-1:0]           core2dmem_addr_o,           // DMEM address
+    output  logic [`SCR1_DMEM_DWIDTH-1:0]           core2dmem_wdata_o,          // DMEM write data
+    input   logic [`SCR1_DMEM_DWIDTH-1:0]           dmem2core_rdata_i,          // DMEM read data
+    input   type_scr1_mem_resp_e                    dmem2core_resp_i            // DMEM response
 );
+
+//-------------------------------------------------------------------------------
+// Local parameters
+//-------------------------------------------------------------------------------
+localparam int unsigned SCR1_CORE_TOP_RST_SYNC_STAGES_NUM               = 2;
 
 //-------------------------------------------------------------------------------
 // Local signals declaration
 //-------------------------------------------------------------------------------
 
 // Reset Logic
-`ifdef SCR1_DBGC_EN
-`else // SCR1_DBGC_EN
-logic                                           core_rst_n_sync;
-`endif // SCR1_DBGC_EN
-logic                                           core_rst_n;
+`ifdef SCR1_DBG_EN
+`else // SCR1_DBG_EN
+logic                                           core_rst_n_in_sync;
 logic                                           core_rst_n_qlfy;
+logic                                           core_rst_n_status;
+`endif // SCR1_DBG_EN
+logic                                           core_rst_n;
+logic                                           core_rst_n_status_sync;
+logic                                           core_rst_status;
+logic                                           core2hdu_rdc_qlfy;
+logic                                           core2dm_rdc_qlfy;
 logic                                           pwrup_rst_n_sync;
 logic                                           rst_n_sync;
 logic                                           cpu_rst_n_sync;
 
-`ifdef SCR1_DBGC_EN
+`ifdef SCR1_DBG_EN
 // TAPC-DM Interface
 logic                                           tapc_dmi_ch_sel;
 logic [SCR1_DBG_DMI_CH_ID_WIDTH-1:0]            tapc_dmi_ch_id;
@@ -124,15 +134,17 @@ logic                                           tapc_scu_ch_sel_tapout;
 logic                                           tapc_scu_ch_tdo;
 logic                                           tapc_ch_tdo;
 // SCU nets
+logic                                           sys_rst_n;
+logic                                           sys_rst_status;
 logic                                           tapc_rst_n;
 logic                                           hdu_rst_n;
-logic                                           hdu_rst_n_qlfy;
+logic                                           hdu2dm_rdc_qlfy;
 logic                                           ndm_rst_n;
 logic                                           dm_rst_n;
 logic                                           hart_rst_n;
-`endif // SCR1_DBGC_EN
+`endif // SCR1_DBG_EN
 
-`ifdef SCR1_DBGC_EN
+`ifdef SCR1_DBG_EN
 // DM-Pipeline Interface
 // HART Run Control i/f
 logic                                           dm_active;
@@ -141,7 +153,6 @@ type_scr1_hdu_dbgstates_e                       dm_cmd;
 logic                                           dm_cmd_resp;
 logic                                           dm_cmd_resp_qlfy;
 logic                                           dm_cmd_rcode;
-logic                                           dm_cmd_rcode_qlfy;
 logic                                           dm_hart_event;
 logic                                           dm_hart_event_qlfy;
 type_scr1_hdu_hartstatus_s                      dm_hart_status;
@@ -154,16 +165,14 @@ logic [SCR1_HDU_CORE_INSTR_WIDTH-1:0]           dm_pbuf_instr;
 logic                                           dm_dreg_req;
 logic                                           dm_dreg_req_qlfy;
 logic                                           dm_dreg_wr;
-logic                                           dm_dreg_wr_qlfy;
 logic [SCR1_HDU_DATA_REG_WIDTH-1:0]             dm_dreg_wdata;
-logic [SCR1_HDU_DATA_REG_WIDTH-1:0]             dm_dreg_wdata_qlfy;
 logic                                           dm_dreg_resp;
 logic                                           dm_dreg_fail;
 logic [SCR1_HDU_DATA_REG_WIDTH-1:0]             dm_dreg_rdata;
 
 logic [`SCR1_XLEN-1 : 0]                        dm_pc_sample;
 logic [`SCR1_XLEN-1 : 0]                        dm_pc_sample_qlfy;
-`endif // SCR1_DBGC_EN
+`endif // SCR1_DBG_EN
 
 `ifdef SCR1_CLKCTRL_EN
 // Global clock gating logic
@@ -175,347 +184,323 @@ logic                                           clk_dbgc;
 logic                                           clk_alw_on;
 `endif // SCR1_CLKCTRL_EN
 
-// Block busy signals
 
 //-------------------------------------------------------------------------------
 // Reset Logic
 //-------------------------------------------------------------------------------
-`ifdef SCR1_DBGC_EN
-scr1_scu #(
-    .SCR1_SCU_CFG_RESET_INPUTS_SYNC     (SCR1_RESET_INPUTS_SYNC)
-) i_scu(
+`ifdef SCR1_DBG_EN
+scr1_scu    i_scu (
     // Global signals
-    .pwrup_rst_n                (pwrup_rst_n),
-    .rst_n                      (rst_n),
-    .cpu_rst_n                  (cpu_rst_n),
-    .test_mode                  (test_mode),
-    .test_rst_n                 (test_rst_n),
-    .clk                        (clk),
+    .pwrup_rst_n                (pwrup_rst_n        ),
+    .rst_n                      (rst_n              ),
+    .cpu_rst_n                  (cpu_rst_n          ),
+    .test_mode                  (test_mode          ),
+    .test_rst_n                 (test_rst_n         ),
+    .clk                        (clk                ),
+
     // TAPC scan-chains
-    .tapc_ch_sel                (tapc_scu_ch_sel),
-    .tapc_ch_id                 ('0),
-    .tapc_ch_capture            (tapc_dmi_ch_capture),
-    .tapc_ch_shift              (tapc_dmi_ch_shift),
-    .tapc_ch_update             (tapc_dmi_ch_update),
-    .tapc_ch_tdi                (tapc_dmi_ch_tdi),
-    .tapc_ch_tdo                (tapc_scu_ch_tdo),
+    .tapcsync2scu_ch_sel_i      (tapc_scu_ch_sel    ),
+    .tapcsync2scu_ch_id_i       ('0                 ),
+    .tapcsync2scu_ch_capture_i  (tapc_dmi_ch_capture),
+    .tapcsync2scu_ch_shift_i    (tapc_dmi_ch_shift  ),
+    .tapcsync2scu_ch_update_i   (tapc_dmi_ch_update ),
+    .tapcsync2scu_ch_tdi_i      (tapc_dmi_ch_tdi    ),
+    .scu2tapcsync_ch_tdo_o      (tapc_scu_ch_tdo    ),
+
     // Input sync resets:
-    .ndm_rst_n                  (ndm_rst_n),
-    .hart_rst_n                 (hart_rst_n),
-    // Generated resets and their attributes (qualifiers etc):
-    .core_rst_n                 (core_rst_n),
-    .core_rst_n_qlfy            (core_rst_n_qlfy),
-    .dm_rst_n                   (dm_rst_n),
-    .hdu_rst_n                  (hdu_rst_n),
-    .hdu_rst_n_qlfy             (hdu_rst_n_qlfy)
+    .ndm_rst_n_i                (ndm_rst_n          ),
+    .hart_rst_n_i               (hart_rst_n         ),
+
+    // Generated resets
+    .sys_rst_n_o                (sys_rst_n          ),
+    .core_rst_n_o               (core_rst_n         ),
+    .dm_rst_n_o                 (dm_rst_n           ),
+    .hdu_rst_n_o                (hdu_rst_n          ),
+
+    // Resets statuses
+    .sys_rst_status_o           (sys_rst_status     ),
+    .core_rst_status_o          (core_rst_status    ),
+
+    // Reset Domain Crossing (RDC) qualifiers
+    .sys_rdc_qlfy_o             (sys_rdc_qlfy_o     ),
+    .core_rdc_qlfy_o            (core_rdc_qlfy_o    ),
+    .core2hdu_rdc_qlfy_o        (core2hdu_rdc_qlfy  ),
+    .core2dm_rdc_qlfy_o         (core2dm_rdc_qlfy   ),
+    .hdu2dm_rdc_qlfy_o          (hdu2dm_rdc_qlfy    )
 );
 
 // TAPC reset
 scr1_reset_and2_cell i_tapc_rstn_and2_cell (
-    .rst_n_in       ({trst_n, pwrup_rst_n}),
-    .test_rst_n     (test_rst_n),
-    .test_mode      (test_mode),
-    .rst_n_out      (tapc_rst_n)
-);
-assign ndm_rst_n_out  = ndm_rst_n;
-
-generate
-
-if (SCR1_RESET_INPUTS_SYNC)
-// reset inputs are synchronous
-
-begin : gen_rst_inputs_sync
-    assign pwrup_rst_n_sync = pwrup_rst_n;
-end : gen_rst_inputs_sync
-
-else // SCR1_RESET_INPUTS_SYNC == 0, - reset inputs are asynchronous
-
-begin : gen_rst_inputs_async
-// Power-Up Reset synchronizer
-scr1_reset_sync_cell i_pwrup_rstn_reset_sync (
-    .rst_n          (pwrup_rst_n),
-    .clk            (clk),
-    .test_rst_n     (test_rst_n),
-    .test_mode      (test_mode),
-    .rst_n_out      (pwrup_rst_n_sync)
-);
-end : gen_rst_inputs_async
-
-// end of  SCR1_RESET_INPUTS_SYNC
-
-endgenerate
-
-`else // SCR1_DBGC_EN
-
-generate
-
-if (SCR1_RESET_INPUTS_SYNC)
-// reset inputs are synchronous
-
-begin : gen_rst_inputs_sync
-    assign pwrup_rst_n_sync = pwrup_rst_n;
-    assign rst_n_sync       = rst_n;
-    assign cpu_rst_n_sync   = cpu_rst_n;
-end : gen_rst_inputs_sync
-
-else // SCR1_RESET_INPUTS_SYNC == 0, - reset inputs are asynchronous
-
-begin : gen_rst_inputs_async
-// Power-Up Reset synchronizer
-scr1_reset_sync_cell i_pwrup_rstn_reset_sync (
-    .rst_n          (pwrup_rst_n),
-    .clk            (clk),
-    .test_rst_n     (test_rst_n),
-    .test_mode      (test_mode),
-    .rst_n_out      (pwrup_rst_n_sync)
+    .rst_n_in       ({tapc_trst_n, pwrup_rst_n}),
+    .test_rst_n     (test_rst_n                ),
+    .test_mode      (test_mode                 ),
+    .rst_n_out      (tapc_rst_n                )
 );
 
-// Regular Reset synchronizer
-scr1_reset_sync_cell i_rstn_reset_sync (
-    .rst_n          (rst_n),
-    .clk            (clk),
-    .test_rst_n     (test_rst_n),
-    .test_mode      (test_mode),
-    .rst_n_out      (rst_n_sync)
-);
+assign sys_rst_n_o      = sys_rst_n;
 
-// CPU Reset synchronizer
-scr1_reset_sync_cell i_cpu_rstn_reset_sync (
-    .rst_n          (cpu_rst_n),
-    .clk            (clk),
-    .test_rst_n     (test_rst_n),
-    .test_mode      (test_mode),
-    .rst_n_out      (cpu_rst_n_sync)
-);
-end : gen_rst_inputs_async
+// Reset inputs are assumed synchronous
+assign pwrup_rst_n_sync = pwrup_rst_n;
 
-// end of  SCR1_RESET_INPUTS_SYNC
+`else // SCR1_DBG_EN
 
-endgenerate
+// Reset inputs are assumed synchronous
+assign pwrup_rst_n_sync   = pwrup_rst_n;
+assign rst_n_sync         = rst_n;
+assign cpu_rst_n_sync     = cpu_rst_n;
+assign core_rst_n_in_sync = rst_n_sync & cpu_rst_n_sync;
 
 // Core Reset: core_rst_n
-scr1_reset_buf_qlfy_cell i_core_rstn_buf_qlfy_cell (
-    .rst_n              (pwrup_rst_n_sync),
-    .clk                (clk),
-    .test_rst_n         (test_rst_n),
-    .test_mode          (test_mode),
-    .reset_n_in         (core_rst_n_sync),
-    .reset_n_out_qlfy   (core_rst_n_qlfy),
-    .reset_n_out        (core_rst_n),
-    .reset_n_status     ()
+scr1_reset_qlfy_adapter_cell_sync i_core_rstn_qlfy_adapter_cell_sync (
+    .rst_n              (pwrup_rst_n_sync  ),
+    .clk                (clk               ),
+    .test_rst_n         (test_rst_n        ),
+    .test_mode          (test_mode         ),
+    .reset_n_in_sync    (core_rst_n_in_sync),
+    .reset_n_out_qlfy   (core_rst_n_qlfy   ),
+    .reset_n_out        (core_rst_n        ),
+    .reset_n_status     (core_rst_n_status )
 );
-assign core_rst_n_sync      = rst_n_sync & cpu_rst_n_sync;
-`endif // SCR1_DBGC_EN
-assign core_rst_n_out       = core_rst_n;
+
+scr1_data_sync_cell #(
+    .STAGES_AMOUNT      (SCR1_CORE_TOP_RST_SYNC_STAGES_NUM)
+) i_core_rstn_status_sync (
+    .rst_n               (pwrup_rst_n_sync      ),
+    .clk                 (clk                   ),
+    .data_in             (core_rst_n_status     ),
+    .data_out            (core_rst_n_status_sync)
+);
+
+assign core_rst_status      = ~core_rst_n_status_sync;
+assign core_rdc_qlfy_o      = core_rst_n_qlfy;
+
+`endif // SCR1_DBG_EN
+assign core_rst_n_o         = core_rst_n;
 
 //-------------------------------------------------------------------------------
 // SCR1 pipeline
 //-------------------------------------------------------------------------------
 scr1_pipe_top i_pipe_top (
     // Control
-    .pipe_rst_n             (core_rst_n         ),
-`ifdef SCR1_DBGC_EN
-    .pipe_rst_n_qlfy        (core_rst_n_qlfy    ),
-    .dbg_rst_n              (hdu_rst_n          ),
-`endif // SCR1_DBGC_EN
+    .pipe_rst_n                     (core_rst_n             ),
+`ifdef SCR1_DBG_EN
+    .pipe2hdu_rdc_qlfy_i            (core2hdu_rdc_qlfy      ),
+    .dbg_rst_n                      (hdu_rst_n              ),
+`endif // SCR1_DBG_EN
 `ifndef SCR1_CLKCTRL_EN
-    .clk                    (clk                ),
+    .clk                            (clk                    ),
 `else // SCR1_CLKCTRL_EN
-    .clk                    (clk_pipe           ),
-    .sleep_pipe             (sleep_pipe         ),
-    .wake_pipe              (wake_pipe          ),
-    .clk_alw_on             (clk_alw_on         ),
-    .clk_dbgc               (clk_dbgc           ),
-    .clk_pipe_en            (clk_pipe_en        ),
+    .clk                            (clk_pipe               ),
+    .pipe2clkctl_sleep_req_o        (sleep_pipe             ),
+    .pipe2clkctl_wake_req_o         (wake_pipe              ),
+    .clkctl2pipe_clk_alw_on_i       (clk_alw_on             ),
+    .clkctl2pipe_clk_dbgc_i         (clk_dbgc               ),
+    .clkctl2pipe_clk_en_i           (clk_pipe_en            ),
 `endif // SCR1_CLKCTRL_EN
+
     // Instruction memory interface
-    .imem_req               (imem_req           ),
-    .imem_cmd               (imem_cmd           ),
-    .imem_addr              (imem_addr          ),
-    .imem_req_ack           (imem_req_ack       ),
-    .imem_rdata             (imem_rdata         ),
-    .imem_resp              (imem_resp          ),
+    .pipe2imem_req_o                (core2imem_req_o        ),
+    .pipe2imem_cmd_o                (core2imem_cmd_o        ),
+    .pipe2imem_addr_o               (core2imem_addr_o       ),
+    .imem2pipe_req_ack_i            (imem2core_req_ack_i    ),
+    .imem2pipe_rdata_i              (imem2core_rdata_i      ),
+    .imem2pipe_resp_i               (imem2core_resp_i       ),
+
     // Data memory interface
-    .dmem_req               (dmem_req           ),
-    .dmem_cmd               (dmem_cmd           ),
-    .dmem_width             (dmem_width         ),
-    .dmem_addr              (dmem_addr          ),
-    .dmem_wdata             (dmem_wdata         ),
-    .dmem_req_ack           (dmem_req_ack       ),
-    .dmem_rdata             (dmem_rdata         ),
-    .dmem_resp              (dmem_resp          ),
-`ifdef SCR1_DBGC_EN
+    .pipe2dmem_req_o                (core2dmem_req_o        ),
+    .pipe2dmem_cmd_o                (core2dmem_cmd_o        ),
+    .pipe2dmem_width_o              (core2dmem_width_o      ),
+    .pipe2dmem_addr_o               (core2dmem_addr_o       ),
+    .pipe2dmem_wdata_o              (core2dmem_wdata_o      ),
+    .dmem2pipe_req_ack_i            (dmem2core_req_ack_i    ),
+    .dmem2pipe_rdata_i              (dmem2core_rdata_i      ),
+    .dmem2pipe_resp_i               (dmem2core_resp_i       ),
+
+`ifdef SCR1_DBG_EN
+    // Debug interface:
+    .dbg_en                         (1'b1                   ),
     // Debug interface:
     // DM <-> Pipeline: HART Run Control i/f
-    .dm_active              (dm_active          ),
-    .dm_cmd_req             (dm_cmd_req         ),
-    .dm_cmd                 (dm_cmd             ),
-    .dm_cmd_resp            (dm_cmd_resp        ),
-    .dm_cmd_rcode           (dm_cmd_rcode       ),
-    .dm_hart_event          (dm_hart_event      ),
-    .dm_hart_status         (dm_hart_status     ),
+    .dm2pipe_active_i               (dm_active              ),
+    .dm2pipe_cmd_req_i              (dm_cmd_req             ),
+    .dm2pipe_cmd_i                  (dm_cmd                 ),
+    .pipe2dm_cmd_resp_o             (dm_cmd_resp            ),
+    .pipe2dm_cmd_rcode_o            (dm_cmd_rcode           ),
+    .pipe2dm_hart_event_o           (dm_hart_event          ),
+    .pipe2dm_hart_status_o          (dm_hart_status         ),
+
     // DM <-> Pipeline: Program Buffer - HART instruction execution i/f
-    .dm_pbuf_addr           (dm_pbuf_addr       ),
-    .dm_pbuf_instr          (dm_pbuf_instr      ),
+    .pipe2dm_pbuf_addr_o            (dm_pbuf_addr           ),
+    .dm2pipe_pbuf_instr_i           (dm_pbuf_instr          ),
+
     // DM <-> Pipeline: HART Abstract Data regs i/f
-    .dm_dreg_req            (dm_dreg_req        ),
-    .dm_dreg_wr             (dm_dreg_wr         ),
-    .dm_dreg_wdata          (dm_dreg_wdata      ),
-    .dm_dreg_resp           (dm_dreg_resp       ),
-    .dm_dreg_fail           (dm_dreg_fail       ),
-    .dm_dreg_rdata          (dm_dreg_rdata      ),
-    //
-    .dm_pc_sample           (dm_pc_sample       ),
-`endif // SCR1_DBGC_EN
+    .pipe2dm_dreg_req_o             (dm_dreg_req            ),
+    .pipe2dm_dreg_wr_o              (dm_dreg_wr             ),
+    .pipe2dm_dreg_wdata_o           (dm_dreg_wdata          ),
+    .dm2pipe_dreg_resp_i            (dm_dreg_resp           ),
+    .dm2pipe_dreg_fail_i            (dm_dreg_fail           ),
+    .dm2pipe_dreg_rdata_i           (dm_dreg_rdata          ),
+
+    // DM <-> Pipeline: PC i/f
+    .pipe2dm_pc_sample_o            (dm_pc_sample           ),
+`endif // SCR1_DBG_EN
+
     // IRQ
 `ifdef SCR1_IPIC_EN
-    .irq_lines              (irq_lines          ),
+    .soc2pipe_irq_lines_i           (core_irq_lines_i       ),
 `else // SCR1_IPIC_EN
-    .ext_irq                (ext_irq            ),
+    .soc2pipe_irq_ext_i             (core_irq_ext_i         ),
 `endif // SCR1_IPIC_EN
-    .soft_irq               (soft_irq           ),
-    .timer_irq              (timer_irq          ),
-    .mtime_ext              (mtime_ext          ),
+    .soc2pipe_irq_soft_i            (core_irq_soft_i        ),
+    .soc2pipe_irq_mtimer_i          (core_irq_mtimer_i      ),
+
+    // Memory-mapped external timer
+    .soc2pipe_mtimer_val_i          (core_mtimer_val_i      ),
 
     // Fuse
-    .fuse_mhartid           (fuse_mhartid       )
+    .soc2pipe_fuse_mhartid_i        (core_fuse_mhartid_i    )
 );
 
 
-`ifdef SCR1_DBGC_EN
+`ifdef SCR1_DBG_EN
 //-------------------------------------------------------------------------------
 // TAP Controller (TAPC)
 //-------------------------------------------------------------------------------
 scr1_tapc i_tapc (
     // JTAG signals
-    .trst_n                 (tapc_rst_n),
-    .tck                    (tck),
-    .tms                    (tms),
-    .tdi                    (tdi),
-    .tdo                    (tdo),
-    .tdo_en                 (tdo_en),
-    // Fuses:
-    .fuse_idcode            (fuse_idcode),
-    // System Control/Status signals
-    .scu_ch_sel             (tapc_scu_ch_sel_tapout),
-    // DMI scan-chains
-    .dmi_ch_sel             (tapc_dmi_ch_sel_tapout),
-    .dmi_ch_id              (tapc_dmi_ch_id_tapout),
-    .dmi_ch_capture         (tapc_dmi_ch_capture_tapout),
-    .dmi_ch_shift           (tapc_dmi_ch_shift_tapout),
-    .dmi_ch_update          (tapc_dmi_ch_update_tapout),
-    .dmi_ch_tdi             (tapc_dmi_ch_tdi_tapout),
-    .dmi_ch_tdo             (tapc_dmi_ch_tdo_tapin)
+    .tapc_trst_n                    (tapc_rst_n                ),
+    .tapc_tck                       (tapc_tck                  ),
+    .tapc_tms                       (tapc_tms                  ),
+    .tapc_tdi                       (tapc_tdi                  ),
+    .tapc_tdo                       (tapc_tdo                  ),
+    .tapc_tdo_en                    (tapc_tdo_en               ),
+
+    // Fuses
+    .soc2tapc_fuse_idcode_i         (tapc_fuse_idcode_i        ),
+
+    // DMI/SCU scan-chains
+    .tapc2tapcsync_scu_ch_sel_o     (tapc_scu_ch_sel_tapout    ),
+    .tapc2tapcsync_dmi_ch_sel_o     (tapc_dmi_ch_sel_tapout    ),
+    .tapc2tapcsync_ch_id_o          (tapc_dmi_ch_id_tapout     ),
+    .tapc2tapcsync_ch_capture_o     (tapc_dmi_ch_capture_tapout),
+    .tapc2tapcsync_ch_shift_o       (tapc_dmi_ch_shift_tapout  ),
+    .tapc2tapcsync_ch_update_o      (tapc_dmi_ch_update_tapout ),
+    .tapc2tapcsync_ch_tdi_o         (tapc_dmi_ch_tdi_tapout    ),
+    .tapcsync2tapc_ch_tdo_i         (tapc_dmi_ch_tdo_tapin     )
 );
 
 scr1_tapc_synchronizer i_tapc_synchronizer (
     // System common signals
-    .pwrup_rst_n            (pwrup_rst_n_sync),
-    .dm_rst_n               (dm_rst_n),
-    .clk                    (clk),
+    .pwrup_rst_n                    (pwrup_rst_n_sync          ),
+    .dm_rst_n                       (dm_rst_n                  ),
+    .clk                            (clk                       ),
 
     // JTAG common signals
-    .trst_n                 (tapc_rst_n),
-    .tck                    (tck),
+    .tapc_trst_n                    (tapc_rst_n                ),
+    .tapc_tck                       (tapc_tck                  ),
 
-    // System Control/Status signals
-    .scu_ch_sel             (tapc_scu_ch_sel_tapout),
-    .scu_ch_sel_core        (tapc_scu_ch_sel),
+    // DMI/SCU scan-chains
+    .tapc2tapcsync_scu_ch_sel_i     (tapc_scu_ch_sel_tapout    ),
+    .tapcsync2scu_ch_sel_o          (tapc_scu_ch_sel           ),
+    .tapc2tapcsync_dmi_ch_sel_i     (tapc_dmi_ch_sel_tapout    ),
+    .tapcsync2dmi_ch_sel_o          (tapc_dmi_ch_sel           ),
 
-    // DMI scan-chains
-    .dmi_ch_sel             (tapc_dmi_ch_sel_tapout),
-    .dmi_ch_sel_core        (tapc_dmi_ch_sel),
-    .dmi_ch_id              (tapc_dmi_ch_id_tapout),
-    .dmi_ch_id_core         (tapc_dmi_ch_id),
-    .dmi_ch_capture         (tapc_dmi_ch_capture_tapout),
-    .dmi_ch_capture_core    (tapc_dmi_ch_capture),
-    .dmi_ch_shift           (tapc_dmi_ch_shift_tapout),
-    .dmi_ch_shift_core      (tapc_dmi_ch_shift),
-    .dmi_ch_update          (tapc_dmi_ch_update_tapout),
-    .dmi_ch_update_core     (tapc_dmi_ch_update),
-    .dmi_ch_tdi             (tapc_dmi_ch_tdi_tapout),
-    .dmi_ch_tdi_core        (tapc_dmi_ch_tdi),
-    .dmi_ch_tdo             (tapc_dmi_ch_tdo_tapin),
-    .dmi_ch_tdo_core        (tapc_ch_tdo)
+    .tapc2tapcsync_ch_id_i          (tapc_dmi_ch_id_tapout     ),
+    .tapcsync2core_ch_id_o          (tapc_dmi_ch_id            ),
+    .tapc2tapcsync_ch_capture_i     (tapc_dmi_ch_capture_tapout),
+    .tapcsync2core_ch_capture_o     (tapc_dmi_ch_capture       ),
+    .tapc2tapcsync_ch_shift_i       (tapc_dmi_ch_shift_tapout  ),
+    .tapcsync2core_ch_shift_o       (tapc_dmi_ch_shift         ),
+    .tapc2tapcsync_ch_update_i      (tapc_dmi_ch_update_tapout ),
+    .tapcsync2core_ch_update_o      (tapc_dmi_ch_update        ),
+    .tapc2tapcsync_ch_tdi_i         (tapc_dmi_ch_tdi_tapout    ),
+    .tapcsync2core_ch_tdi_o         (tapc_dmi_ch_tdi           ),
+    .tapc2tapcsync_ch_tdo_i         (tapc_dmi_ch_tdo_tapin     ),
+    .tapcsync2core_ch_tdo_o         (tapc_ch_tdo               )
 );
-assign tapc_ch_tdo = (tapc_scu_ch_tdo & tapc_scu_ch_sel) | (tapc_dmi_ch_tdo & tapc_dmi_ch_sel);
+assign tapc_ch_tdo = (tapc_scu_ch_tdo & tapc_scu_ch_sel)
+                   | (tapc_dmi_ch_tdo & tapc_dmi_ch_sel);
 
 scr1_dmi i_dmi (
-    .rst_n                  (dm_rst_n),
-    .clk                    (clk),
+    .rst_n                      (dm_rst_n           ),
+    .clk                        (clk                ),
 
     // TAP scan-chains
-    .dtm_ch_sel             (tapc_dmi_ch_sel),
-    .dtm_ch_id              (tapc_dmi_ch_id),
-    .dtm_ch_capture         (tapc_dmi_ch_capture),
-    .dtm_ch_shift           (tapc_dmi_ch_shift),
-    .dtm_ch_update          (tapc_dmi_ch_update),
-    .dtm_ch_tdi             (tapc_dmi_ch_tdi),
-    .dtm_ch_tdo             (tapc_dmi_ch_tdo),
+    .tapcsync2dmi_ch_sel_i      (tapc_dmi_ch_sel    ),
+    .tapcsync2dmi_ch_id_i       (tapc_dmi_ch_id     ),
+    .tapcsync2dmi_ch_capture_i  (tapc_dmi_ch_capture),
+    .tapcsync2dmi_ch_shift_i    (tapc_dmi_ch_shift  ),
+    .tapcsync2dmi_ch_update_i   (tapc_dmi_ch_update ),
+    .tapcsync2dmi_ch_tdi_i      (tapc_dmi_ch_tdi    ),
+    .dmi2tapcsync_ch_tdo_o      (tapc_dmi_ch_tdo    ),
 
     // DMI
-    .dmi_resp               (dmi_resp),
-    .dmi_rdata              (dmi_rdata),
-    .dmi_req                (dmi_req),
-    .dmi_wr                 (dmi_wr),
-    .dmi_addr               (dmi_addr),
-    .dmi_wdata              (dmi_wdata)
+    .dm2dmi_resp_i              (dmi_resp           ),
+    .dm2dmi_rdata_i             (dmi_rdata          ),
+    .dmi2dm_req_o               (dmi_req            ),
+    .dmi2dm_wr_o                (dmi_wr             ),
+    .dmi2dm_addr_o              (dmi_addr           ),
+    .dmi2dm_wdata_o             (dmi_wdata          )
 );
-`endif // SCR1_DBGC_EN
+
+`endif // SCR1_DBG_EN
 
 
-`ifdef SCR1_DBGC_EN
+`ifdef SCR1_DBG_EN
 
 //-------------------------------------------------------------------------------
 // Debug Module (DM)
 //-------------------------------------------------------------------------------
-assign dm_cmd_resp_qlfy    = dm_cmd_resp   & {$bits(dm_cmd_resp){hdu_rst_n_qlfy}};
-assign dm_cmd_rcode_qlfy   = dm_cmd_rcode  & {$bits(dm_cmd_rcode){hdu_rst_n_qlfy}};
-assign dm_hart_event_qlfy  = dm_hart_event & {$bits(dm_hart_event){hdu_rst_n_qlfy}};
-assign dm_hart_status_qlfy = hdu_rst_n_qlfy ? dm_hart_status : '0;
-assign dm_pbuf_addr_qlfy   = dm_pbuf_addr  & {$bits(dm_pbuf_addr){hdu_rst_n_qlfy}};
-assign dm_dreg_req_qlfy    = dm_dreg_req   & {$bits(dm_dreg_req){hdu_rst_n_qlfy}};
-assign dm_dreg_wr_qlfy     = dm_dreg_wr    & {$bits(dm_dreg_wr){hdu_rst_n_qlfy}};
-assign dm_dreg_wdata_qlfy  = dm_dreg_wdata & {$bits(dm_dreg_wdata){hdu_rst_n_qlfy}};
-assign dm_pc_sample_qlfy   = dm_pc_sample  & {$bits(dm_pc_sample){core_rst_n_qlfy}};
+assign dm_cmd_resp_qlfy    = dm_cmd_resp   & {$bits(dm_cmd_resp){hdu2dm_rdc_qlfy}};
+assign dm_hart_event_qlfy  = dm_hart_event & {$bits(dm_hart_event){hdu2dm_rdc_qlfy}};
+assign dm_hart_status_qlfy.dbg_state = hdu2dm_rdc_qlfy ? dm_hart_status.dbg_state
+                                                       : SCR1_HDU_DBGSTATE_RESET;
+assign dm_hart_status_qlfy.except    = dm_hart_status.except;
+assign dm_hart_status_qlfy.ebreak    = dm_hart_status.ebreak;
+assign dm_pbuf_addr_qlfy   = dm_pbuf_addr  & {$bits(dm_pbuf_addr){hdu2dm_rdc_qlfy}};
+assign dm_dreg_req_qlfy    = dm_dreg_req   & {$bits(dm_dreg_req){hdu2dm_rdc_qlfy}};
+assign dm_pc_sample_qlfy   = dm_pc_sample  & {$bits(dm_pc_sample){core2dm_rdc_qlfy}};
 
 scr1_dm i_dm (
     // Common signals
-    .rst_n                  (dm_rst_n),
-    .clk                    (clk),
+    .rst_n                      (dm_rst_n               ),
+    .clk                        (clk                    ),
+
     // DM internal interface
-    .dmi_req                (dmi_req),
-    .dmi_wr                 (dmi_wr),
-    .dmi_addr               (dmi_addr),
-    .dmi_wdata              (dmi_wdata),
-    .dmi_resp               (dmi_resp),
-    .dmi_rdata              (dmi_rdata),
+    .dmi2dm_req_i               (dmi_req                ),
+    .dmi2dm_wr_i                (dmi_wr                 ),
+    .dmi2dm_addr_i              (dmi_addr               ),
+    .dmi2dm_wdata_i             (dmi_wdata              ),
+    .dm2dmi_resp_o              (dmi_resp               ),
+    .dm2dmi_rdata_o             (dmi_rdata              ),
+
     // DM <-> Pipeline: HART Run Control i/f
-    .ndm_rst_n              (ndm_rst_n),
-    .hart_rst_n             (hart_rst_n),
-    .hart_dmactive          (dm_active),
-    .hart_cmd_req           (dm_cmd_req),
-    .hart_cmd               (dm_cmd),
-    .hart_cmd_resp          (dm_cmd_resp_qlfy),
-    .hart_cmd_rcode         (dm_cmd_rcode_qlfy),
-    .hart_event             (dm_hart_event_qlfy),
-    .hart_status            (dm_hart_status_qlfy),
-    .ro_fuse_mhartid        (fuse_mhartid),
-    .ro_pc                  (dm_pc_sample_qlfy),
+    .ndm_rst_n_o                (ndm_rst_n              ),
+    .hart_rst_n_o               (hart_rst_n             ),
+    .dm2pipe_active_o           (dm_active              ),
+    .dm2pipe_cmd_req_o          (dm_cmd_req             ),
+    .dm2pipe_cmd_o              (dm_cmd                 ),
+    .pipe2dm_cmd_resp_i         (dm_cmd_resp_qlfy       ),
+    .pipe2dm_cmd_rcode_i        (dm_cmd_rcode           ),
+    .pipe2dm_hart_event_i       (dm_hart_event_qlfy     ),
+    .pipe2dm_hart_status_i      (dm_hart_status_qlfy    ),
+
+    .soc2dm_fuse_mhartid_i      (core_fuse_mhartid_i    ),
+    .pipe2dm_pc_sample_i        (dm_pc_sample_qlfy      ),
 
     // DM <-> Pipeline: HART Abstract Command / Program Buffer i/f
-    .hart_pbuf_addr         (dm_pbuf_addr_qlfy),
-    .hart_pbuf_instr        (dm_pbuf_instr),
+    .pipe2dm_pbuf_addr_i        (dm_pbuf_addr_qlfy      ),
+    .dm2pipe_pbuf_instr_o       (dm_pbuf_instr          ),
 
     // DM <-> Pipeline: HART Abstract Data regs i/f
-    .hart_dreg_req          (dm_dreg_req_qlfy),
-    .hart_dreg_wr           (dm_dreg_wr_qlfy),
-    .hart_dreg_wdata        (dm_dreg_wdata_qlfy),
-    .hart_dreg_resp         (dm_dreg_resp),
-    .hart_dreg_fail         (dm_dreg_fail),
-    .hart_dreg_rdata        (dm_dreg_rdata)
+    .pipe2dm_dreg_req_i         (dm_dreg_req_qlfy       ),
+    .pipe2dm_dreg_wr_i          (dm_dreg_wr             ),
+    .pipe2dm_dreg_wdata_i       (dm_dreg_wdata          ),
+    .dm2pipe_dreg_resp_o        (dm_dreg_resp           ),
+    .dm2pipe_dreg_fail_o        (dm_dreg_fail           ),
+    .dm2pipe_dreg_rdata_o       (dm_dreg_rdata          )
 );
-`endif // SCR1_DBGC_EN
+`endif // SCR1_DBG_EN
 
 
 `ifdef SCR1_CLKCTRL_EN
@@ -523,17 +508,20 @@ scr1_dm i_dm (
 // Global clock gating logic
 //-------------------------------------------------------------------------------
 scr1_clk_ctrl i_clk_ctrl (
-    .clk                (clk            ),
-    .rst_n              (rst_n          ),
-    .test_mode          (test_mode      ),
+    .clk                            (clk        ),
+    .rst_n                          (rst_n      ),
+    .test_mode                      (test_mode  ),
+    .test_rst_n                     (test_rst_n ),
+
     // Sleep/wake interface
-    .sleep_pipe         (sleep_pipe     ),
-    .wake_pipe          (wake_pipe      ),
+    .pipe2clkctl_sleep_req_i        (sleep_pipe ),
+    .pipe2clkctl_wake_req_i         (wake_pipe  ),
+
     // Clocks
-    .clkout             (clk_alw_on     ),
-    .clkout_pipe        (clk_pipe       ),
-    .clk_pipe_en        (clk_pipe_en    ),
-    .clkout_dbgc        (clk_dbgc       )
+    .clkctl2pipe_clk_alw_on_o       (clk_alw_on ),
+    .clkctl2pipe_clk_o              (clk_pipe   ),
+    .clkctl2pipe_clk_en_o           (clk_pipe_en),
+    .clkctl2pipe_clk_dbgc_o         (clk_dbgc   )
 );
 `endif // SCR1_CLKCTRL_EN
 

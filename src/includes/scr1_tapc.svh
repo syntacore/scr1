@@ -1,13 +1,14 @@
-`ifndef SCR1_INCLUDE_TAPC_DEFS
-`define SCR1_INCLUDE_TAPC_DEFS
-/// Copyright by Syntacore LLC © 2016-2019. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
 /// @file       <scr1_tapc.svh>
 /// @brief      TAPC header file
 ///
 
+`ifndef SCR1_INCLUDE_TAPC_DEFS
+`define SCR1_INCLUDE_TAPC_DEFS
+
 `include "scr1_arch_description.svh"
 
-`ifdef SCR1_DBGC_EN
+`ifdef SCR1_DBG_EN
 
 //==============================================================================
 // Parameters
@@ -55,5 +56,5 @@ typedef enum logic [SCR1_TAP_INSTRUCTION_WIDTH - 1:0] {
     SCR1_TAP_INSTR_XXX               = 'X
 } type_scr1_tap_instr_e;
 
-`endif // SCR1_DBGC_EN
+`endif // SCR1_DBG_EN
 `endif // SCR1_INCLUDE_TAPC_DEFS

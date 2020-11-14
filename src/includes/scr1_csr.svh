@@ -1,9 +1,10 @@
-`ifndef SCR1_CSR_SVH
-`define SCR1_CSR_SVH
-/// Copyright by Syntacore LLC © 2016-2019. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
 /// @file       <scr1_csr.svh>
 /// @brief      CSR mapping/description file
 ///
+
+`ifndef SCR1_CSR_SVH
+`define SCR1_CSR_SVH
 
 `include "scr1_arch_description.svh"
 `include "scr1_arch_types.svh"
@@ -14,7 +15,7 @@
 `endif // SCR1_RVE_EXT
 
 `ifdef SCR1_CSR_REDUCED_CNT
-`undef SCR1_CSR_MCOUNTEN_EN
+`undef SCR1_MCOUNTEN_EN
 `endif // SCR1_CSR_REDUCED_CNT
 
 //-------------------------------------------------------------------------------
@@ -58,23 +59,23 @@ parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_CYCLEH        = 'hC80;
 parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_INSTRETH      = 'hC82;
 `endif // SCR1_CSR_REDUCED_CNT
 
-`ifdef SCR1_DBGC_EN
+`ifdef SCR1_DBG_EN
 //parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_DBGC_SCRATCH  = 'h7C8;
 parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_HDU_MBASE    = 'h7B0;
 parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_HDU_MSPAN    = 'h004;    // must be power of 2
-`endif // SCR1_DBGC_EN
+`endif // SCR1_DBG_EN
 
 //-------------------------------------------------------------------------------
 // CSR addresses (non-standard)
 //-------------------------------------------------------------------------------
-`ifdef SCR1_CSR_MCOUNTEN_EN
+`ifdef SCR1_MCOUNTEN_EN
 parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MCOUNTEN      = 'h7E0;
-`endif // SCR1_CSR_MCOUNTEN_EN
+`endif // SCR1_MCOUNTEN_EN
 
-`ifdef SCR1_BRKM_EN
+`ifdef SCR1_TDU_EN
 parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_TDU_MBASE    = 'h7A0;
 parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_TDU_MSPAN    = 'h008;    // must be power of 2
-`endif // SCR1_BRKM_EN
+`endif // SCR1_TDU_EN
 
 `ifdef SCR1_IPIC_EN
 parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_IPIC_BASE     = 'hBF0;
@@ -115,21 +116,21 @@ parameter bit SCR1_CSR_MSTATUS_MPIE_RST_VAL         = 1'b1;
 `define SCR1_RVM_ENC                                `SCR1_XLEN'h1000
 parameter bit [1:0]             SCR1_MISA_MXL_32    = 2'd1;
 parameter bit [`SCR1_XLEN-1:0]  SCR1_CSR_MISA       = (SCR1_MISA_MXL_32 << (`SCR1_XLEN-2))
-`ifdef SCR1_RVI_EXT
+`ifndef SCR1_RVE_EXT
                                                     | `SCR1_RVI_ENC
-`elsif SCR1_RVE_EXT
+`else // SCR1_RVE_EXT
                                                     | `SCR1_RVE_ENC
-`endif
+`endif // SCR1_RVE_EXT
 `ifdef SCR1_RVC_EXT
                                                     | `SCR1_RVC_ENC
-`endif
+`endif // SCR1_RVC_EXT
 `ifdef SCR1_RVM_EXT
                                                     | `SCR1_RVM_ENC
-`endif
+`endif // SCR1_RVM_EXT
                                                     ;
 
 // MVENDORID
-parameter bit [`SCR1_XLEN-1:0] SCR1_CSR_MVENDORID   = '0;
+parameter bit [`SCR1_XLEN-1:0] SCR1_CSR_MVENDORID   = `SCR1_MVENDORID;
 
 // MARCHID
 parameter bit [`SCR1_XLEN-1:0] SCR1_CSR_MARCHID     = `SCR1_XLEN'd8;
@@ -145,23 +146,23 @@ parameter int unsigned SCR1_CSR_MSTATUS_MPP_OFFSET  = 11;
 
 // MTVEC
 // bits [5:0] are always zero
-parameter bit [`SCR1_XLEN-1:SCR1_CSR_MTVEC_BASE_ZERO_BITS] SCR1_CSR_MTVEC_BASE_RST_VAL  = SCR1_ARCH_CSR_MTVEC_BASE_RST_VAL;
+parameter bit [`SCR1_XLEN-1:SCR1_CSR_MTVEC_BASE_ZERO_BITS] SCR1_CSR_MTVEC_BASE_RST_VAL  = SCR1_CSR_MTVEC_BASE_WR_RST_VAL;
 
 parameter bit SCR1_CSR_MTVEC_MODE_DIRECT            = 1'b0;
-`ifdef SCR1_VECT_IRQ_EN
+`ifdef SCR1_MTVEC_MODE_EN
 parameter bit SCR1_CSR_MTVEC_MODE_VECTORED          = 1'b1;
-`endif // SCR1_VECT_IRQ_EN
+`endif // SCR1_MTVEC_MODE_EN
 
 // MIE, MIP
 parameter int unsigned SCR1_CSR_MIE_MSIE_OFFSET     = 3;
 parameter int unsigned SCR1_CSR_MIE_MTIE_OFFSET     = 7;
 parameter int unsigned SCR1_CSR_MIE_MEIE_OFFSET     = 11;
 
-`ifdef SCR1_CSR_MCOUNTEN_EN
+`ifdef SCR1_MCOUNTEN_EN
 // MCOUNTEN
 parameter int unsigned SCR1_CSR_MCOUNTEN_CY_OFFSET  = 0;
 parameter int unsigned SCR1_CSR_MCOUNTEN_IR_OFFSET  = 2;
-`endif // SCR1_CSR_MCOUNTEN_EN
+`endif // SCR1_MCOUNTEN_EN
 
 // MCAUSE
 typedef logic [`SCR1_XLEN-2:0]      type_scr1_csr_mcause_ec_v;

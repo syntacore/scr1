@@ -1,8 +1,9 @@
-/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
 /// @file       <scr1_memory_tb_axi.sv>
 /// @brief      AXI memory testbench
 ///
 
+`include "scr1_arch_description.svh"
 `include "scr1_ipic.svh"
 
 module scr1_memory_tb_axi #(
@@ -18,7 +19,10 @@ module scr1_memory_tb_axi #(
     input   logic                          clk,
 `ifdef SCR1_IPIC_EN
     output  logic [SCR1_IRQ_LINES_NUM-1:0] irq_lines,
+`else // SCR1_IPIC_EN
+    output  logic                          ext_irq,
 `endif // SCR1_IPIC_EN
+    output  logic                          soft_irq,
 
     // Write address channel
     input  logic [N_IF-1:0]                awvalid,
@@ -60,12 +64,6 @@ module scr1_memory_tb_axi #(
 );
 
 //-------------------------------------------------------------------------------
-// Local parameters
-//-------------------------------------------------------------------------------
-localparam [W_ADR-1:0]                      PRINT_ADDR     = 32'hF000_0000;
-localparam [W_ADR-1:0]                      IRQ_ADDR       = 32'hF000_0100;
-
-//-------------------------------------------------------------------------------
 // Local signal declaration
 //-------------------------------------------------------------------------------
 logic  [7:0]                                memory [0:SIZE-1];
@@ -73,6 +71,13 @@ logic  [N_IF-1:0] [W_ADR-1:0]               awaddr_hold;
 logic  [N_IF-1:0] [2:0]                     awsize_hold;
 genvar                                      gi;
 genvar                                      gj;
+
+`ifdef SCR1_IPIC_EN
+logic [SCR1_IRQ_LINES_NUM-1:0]              irq_lines_reg;
+`else // SCR1_IPIC_EN
+logic                                       ext_irq_reg;
+`endif // SCR1_IPIC_EN
+logic                                       soft_irq_reg;
 
 `ifdef VERILATOR
 logic [255:0]                               test_file;
@@ -86,77 +91,107 @@ bit                                         test_file_init;
 //-------------------------------------------------------------------------------
 
 function automatic logic [W_DATA-1:0] mem_read (
-    logic [W_ADR:0] adr,
-    int             bytes_num,
-    int             bytes_max
+    logic [W_ADR:0] adr,        // starting address of READ burst operation
+    int             bytes_num,  // number of bytes to read
+    int             bytes_max   // number of bytes in data width
     );
 
-    logic [W_ADR:0] byte_lane;
+    logic [W_ADR:0] byte_lane;  // positional number of byte to read
 
     mem_read  = 'x;
     byte_lane = 0;
 
+    // Storing the positional number of byte to read
     for(int i=0; i<$clog2(bytes_max); ++i) begin
         byte_lane[i] = adr[i];
     end
 
+    // READ burst operation
     for(int i=byte_lane; i<bytes_max & bytes_num!=0; ++i) begin
+        // Reading Soft IRQ value
+        if (adr[W_ADR-1:1] == SCR1_SIM_SOFT_IRQ_ADDR[W_ADR-1:1]) begin
+            mem_read[0] = soft_irq_reg;
 `ifdef SCR1_IPIC_EN
-        if (adr[W_ADR-1:1]==IRQ_ADDR[W_ADR-1:1]) begin
-            if( i*8 < SCR1_IRQ_LINES_NUM ) begin
-                if( SCR1_IRQ_LINES_NUM < 8 ) begin
-                    mem_read[(i*8)+:8] = irq_lines;
+        // Reading IRQ Lines values
+        end else if (adr[W_ADR-1:1] == SCR1_SIM_EXT_IRQ_ADDR[W_ADR-1:1]) begin
+            if (i*8 < SCR1_IRQ_LINES_NUM) begin
+                if (SCR1_IRQ_LINES_NUM < 8) begin
+                    mem_read[(i*8)+:8] = irq_lines_reg;
                 end else begin
-                    mem_read[(i*8)+:8] = irq_lines[(i*8)+:8];
+                    mem_read[(i*8)+:8] = irq_lines_reg[(i*8)+:8];
                 end
             end
+`else // SCR1_IPIC_EN
+        // Reading External IRQ value
+        end else if (adr[W_ADR-1:1] == SCR1_SIM_EXT_IRQ_ADDR[W_ADR-1:1]) begin
+            mem_read[0] = ext_irq_reg;
+`endif // SCR1_IPIC_EN
+        // Regular read operation
         end else begin
             mem_read[(i*8)+:8] = memory[adr];
         end
-`else // SCR1_IPIC_EN
-        mem_read[(i*8)+:8] = memory[adr];
-`endif // SCR1_IPIC_EN
+
         adr = adr+1'b1;
         bytes_num = bytes_num - 1'b1;
     end
 endfunction : mem_read
 
 function automatic void mem_write (
-    logic [W_ADR-1:0]      adr,
-    logic [W_DATA-1:0]     data,
-    logic [(W_DATA/8)-1:0] bytes_en,
-    int                    bytes_num,
-    int                    bytes_max
+    logic [W_ADR-1:0]      adr,         // starting address of WRITE burst operation
+    logic [W_DATA-1:0]     data,        // data to write
+    logic [(W_DATA/8)-1:0] bytes_en,    // bytes write strobes
+    int                    bytes_num,   // number of bytes to write
+    int                    bytes_max    // number of bytes in data width
     );
 
-    logic[W_ADR:0]         byte_lane;
+    logic[W_ADR:0]         byte_lane;   // positional number of byte to write
 
     byte_lane = 0;
 
+    // Storing the positional number of byte to write
     for(int i=0; i<$clog2(bytes_max); ++i) begin
         byte_lane[i] = adr[i];
     end
 
+    // WRITE burst operation
     for(int i=byte_lane; i<bytes_max & bytes_num!=0; ++i) begin
-        if(bytes_en[i] & adr==PRINT_ADDR) begin
+        // Printing character in the simulation console
+        if(bytes_en[i] & adr == SCR1_SIM_PRINT_ADDR) begin
             $write("%c",data[(i*8)+:8]);
+        // Writing Soft IRQ value
+        end else if(bytes_en[0] & adr[W_ADR-1:1] == SCR1_SIM_SOFT_IRQ_ADDR[W_ADR-1:1]) begin
+            soft_irq_reg <= data[0];
 `ifdef SCR1_IPIC_EN
-        end else if(bytes_en[i] & adr[W_ADR-1:1]==IRQ_ADDR[W_ADR-1:1]) begin
+        // Writing IRQ Lines values
+        end else if(bytes_en[i] & adr[W_ADR-1:1] == SCR1_SIM_EXT_IRQ_ADDR[W_ADR-1:1]) begin
             if( i*8 < SCR1_IRQ_LINES_NUM ) begin
                 if( SCR1_IRQ_LINES_NUM < 8 ) begin
-                    irq_lines = data[SCR1_IRQ_LINES_NUM-1:0];
+                    irq_lines_reg <= data[SCR1_IRQ_LINES_NUM-1:0];
                 end else begin
-                    irq_lines[(i*8)+:8] = data[(i*8)+:8];
+                    irq_lines_reg[(i*8)+:8] <= data[(i*8)+:8];
                 end
             end
+`else
+        // Writing External IRQ value
+        end else if(bytes_en[0] & adr[W_ADR-1:1] == SCR1_SIM_EXT_IRQ_ADDR[W_ADR-1:1]) begin
+            ext_irq_reg <= data[0];
 `endif // SCR1_IPIC_EN
-        end else if(bytes_en[i]) begin
+        // Regular write operation
+        end else if (bytes_en[i]) begin
             memory[adr] = data[(i*8)+:8];
         end
         adr       = adr+1'b1;
         bytes_num = bytes_num-1'b1;
     end
 endfunction : mem_write
+
+
+`ifdef SCR1_IPIC_EN
+assign irq_lines = irq_lines_reg;
+`else // SCR1_IPIC_EN
+assign ext_irq = ext_irq_reg;
+`endif // SCR1_IPIC_EN
+assign soft_irq = soft_irq_reg;
 
 generate for(gi=0; gi<N_IF; ++gi) begin : rw_if
 
@@ -200,11 +235,19 @@ end
 // Write operation
 //-------------------------------------------------------------------------------
 always @(posedge clk, negedge rst_n) begin
-    if(~rst_n) begin
-        bvalid[gi]  <= '0;
-        bresp[gi]   <= 2'd3;
-        awready[gi] <= 1'b1;
-        wready[gi]  <= 1'b1;
+    if (~rst_n) begin
+        bvalid[gi]      <= '0;
+        bresp[gi]       <= 2'd3;
+        awready[gi]     <= 1'b1;
+        wready[gi]      <= 1'b1;
+
+        soft_irq_reg    <= '0;
+`ifdef SCR1_IPIC_EN
+        irq_lines_reg   <= '0;
+`else // SCR1_IPIC_EN
+        ext_irq_reg     <= '0;
+`endif // SCR1_IPIC_EN
+
         if (test_file_init) $readmemh(test_file, memory);
     end else begin
 
@@ -242,15 +285,16 @@ always @(posedge clk, negedge rst_n) begin
     end
 end
 
-`ifndef VERILATOR
+//`ifndef VERILATOR
 //-------------------------------------------------------------------------------
 // Assertions
 //-------------------------------------------------------------------------------
 SVA_TBMEM_AWADDR_404 :
     assert property (
         @(negedge clk) disable iff (~rst_n)
-        awvalid[gi] |-> awaddr[gi]<SIZE | awaddr[gi]==PRINT_ADDR |
-        awaddr[gi]==IRQ_ADDR
+        awvalid[gi] |-> awaddr[gi]<SIZE | awaddr[gi]==SCR1_SIM_PRINT_ADDR
+                                        | awaddr[gi]==SCR1_SIM_SOFT_IRQ_ADDR
+                                        | awaddr[gi]==SCR1_SIM_EXT_IRQ_ADDR
     )
     else $error("TBMEM: awaddr[%0d] >= SIZE",gi);
 
@@ -308,8 +352,9 @@ SVA_TBMEM_X_BREADY :
 SVA_TBMEM_ARADDR_404 :
     assert property (
         @(negedge clk) disable iff (~rst_n)
-        arvalid[gi] |-> araddr[gi]<SIZE | araddr[gi]==PRINT_ADDR |
-        awaddr[gi]==IRQ_ADDR
+        arvalid[gi] |-> araddr[gi]<SIZE | araddr[gi]==SCR1_SIM_PRINT_ADDR
+                                        | awaddr[gi]==SCR1_SIM_SOFT_IRQ_ADDR
+                                        | awaddr[gi]==SCR1_SIM_EXT_IRQ_ADDR
     )
     else $error("TBMEM: awaddr[%0d] >= SIZE",gi);
 
@@ -341,7 +386,7 @@ SVA_TBMEM_X_RREADY :
     )
     else $error("TBMEM: X state on rready[%0d]",gi);
 
-`endif // VERILATOR
+//`endif // VERILATOR
 
 end endgenerate
 

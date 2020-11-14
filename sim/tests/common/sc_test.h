@@ -5,7 +5,20 @@
 #ifndef SC_TEST_H
 #define SC_TEST_H
 
-#ifdef ASM
+#if defined(__ASSEMBLER__)
+.altmacro
+
+.macro zero_int_reg regn
+mv   x\regn, zero
+.endm
+
+.macro zero_int_regs reg_first, reg_last
+.set regn, \reg_first
+.rept \reg_last - \reg_first + 1
+zero_int_reg %(regn)
+.set regn, regn+1
+.endr
+.endm
 
 #define report_results(result) \
 li  a0, result;  \
@@ -14,7 +27,7 @@ jr	 t0;
 
 .pushsection sc_test_section, "ax"
 sc_exit: la t0, SIM_EXIT; jr t0;
-.align 5
+.balign 32
 .popsection
 #define sc_pass report_results(0x0)
 #define sc_fail report_results(0x1)

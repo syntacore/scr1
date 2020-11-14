@@ -1,9 +1,10 @@
-`ifndef SCR1_RISCV_ISA_DECODING_SVH
-`define SCR1_RISCV_ISA_DECODING_SVH
-/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
 /// @file       <scr1_riscv_isa_decoding.svh>
 /// @brief      RISC-V ISA definitions file
 ///
+
+`ifndef SCR1_RISCV_ISA_DECODING_SVH
+`define SCR1_RISCV_ISA_DECODING_SVH
 
 `include "scr1_arch_description.svh"
 `include "scr1_arch_types.svh"
@@ -168,7 +169,7 @@ typedef struct packed {
     logic                               mret_req;
     logic                               fencei_req;
     logic                               wfi_req;
-    logic [SCR1_GPR_FIELD_WIDTH-1:0]    rs1_addr;       // used as zimm for CSRRxI instructions
+    logic [SCR1_GPR_FIELD_WIDTH-1:0]    rs1_addr;       // also used as zimm for CSRRxI instructions
     logic [SCR1_GPR_FIELD_WIDTH-1:0]    rs2_addr;
     logic [SCR1_GPR_FIELD_WIDTH-1:0]    rd_addr;
     logic [`SCR1_XLEN-1:0]              imm;            // used as {funct3, CSR address} for CSR instructions

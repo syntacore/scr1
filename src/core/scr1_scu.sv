@@ -1,418 +1,516 @@
-/// Copyright by Syntacore LLC © 2016-2019. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
 /// @file <scr1_scu.sv>
 /// @brief System Control Unit (SCU)
 ///
 
+//------------------------------------------------------------------------------
+ //
+ // Functionality:
+ // - Generates System, Core, HDU and DM resets and their qualifier signals
+ // - Provides debugger with software System and Core resets generation functionality
+ // - Allows to set the behavior of DM and HDU resets
+ // - Shows resets Statuses and Sticky Statuses
+
+ // Structure:
+ // - TAPC scan-chain interface
+ // - SCU CSRs write/read interface
+ // - SCU CSRS:
+ //   - CONTROL register
+ //   - MODE register
+ //   - STATUS register
+ //   - STICKY_STATUS register
+ // - Reset logic
+ //   - System Reset
+ //   - Core Reset
+ //   - DM Reset
+ //   - HDU Reset
+//------------------------------------------------------------------------------
+
 `include "scr1_arch_description.svh"
+`include "scr1_scu.svh"
 
-`ifdef SCR1_DBGC_EN
+`ifdef SCR1_DBG_EN
 
-module scr1_scu #(
-    parameter bit SCR1_SCU_CFG_RESET_INPUTS_SYNC    = 1 // Reset inputs are: 1 - synchronous, 0 -asynchronous
-) (
+module scr1_scu (
     // Global signals
-    input  logic                                      pwrup_rst_n,      // Power-Up Reset
-    input  logic                                      rst_n,            // Regular Reset
-    input  logic                                      cpu_rst_n,        // CPU Reset
-    input  logic                                      test_mode,        // DFT Test Mode
-    input  logic                                      test_rst_n,       // DFT Test Reset
-    input  logic                                      clk,              // SCU clock
+    input  logic        pwrup_rst_n,                  // Power-Up Reset
+    input  logic        rst_n,                        // Regular Reset
+    input  logic        cpu_rst_n,                    // CPU Reset
+    input  logic        test_mode,                    // DFT Test Mode
+    input  logic        test_rst_n,                   // DFT Test Reset
+    input  logic        clk,                          // SCU clock
+
     // TAPC scan-chains
-    input  logic                                      tapc_ch_sel,      // TAPC Chain Select
-    input  logic                                      tapc_ch_id,       // TAPC Chain ID
-    input  logic                                      tapc_ch_capture,  // TAPC Chain Capture
-    input  logic                                      tapc_ch_shift,    // TAPC Chain Shift
-    input  logic                                      tapc_ch_update,   // TAPC Chain Update
-    input  logic                                      tapc_ch_tdi,      // TAPC Chain TDI
-    output logic                                      tapc_ch_tdo,      // TAPC Chain TDO
+    input  logic        tapcsync2scu_ch_sel_i,        // TAPC Chain Select
+    input  logic        tapcsync2scu_ch_id_i,         // TAPC Chain ID
+    input  logic        tapcsync2scu_ch_capture_i,    // TAPC Chain Capture
+    input  logic        tapcsync2scu_ch_shift_i,      // TAPC Chain Shift
+    input  logic        tapcsync2scu_ch_update_i,     // TAPC Chain Update
+    input  logic        tapcsync2scu_ch_tdi_i,        // TAPC Chain TDI
+    output logic        scu2tapcsync_ch_tdo_o,        // TAPC Chain TDO
+
     // Input sync resets:
-    input  logic                                      ndm_rst_n,        // Non-DM Reset input from DM
-    input  logic                                      hart_rst_n,       // HART Reset from DM
-    // Generated resets and their attributes (qualifiers etc):
-    output logic                                      core_rst_n,       // Core Reset
-    output logic                                      core_rst_n_qlfy,  // Core Reset Qualifier
-    output logic                                      dm_rst_n,         // Debug Module Reset
-    output logic                                      hdu_rst_n,        // HART Debug Unit Reset
-    output logic                                      hdu_rst_n_qlfy    // HDU Reset Qualifier
+    input  logic        ndm_rst_n_i,                  // Non-DM Reset input from DM
+    input  logic        hart_rst_n_i,                 // HART Reset from DM
+
+    // Generated resets
+    output logic        sys_rst_n_o,                  // System/Cluster Reset
+    output logic        core_rst_n_o,                 // Core Reset
+    output logic        dm_rst_n_o,                   // Debug Module Reset
+    output logic        hdu_rst_n_o,                  // HART Debug Unit Reset
+
+    // Resets statuses
+    output logic        sys_rst_status_o,             // System Reset Status (sync'ed to POR reset domain)
+    output logic        core_rst_status_o,            // Core Reset Status (sync'ed to POR reset domain)
+
+    // Reset Domain Crossing (RDC) qualifiers
+    output logic        sys_rdc_qlfy_o,               // System/Cluster-to-ExternalSOC Reset Domain Crossing Qualifier
+    output logic        core_rdc_qlfy_o,              // Core-to-ExternalSOC Reset Domain Crossing Qualifier
+    output logic        core2hdu_rdc_qlfy_o,          // Core-to-HDU Reset Domain Crossing Qualifier
+    output logic        core2dm_rdc_qlfy_o,           // Core-to-DM Reset Domain Crossing Qualifier
+    output logic        hdu2dm_rdc_qlfy_o             // HDU-to-DM Reset Domain Crossing Qualifier
 );
 
-//======================================================================================================================
+//------------------------------------------------------------------------------
 // Local Parameters
 //======================================================================================================================
-localparam int unsigned SCR1_SCU_DR_SYSCTRL_OP_WIDTH    = 2;
-localparam int unsigned SCR1_SCU_DR_SYSCTRL_ADDR_WIDTH  = 2;
-localparam int unsigned SCR1_SCU_DR_SYSCTRL_DATA_WIDTH  = 4;
+localparam int unsigned SCR1_SCU_RST_SYNC_STAGES_NUM        = 2;
 
-//======================================================================================================================
-// Local Types
-//======================================================================================================================
-typedef enum logic [SCR1_SCU_DR_SYSCTRL_OP_WIDTH-1:0] {
-    SCR1_SCU_SYSCTRL_OP_WRITE       = 2'h0,
-    SCR1_SCU_SYSCTRL_OP_READ        = 2'h1,
-    SCR1_SCU_SYSCTRL_OP_SETBITS     = 2'h2,
-    SCR1_SCU_SYSCTRL_OP_CLRBITS     = 2'h3,
-    SCR1_SCU_SYSCTRL_OP_XXX         = 'X
-} type_scr1_scu_sysctrl_op_e;
-
-typedef enum logic [SCR1_SCU_DR_SYSCTRL_ADDR_WIDTH-1:0] {
-    SCR1_SCU_SYSCTRL_ADDR_CONTROL   = 2'h0,
-    SCR1_SCU_SYSCTRL_ADDR_MODE      = 2'h1,
-    SCR1_SCU_SYSCTRL_ADDR_STATUS    = 2'h2,
-    SCR1_SCU_SYSCTRL_ADDR_STICKY    = 2'h3,
-    SCR1_SCU_SYSCTRL_ADDR_XXX       = 'X
-} type_scr1_scu_sysctrl_addr_e;
-
-typedef struct packed {
-    logic [SCR1_SCU_DR_SYSCTRL_DATA_WIDTH-1:0]  data;
-    logic [SCR1_SCU_DR_SYSCTRL_ADDR_WIDTH-1:0]  addr;
-    logic [SCR1_SCU_DR_SYSCTRL_OP_WIDTH-1:0]    op;
-} type_scr1_scu_sysctrl_dr_s;
-
-typedef struct packed {
-    logic [2:0]                                     rsrv;
-    logic                                           sys_reset;
-} type_scr1_scu_sysctrl_control_reg_s;
-
-typedef struct packed {
-    logic [1:0]                                     rsrv;
-    logic                                           hdu_rst_mux;
-    logic                                           dm_rst_mux;
-} type_scr1_scu_sysctrl_mode_reg_s;
-
-typedef struct packed {
-    logic                                           hdu_reset;
-    logic                                           dm_reset;
-    logic                                           core_reset;
-    logic                                           sys_reset;
-} type_scr1_scu_sysctrl_status_reg_s;
-
-//======================================================================================================================
+//------------------------------------------------------------------------------
 // Local Signals
-//======================================================================================================================
+//------------------------------------------------------------------------------
 
-type_scr1_scu_sysctrl_dr_s                          shift_reg;
-type_scr1_scu_sysctrl_dr_s                          shadow_reg;
-logic                                               dr_capture;
-logic                                               dr_shift;
-logic                                               dr_update;
-logic [SCR1_SCU_DR_SYSCTRL_DATA_WIDTH-1:0]          cmd_data;
-logic [SCR1_SCU_DR_SYSCTRL_DATA_WIDTH-1:0]          reg_data;
-//
-type_scr1_scu_sysctrl_control_reg_s                 control_reg;
-logic                                               control_reg_wr;
-type_scr1_scu_sysctrl_mode_reg_s                    mode_reg;
-type_scr1_scu_sysctrl_mode_reg_s                    mode_reg_r;
-logic                                               mode_reg_wr;
-logic                                               mode_reg_wr_r;
-type_scr1_scu_sysctrl_status_reg_s                  status_reg_data;
-type_scr1_scu_sysctrl_status_reg_s                  status_reg_data_dly;
-type_scr1_scu_sysctrl_status_reg_s                  status_reg_data_posedge;
-type_scr1_scu_sysctrl_status_reg_s                  sticky_sts_reg;
-logic                                               sticky_sts_reg_wr;
-//
-logic                                               pwrup_rst_n_sync;
-logic                                               rst_n_sync;
-logic                                               cpu_rst_n_sync;
-//
-logic                                               sys_rst_n;
-logic                                               sys_rst_n_sync;
-logic                                               sys_rst_n_qlfy;
-logic                                               sys_rst_n_status;
-//
-logic                                               dm_rst_n_sync;
-logic                                               dm_rst_n_qlfy;
-logic                                               dm_rst_n_status;
-//
-logic                                               core_rst_n_sync;
-logic                                               core_rst_n_qlfy_sync;
-logic                                               core_rst_n_status;
-//
-logic                                               hdu_rst_n_sync;
-logic                                               hdu_rst_n_status;
+// SCU CSR write/read i/f
+//------------------------------------------------------------------------------
 
+// TAPC scan-chain control logic
+logic                                       scu_csr_req;
+logic                                       tapc_dr_cap_req;
+logic                                       tapc_dr_shft_req;
+logic                                       tapc_dr_upd_req;
 
-//======================================================================================================================
-// Logic
-//======================================================================================================================
+// TAPC shift register signals
+logic                                       tapc_shift_upd;
+type_scr1_scu_sysctrl_dr_s                  tapc_shift_ff;
+type_scr1_scu_sysctrl_dr_s                  tapc_shift_next;
 
-// -----------------------------------------------------------------------------
-// Scan-chain i/f
-// -----------------------------------------------------------------------------
-assign dr_capture = tapc_ch_sel & (tapc_ch_id == '0) & tapc_ch_capture;
-assign dr_shift   = tapc_ch_sel & (tapc_ch_id == '0) & tapc_ch_shift;
-assign dr_update  = tapc_ch_sel & (tapc_ch_id == '0) & tapc_ch_update;
+// TAPC shadow register signals
+type_scr1_scu_sysctrl_dr_s                  tapc_shadow_ff;
+
+// SCU CSR write/read i/f
+//------------------------------------------------------------------------------
+
+logic [SCR1_SCU_DR_SYSCTRL_DATA_WIDTH-1:0]  scu_csr_wdata;
+logic [SCR1_SCU_DR_SYSCTRL_DATA_WIDTH-1:0]  scu_csr_rdata;
+
+// SCU CSRs signals
+//------------------------------------------------------------------------------
+
+// Control register
+type_scr1_scu_sysctrl_control_reg_s         scu_control_ff;
+logic                                       scu_control_wr_req;
+
+// Mode register
+type_scr1_scu_sysctrl_mode_reg_s            scu_mode_ff;
+logic                                       scu_mode_wr_req;
+
+// Status register
+type_scr1_scu_sysctrl_status_reg_s          scu_status_ff;
+type_scr1_scu_sysctrl_status_reg_s          scu_status_ff_dly;
+type_scr1_scu_sysctrl_status_reg_s          scu_status_ff_posedge;
+
+// Sticky Status register
+type_scr1_scu_sysctrl_status_reg_s          scu_sticky_sts_ff;
+logic                                       scu_sticky_sts_wr_req;
+
+// Reset logic signals
+//------------------------------------------------------------------------------
+
+// Input resets synchronization signals
+logic                                       pwrup_rst_n_sync;
+logic                                       rst_n_sync;
+logic                                       cpu_rst_n_sync;
+
+// System Reset signals
+logic                                       sys_rst_n_in;
+logic                                       sys_rst_n_status;
+logic                                       sys_rst_n_status_sync;
+logic                                       sys_rst_n_qlfy;
+logic                                       sys_reset_n;
+
+// Core Reset signals
+logic                                       core_rst_n_in_sync;
+logic                                       core_rst_n_status;
+logic                                       core_rst_n_status_sync;
+logic                                       core_rst_n_qlfy;
+logic                                       core_reset_n;
+
+// HDU Reset signals
+logic                                       hdu_rst_n_in_sync;
+logic                                       hdu_rst_n_status;
+logic                                       hdu_rst_n_status_sync;
+logic                                       hdu_rst_n_qlfy;
+
+// DM Reset signals
+logic                                       dm_rst_n_in;
+logic                                       dm_rst_n_status;
+
+//------------------------------------------------------------------------------
+// TAPC scan-chain i/f
+//------------------------------------------------------------------------------
+//
+ // Consists of the following functional units:
+ // - TAPC scan-chain control logic
+ // - TAPC shift register
+ // - TAPC shadow register
+//
+
+// TAPC scan-chain control logic
+//------------------------------------------------------------------------------
+
+assign scu_csr_req      = tapcsync2scu_ch_sel_i & (tapcsync2scu_ch_id_i == '0);
+assign tapc_dr_cap_req  = scu_csr_req & tapcsync2scu_ch_capture_i;
+assign tapc_dr_shft_req = scu_csr_req & tapcsync2scu_ch_shift_i;
+assign tapc_dr_upd_req  = scu_csr_req & tapcsync2scu_ch_update_i;
+
+// TAPC shift register
+//------------------------------------------------------------------------------
+
+assign tapc_shift_upd = tapc_dr_cap_req | tapc_dr_shft_req;
 
 always_ff @(posedge clk, negedge pwrup_rst_n_sync) begin
     if (~pwrup_rst_n_sync) begin
-        shift_reg   <= '0;
-    end
-    else begin
-        if (dr_capture)
-            shift_reg <= shadow_reg;
-        else if(dr_shift)
-            shift_reg <= {tapc_ch_tdi, shift_reg[$bits(type_scr1_scu_sysctrl_dr_s)-1:1]};
+        tapc_shift_ff <= '0;
+    end else if (tapc_shift_upd) begin
+        tapc_shift_ff <= tapc_shift_next;
     end
 end
+
+assign tapc_shift_next = tapc_dr_cap_req  ? tapc_shadow_ff
+                       : tapc_dr_shft_req ? {tapcsync2scu_ch_tdi_i, tapc_shift_ff[$bits(type_scr1_scu_sysctrl_dr_s)-1:1]}
+                                          : tapc_shift_ff;
+
+// TAPC shadow register
+//------------------------------------------------------------------------------
 
 always_ff @(posedge clk, negedge pwrup_rst_n_sync) begin
     if (~pwrup_rst_n_sync) begin
-        shadow_reg   <= '0;
-    end
-    else begin
-        if (dr_update) begin
-            shadow_reg.op   <= shift_reg.op;
-            shadow_reg.addr <= shift_reg.addr;
-            shadow_reg.data <= cmd_data;
-        end
+        tapc_shadow_ff      <= '0;
+    end else if (tapc_dr_upd_req) begin
+        tapc_shadow_ff.op   <= tapc_shift_ff.op;
+        tapc_shadow_ff.addr <= tapc_shift_ff.addr;
+        tapc_shadow_ff.data <= scu_csr_wdata;
     end
 end
 
-always_comb
-begin
-    cmd_data = '0;
+assign scu2tapcsync_ch_tdo_o = tapc_shift_ff[0];
 
-    if (dr_update) begin
-        case (shift_reg.op)
-            SCR1_SCU_SYSCTRL_OP_WRITE : begin
-                cmd_data = shift_reg.data;
-            end
-            SCR1_SCU_SYSCTRL_OP_READ : begin
-                cmd_data = reg_data;
-            end
-            SCR1_SCU_SYSCTRL_OP_SETBITS : begin
-                cmd_data = reg_data |   shift_reg.data;
-            end
-            SCR1_SCU_SYSCTRL_OP_CLRBITS : begin
-                cmd_data = reg_data & (~shift_reg.data);
-            end
-            default: begin
-            end
+//------------------------------------------------------------------------------
+// SCU CSRs write/read interface
+//------------------------------------------------------------------------------
+
+// Write interface
+//------------------------------------------------------------------------------
+
+// Register selection logic
+always_comb begin
+    scu_control_wr_req    = 1'b0;
+    scu_mode_wr_req       = 1'b0;
+    scu_sticky_sts_wr_req = 1'b0;
+
+    if (tapc_dr_upd_req && (tapc_shift_ff.op != SCR1_SCU_SYSCTRL_OP_READ)) begin
+        case (tapc_shift_ff.addr)
+            SCR1_SCU_SYSCTRL_ADDR_CONTROL: scu_control_wr_req    = 1'b1;
+            SCR1_SCU_SYSCTRL_ADDR_MODE   : scu_mode_wr_req       = 1'b1;
+            SCR1_SCU_SYSCTRL_ADDR_STICKY : scu_sticky_sts_wr_req = (tapc_shift_ff.op == SCR1_SCU_SYSCTRL_OP_CLRBITS);
+            default                      : begin end
         endcase
     end
 end
 
-assign tapc_ch_tdo = shift_reg[0];
+// Write data construction
+always_comb begin
+    scu_csr_wdata = '0;
 
-// -----------------------------------------------------------------------------
-// Registers
-// -----------------------------------------------------------------------------
-always_comb
-begin
-    control_reg_wr      = 1'b0;
-    mode_reg_wr         = 1'b0;
-    sticky_sts_reg_wr   = 1'b0;
-
-    if (dr_update && (shift_reg.op != SCR1_SCU_SYSCTRL_OP_READ)) begin
-        case (shift_reg.addr)
-            SCR1_SCU_SYSCTRL_ADDR_CONTROL : begin
-                control_reg_wr      = 1'b1;
-            end
-            SCR1_SCU_SYSCTRL_ADDR_MODE : begin
-                mode_reg_wr         = 1'b1;
-            end
-            SCR1_SCU_SYSCTRL_ADDR_STICKY : begin
-                sticky_sts_reg_wr   = (shift_reg.op == SCR1_SCU_SYSCTRL_OP_CLRBITS) ? 1'b1 : 1'b0;
-            end
-            default: begin
-            end
+    if (tapc_dr_upd_req) begin
+        case (tapc_shift_ff.op)
+            SCR1_SCU_SYSCTRL_OP_WRITE  : scu_csr_wdata = tapc_shift_ff.data;
+            SCR1_SCU_SYSCTRL_OP_READ   : scu_csr_wdata = scu_csr_rdata;
+            SCR1_SCU_SYSCTRL_OP_SETBITS: scu_csr_wdata = scu_csr_rdata |   tapc_shift_ff.data;
+            SCR1_SCU_SYSCTRL_OP_CLRBITS: scu_csr_wdata = scu_csr_rdata & (~tapc_shift_ff.data);
+            default                    : begin end
         endcase
     end
 end
 
-always_comb
-begin
-    reg_data = '0;
+// Read interface
+//------------------------------------------------------------------------------
 
-    if (dr_update) begin
-        case (shift_reg.addr)
-            SCR1_SCU_SYSCTRL_ADDR_CONTROL : begin
-                reg_data = control_reg;
-            end
-            SCR1_SCU_SYSCTRL_ADDR_MODE : begin
-                reg_data = mode_reg;
-            end
-            SCR1_SCU_SYSCTRL_ADDR_STATUS : begin
-                reg_data = status_reg_data;
-            end
-            SCR1_SCU_SYSCTRL_ADDR_STICKY : begin
-                reg_data = sticky_sts_reg;
-            end
-            default: begin
-                reg_data = 'x;
-            end
+// Read data multiplexer
+always_comb begin
+    scu_csr_rdata = '0;
+
+    if (tapc_dr_upd_req) begin
+        case (tapc_shift_ff.addr)
+            SCR1_SCU_SYSCTRL_ADDR_CONTROL: scu_csr_rdata = scu_control_ff;
+            SCR1_SCU_SYSCTRL_ADDR_MODE   : scu_csr_rdata = scu_mode_ff;
+            SCR1_SCU_SYSCTRL_ADDR_STATUS : scu_csr_rdata = scu_status_ff;
+            SCR1_SCU_SYSCTRL_ADDR_STICKY : scu_csr_rdata = scu_sticky_sts_ff;
+            default                      : scu_csr_rdata = 'x;
         endcase
     end
 end
 
-// Control Register
+//------------------------------------------------------------------------------
+// SCU CSRs
+//------------------------------------------------------------------------------
+//
+ // Registers:
+ // - CONTROL register
+ // - MODE register
+ // - STATUS register
+ // - STICKY_STATUS register
+//
+
+// CONTROL register
+//------------------------------------------------------------------------------
+// Allows debugger to generate System and Core resets
+
 always_ff @(posedge clk, negedge pwrup_rst_n_sync) begin
     if (~pwrup_rst_n_sync) begin
-        control_reg <= '0;
-    end
-    else begin
-        if (control_reg_wr) begin
-            control_reg <= cmd_data;
-        end
+        scu_control_ff <= '0;
+    end else if (scu_control_wr_req) begin
+        scu_control_ff <= scu_csr_wdata;
     end
 end
 
-// Mode Register
+// MODE register
+//------------------------------------------------------------------------------
+// Sets reset behavior for DM Reset and HDU Reset signals
+
 always_ff @(posedge clk, negedge pwrup_rst_n_sync) begin
     if (~pwrup_rst_n_sync) begin
-        mode_reg      <= '0;
-        mode_reg_r    <= '0;
-        mode_reg_wr_r <= '0;
-    end
-    else begin
-        if (mode_reg_wr) begin
-            mode_reg <= cmd_data;
-        end
-        mode_reg_wr_r <= mode_reg_wr;
-        if (mode_reg_wr_r) begin
-            mode_reg_r <= mode_reg;
-        end
+        scu_mode_ff <= '0;
+    end else if (scu_mode_wr_req) begin
+        scu_mode_ff <= scu_csr_wdata;
     end
 end
 
-// Status Register
-assign status_reg_data.sys_reset    = ~sys_rst_n_status ;
-assign status_reg_data.core_reset   = ~core_rst_n_status;
-assign status_reg_data.dm_reset     = ~dm_rst_n_status  ;
-assign status_reg_data.hdu_reset    = ~hdu_rst_n_status ;
+// STATUS register
+//------------------------------------------------------------------------------
+// Holds the status of every output reset signal (System, Core, DM and HDU)
 
+assign scu_status_ff.sys_reset  = sys_rst_status_o ;
+assign scu_status_ff.core_reset = core_rst_status_o;
+assign scu_status_ff.dm_reset   = ~dm_rst_n_status;
+assign scu_status_ff.hdu_reset  = ~hdu_rst_n_status_sync;
+
+// Status Register positive edge detection logic
 always_ff @(posedge clk, negedge pwrup_rst_n_sync) begin
     if (~pwrup_rst_n_sync) begin
-        status_reg_data_dly <= '0;
-    end
-    else begin
-        status_reg_data_dly <= status_reg_data;
+        scu_status_ff_dly <= '0;
+    end else begin
+        scu_status_ff_dly <= scu_status_ff;
     end
 end
 
-assign status_reg_data_posedge = status_reg_data & (~status_reg_data_dly);
+assign scu_status_ff_posedge = scu_status_ff & ~scu_status_ff_dly;
 
-// Sticky Status Register
+// STICKY_STATUS register
+//------------------------------------------------------------------------------
+// For every output reset signal shows if it was asserted since the last bit clearing
+
 always_ff @(posedge clk, negedge pwrup_rst_n_sync) begin
     if (~pwrup_rst_n_sync) begin
-        sticky_sts_reg <= '0;
-    end
-    else begin
+        scu_sticky_sts_ff <= '0;
+    end else begin
         for (int unsigned i = 0; i < $bits(type_scr1_scu_sysctrl_status_reg_s); ++i) begin
-            if (status_reg_data_posedge[i]) begin
-                sticky_sts_reg[i] <= 1'b1;
-            end
-            else if (sticky_sts_reg_wr) begin
-                sticky_sts_reg[i] <= cmd_data[i];
+            if (scu_status_ff_posedge[i]) begin
+                scu_sticky_sts_ff[i] <= 1'b1;
+            end else if (scu_sticky_sts_wr_req) begin
+                scu_sticky_sts_ff[i] <= scu_csr_wdata[i];
             end
         end
     end
 end
 
-// -----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Reset logic
-// -----------------------------------------------------------------------------
-generate
+//------------------------------------------------------------------------------
+//
+ // Consists of the following functional units:
+ // - System Reset logic
+ // - Core Reset logic
+ // - Hart Debug Unit Reset logic
+ // - Debug Module Reset logic
+//
 
-if (SCR1_SCU_CFG_RESET_INPUTS_SYNC)
-// reset inputs are synchronous
+// Reset inputs are assumed synchronous
+assign pwrup_rst_n_sync = pwrup_rst_n;
+assign rst_n_sync       = rst_n;
+assign cpu_rst_n_sync   = cpu_rst_n;
 
-begin : gen_rst_inputs_sync
-    assign pwrup_rst_n_sync     = pwrup_rst_n;
-    assign rst_n_sync           = rst_n;
-    assign cpu_rst_n_sync       = cpu_rst_n;
-end : gen_rst_inputs_sync
+// Intermediate resets:
+assign sys_reset_n  = ~scu_control_ff.sys_reset;
+assign core_reset_n = ~scu_control_ff.core_reset;
 
-else // SCR1_SCU_CFG_RESET_INPUTS_SYNC == 0, - reset inputs are asynchronous
+// System/Cluster Reset: sys_rst_n_o
+//------------------------------------------------------------------------------
 
-begin : gen_rst_inputs_async
-// Power-Up Reset synchronizer
-scr1_reset_sync_cell i_pwrup_rstn_reset_sync (
-    .rst_n          (pwrup_rst_n),
-    .clk            (clk),
-    .test_rst_n     (test_rst_n),
-    .test_mode      (test_mode),
-    .rst_n_out      (pwrup_rst_n_sync)
+scr1_reset_qlfy_adapter_cell_sync   i_sys_rstn_qlfy_adapter_cell_sync (
+    .rst_n                          (pwrup_rst_n_sync),
+    .clk                            (clk             ),
+    .test_rst_n                     (test_rst_n      ),
+    .test_mode                      (test_mode       ),
+    .reset_n_in_sync                (sys_rst_n_in    ),
+    .reset_n_out_qlfy               (sys_rst_n_qlfy  ),
+    .reset_n_out                    (sys_rst_n_o     ),
+    .reset_n_status                 (sys_rst_n_status)
 );
 
-// Regular Reset synchronizer
-scr1_reset_sync_cell i_rstn_reset_sync (
-    .rst_n          (rst_n),
-    .clk            (clk),
-    .test_rst_n     (test_rst_n),
-    .test_mode      (test_mode),
-    .rst_n_out      (rst_n_sync)
+assign sys_rst_n_in = sys_reset_n & ndm_rst_n_i & rst_n_sync;
+
+scr1_data_sync_cell #(
+    .STAGES_AMOUNT       (SCR1_SCU_RST_SYNC_STAGES_NUM)
+) i_sys_rstn_status_sync (
+    .rst_n               (pwrup_rst_n_sync     ),
+    .clk                 (clk                  ),
+    .data_in             (sys_rst_n_status     ),
+    .data_out            (sys_rst_n_status_sync)
 );
 
-// CPU Reset synchronizer
-scr1_reset_sync_cell i_cpu_rstn_reset_sync (
-    .rst_n          (cpu_rst_n),
-    .clk            (clk),
-    .test_rst_n     (test_rst_n),
-    .test_mode      (test_mode),
-    .rst_n_out      (cpu_rst_n_sync)
+assign sys_rst_status_o = ~sys_rst_n_status_sync;
+
+// System/Cluster-to-ExternalSOC RDC qualifier
+assign sys_rdc_qlfy_o = sys_rst_n_qlfy;
+
+// Core Reset: core_rst_n_o
+//------------------------------------------------------------------------------
+
+scr1_reset_qlfy_adapter_cell_sync   i_core_rstn_qlfy_adapter_cell_sync (
+    .rst_n                          (pwrup_rst_n_sync  ),
+    .clk                            (clk               ),
+    .test_rst_n                     (test_rst_n        ),
+    .test_mode                      (test_mode         ),
+    .reset_n_in_sync                (core_rst_n_in_sync),
+    .reset_n_out_qlfy               (core_rst_n_qlfy   ),
+    .reset_n_out                    (core_rst_n_o      ),
+    .reset_n_status                 (core_rst_n_status )
 );
-end : gen_rst_inputs_async
 
-// end of SCR1_SCU_CFG_RESET_INPUTS_SYNC
+assign core_rst_n_in_sync   = sys_rst_n_in & hart_rst_n_i & core_reset_n & cpu_rst_n_sync;
 
-endgenerate
-
-// System Reset: sys_rst_n
-scr1_reset_buf_qlfy_cell i_sys_rstn_buf_qlfy_cell (
-    .rst_n              (pwrup_rst_n_sync),
-    .clk                (clk),
-    .test_rst_n         (test_rst_n),
-    .test_mode          (test_mode),
-    .reset_n_in         (sys_rst_n_sync),
-    .reset_n_out_qlfy   (sys_rst_n_qlfy),
-    .reset_n_out        (sys_rst_n),
-    .reset_n_status     (sys_rst_n_status)
+scr1_data_sync_cell #(
+    .STAGES_AMOUNT        (SCR1_SCU_RST_SYNC_STAGES_NUM)
+) i_core_rstn_status_sync (
+    .rst_n                (pwrup_rst_n_sync      ),
+    .clk                  (clk                   ),
+    .data_in              (core_rst_n_status     ),
+    .data_out             (core_rst_n_status_sync)
 );
-assign sys_rst_n_sync = (~control_reg.sys_reset) & rst_n_sync;
 
-// Debug Module Reset: dm_rst_n
+assign core_rst_status_o = ~core_rst_n_status_sync;
+
+// Core Reset RDC Qualifiers:
+//  - Core-to-ExternalSOC RDC Qlfy
+assign core_rdc_qlfy_o = core_rst_n_qlfy;
+//  - Core-to-HDU RDC Qlfy
+assign core2hdu_rdc_qlfy_o = core_rst_n_qlfy;
+//  - Core-to-DebugModule RDC Qlfy
+assign core2dm_rdc_qlfy_o  = core_rst_n_qlfy;
+
+// Hart Debug Unit Reset: hdu_rst_n_o
+//------------------------------------------------------------------------------
+
+scr1_reset_qlfy_adapter_cell_sync   i_hdu_rstn_qlfy_adapter_cell_sync (
+    .rst_n                          (pwrup_rst_n_sync ),
+    .clk                            (clk              ),
+    .test_rst_n                     (test_rst_n       ),
+    .test_mode                      (test_mode        ),
+    .reset_n_in_sync                (hdu_rst_n_in_sync),
+    .reset_n_out_qlfy               (hdu_rst_n_qlfy   ),
+    .reset_n_out                    (hdu_rst_n_o      ),
+    .reset_n_status                 (hdu_rst_n_status )
+);
+
+assign hdu_rst_n_in_sync = scu_mode_ff.hdu_rst_bhv | core_rst_n_in_sync;
+
+scr1_data_sync_cell #(
+    .STAGES_AMOUNT       (SCR1_SCU_RST_SYNC_STAGES_NUM)
+) i_hdu_rstn_status_sync (
+    .rst_n               (pwrup_rst_n_sync     ),
+    .clk                 (clk                  ),
+    .data_in             (hdu_rst_n_status     ),
+    .data_out            (hdu_rst_n_status_sync)
+);
+
+// Hart Debug Unit Reset RDC Qualifiers:
+//  - HDU-to-DebugModule RDC Qlfy
+assign hdu2dm_rdc_qlfy_o = hdu_rst_n_qlfy;
+
+// Debug Module Reset: dm_rst_n_o
+//------------------------------------------------------------------------------
+
 scr1_reset_buf_cell i_dm_rstn_buf_cell (
-    .rst_n              (dm_rst_n_sync),
-    .clk                (clk),
-    .test_mode          (test_mode),
-    .test_rst_n         (test_rst_n),
-    .reset_n_in         (1'b1),
-    .reset_n_out        (dm_rst_n),
-    .reset_n_status     (dm_rst_n_status)
+    .rst_n              (pwrup_rst_n_sync),
+    .clk                (clk             ),
+    .test_mode          (test_mode       ),
+    .test_rst_n         (test_rst_n      ),
+    .reset_n_in         (dm_rst_n_in     ),
+    .reset_n_out        (dm_rst_n_o      ),
+    .reset_n_status     (dm_rst_n_status )
 );
-assign dm_rst_n_sync = mode_reg_r.dm_rst_mux ? sys_rst_n      : pwrup_rst_n_sync;
-assign dm_rst_n_qlfy = mode_reg.dm_rst_mux   ? sys_rst_n_qlfy : 1'b1 ;
 
-// Core Reset: core_rst_n
-scr1_reset_buf_qlfy_cell i_core_rstn_buf_qlfy_cell (
-    .rst_n              (sys_rst_n),
-    .clk                (clk),
-    .test_rst_n         (test_rst_n),
-    .test_mode          (test_mode),
-    .reset_n_in         (core_rst_n_sync),
-    .reset_n_out_qlfy   (core_rst_n_qlfy_sync),
-    .reset_n_out        (core_rst_n),
-    .reset_n_status     (core_rst_n_status)
-);
-assign core_rst_n_sync      = ndm_rst_n & hart_rst_n & cpu_rst_n_sync;
-// Reset qualifier - become active before reset is asserted
-assign core_rst_n_qlfy = sys_rst_n_qlfy & core_rst_n_qlfy_sync;
+assign dm_rst_n_in  = ~scu_mode_ff.dm_rst_bhv | sys_reset_n;
 
+`ifdef SCR1_TRGT_SIMULATION
+//--------------------------------------------------------------------
+// Assertions
+//--------------------------------------------------------------------
 
-// Hart Debug Unit Reset: hdu_rst_n
-scr1_reset_buf_cell i_hdu_rstn_buf_cell (
-    .rst_n              (hdu_rst_n_sync),
-    .clk                (clk),
-    .test_mode          (test_mode),
-    .test_rst_n         (test_rst_n),
-    .reset_n_in         (1'b1),
-    .reset_n_out        (hdu_rst_n),
-    .reset_n_status     (hdu_rst_n_status)
-);
-assign hdu_rst_n_sync = mode_reg_r.hdu_rst_mux ? pwrup_rst_n_sync : core_rst_n;
-assign hdu_rst_n_qlfy = mode_reg.hdu_rst_mux   ? 1'b1             : core_rst_n_qlfy;
+`ifndef VERILATOR
+// Preventing some assertions to be raised at 0 sim time or in the first cycle
+initial begin
+$assertoff(0, scr1_scu);
+repeat (2) @(posedge clk);
+$asserton(0, scr1_scu);
+end
+`endif // VERILATOR
+
+// X checks
+SCR1_SVA_SCU_RESETS_XCHECK : assert property (
+    @(negedge clk)
+    !$isunknown({pwrup_rst_n, rst_n, cpu_rst_n, ndm_rst_n_i, hart_rst_n_i})
+) else $error("SCU resets error: unknown values of input resets");
+
+// Qualifiers checks
+SCR1_SVA_SCU_SYS2SOC_QLFY_CHECK : assert property (
+    @(negedge clk) disable iff (~pwrup_rst_n)
+    $fell(sys_rst_n_o) |-> $fell($past(sys_rdc_qlfy_o))
+) else $error("SCU sys2soc qlfy error: qlfy wasn't raised prior to reset");
+
+SCR1_SVA_SCU_CORE2SOC_QLFY_CHECK : assert property (
+    @(negedge clk) disable iff (~pwrup_rst_n)
+    $fell(core_rst_n_o) |-> $fell($past(core_rdc_qlfy_o))
+) else $error("SCU core2soc qlfy error: qlfy wasn't raised prior to reset");
+
+SCR1_SVA_SCU_CORE2HDU_QLFY_CHECK : assert property (
+    @(negedge clk) disable iff (~pwrup_rst_n)
+    $fell(core_rst_n_o) |-> $fell($past(core2hdu_rdc_qlfy_o))
+) else $error("SCU core2hdu qlfy error: qlfy wasn't raised prior to reset");
+
+SCR1_SVA_SCU_CORE2DM_QLFY_CHECK : assert property (
+    @(negedge clk) disable iff (~pwrup_rst_n)
+    $fell(core_rst_n_o) |-> $fell($past(core2dm_rdc_qlfy_o))
+) else $error("SCU core2dm qlfy error: qlfy wasn't raised prior to reset");
+
+SCR1_SVA_SCU_HDU2DM_QLFY_CHECK : assert property (
+    @(negedge clk) disable iff (~pwrup_rst_n)
+    $fell(hdu_rst_n_o) |-> $fell($past(hdu2dm_rdc_qlfy_o))
+) else $error("SCU hdu2dm qlfy error: qlfy wasn't raised prior to reset");
+
+`endif // SCR1_TRGT_SIMULATION
 
 endmodule : scr1_scu
-
-`endif // SCR1_DBGC_EN
+`endif // SCR1_DBG_EN
 

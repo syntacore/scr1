@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
 /// @file       <scr1_imem_ahb.sv>
 /// @brief      Instruction memory AHB bridge
 ///
@@ -282,8 +282,7 @@ end
 
 assign haddr  = req_fifo[0].haddr;
 
-`ifdef SCR1_SIM_ENV
-`ifndef VERILATOR
+`ifdef SCR1_TRGT_SIMULATION
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -315,7 +314,6 @@ SCR1_IMEM_AHB_BRIDGE_HRESP_XCHECK : assert property (
     !$isunknown(hresp)
     ) else $error("IMEM AHB bridge Error: hresp has unknown values");
 
-`endif // VERILATOR
-`endif // SCR1_SIM_ENV
+`endif // SCR1_TRGT_SIMULATION
 
 endmodule : scr1_imem_ahb

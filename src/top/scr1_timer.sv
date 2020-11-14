@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
 /// @file       <scr1_timer.sv>
 /// @brief      Memory-mapped Timer
 ///
@@ -210,7 +210,7 @@ end
 // Memory interface
 //-------------------------------------------------------------------------------
 assign dmem_req_valid   =   (dmem_width == SCR1_MEM_WIDTH_WORD) & (~|dmem_addr[1:0]) &
-                            (dmem_addr[SCR1_TIMER_ADDR_WIDTH-1:2] <= (SCR1_TIMER_MTIMECMPHI >> 2));
+                            (dmem_addr[SCR1_TIMER_ADDR_WIDTH-1:2] <= SCR1_TIMER_MTIMECMPHI[SCR1_TIMER_ADDR_WIDTH-1:2]);
 
 assign dmem_req_ack     = 1'b1;
 

@@ -15,10 +15,10 @@ $(ADD_CFLAGS)
 LDFLAGS   ?= -nostartfiles -nostdlib -lc -lgcc -march=rv32$(ARCH) -mabi=$(ABI)
 
 ifeq (,$(findstring 0,$(TCM)))
-ld_script := $(inc_dir)/link_tcm.ld
+ld_script ?= $(inc_dir)/link_tcm.ld
 asm_src   ?= crt_tcm.S
 else
-ld_script := $(inc_dir)/link.ld
+ld_script ?= $(inc_dir)/link.ld
 asm_src   ?= crt.S
 endif
 

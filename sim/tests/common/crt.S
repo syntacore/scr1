@@ -3,6 +3,7 @@
 ///
 
 #include "riscv_csr_encoding.h"
+#include "sc_test.h"
 
 # define LREG lw
 # define SREG sw
@@ -13,17 +14,22 @@
     .globl trap_entry
     .globl handle_trap
     .globl sc_exit
-    .weak trap_entry, handle_trap, sc_exit
+    .weak trap_entry, handle_trap
 
     .text
     .org (64*3)
-    .align 6
+    .balign 64
 machine_trap_entry:
     j trap_entry
 
-    .align 6
+    .balign 64
 
 _start:
+#ifndef __RVE_EXT
+    zero_int_regs 1, 31
+#else
+    zero_int_regs 1, 15
+#endif
     # Global pointer init
     .option push
     .option norelax
@@ -135,7 +141,6 @@ trap_entry:
     mret
 
 handle_trap:
-sc_exit:
     j SIM_EXIT
 
 // end of crt.S

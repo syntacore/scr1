@@ -1,10 +1,10 @@
-`ifndef SCR1_INCLUDE_HDU_DEFS
-`define SCR1_INCLUDE_HDU_DEFS
-/// Copyright by Syntacore LLC © 2016-2019. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
 /// @file       <scr1_pipe_hdu.svh>
 /// @brief      HART Debug Unit definitions file
 ///
 
+`ifndef SCR1_INCLUDE_HDU_DEFS
+`define SCR1_INCLUDE_HDU_DEFS
 
 `include "scr1_arch_description.svh"
 `include "scr1_csr.svh"

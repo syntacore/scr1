@@ -1,9 +1,10 @@
-`ifndef SCR1_INCLUDE_DM_DEFS
-`define SCR1_INCLUDE_DM_DEFS
-/// Copyright by Syntacore LLC © 2016-2019. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
 /// @file       <scr1_dm.svh>
 /// @brief      Debug Module header file
 ///
+
+`ifndef SCR1_INCLUDE_DM_DEFS
+`define SCR1_INCLUDE_DM_DEFS
 
 `include "scr1_arch_description.svh"
 `include "scr1_hdu.svh"
@@ -12,7 +13,7 @@
 parameter SCR1_DBG_DMI_ADDR_WIDTH                  = 6'd7;
 parameter SCR1_DBG_DMI_DATA_WIDTH                  = 6'd32;
 parameter SCR1_DBG_DMI_OP_WIDTH                    = 2'd2;
-                                                                    
+
 parameter SCR1_DBG_DMI_CH_ID_WIDTH                 = 2'd2;
 parameter SCR1_DBG_DMI_DR_DTMCS_WIDTH              = 6'd32;
 parameter SCR1_DBG_DMI_DR_DMI_ACCESS_WIDTH         = SCR1_DBG_DMI_OP_WIDTH +
@@ -80,10 +81,14 @@ parameter SCR1_DBG_DMSTATUS_VERSION_LO             = 5'd0;
 // COMMANDS
 parameter SCR1_DBG_COMMAND_TYPE_HI                 = 5'd31;
 parameter SCR1_DBG_COMMAND_TYPE_LO                 = 5'd24;
+parameter SCR1_DBG_COMMAND_TYPE_WDTH               = SCR1_DBG_COMMAND_TYPE_HI
+                                                   - SCR1_DBG_COMMAND_TYPE_LO;
 
 parameter SCR1_DBG_COMMAND_ACCESSREG_RESERVEDB     = 5'd23;
 parameter SCR1_DBG_COMMAND_ACCESSREG_SIZE_HI       = 5'd22;
 parameter SCR1_DBG_COMMAND_ACCESSREG_SIZE_LO       = 5'd20;
+parameter SCR1_DBG_COMMAND_ACCESSREG_SIZE_WDTH     = SCR1_DBG_COMMAND_ACCESSREG_SIZE_HI
+                                                   - SCR1_DBG_COMMAND_ACCESSREG_SIZE_LO;
 parameter SCR1_DBG_COMMAND_ACCESSREG_RESERVEDA     = 5'd19;
 parameter SCR1_DBG_COMMAND_ACCESSREG_POSTEXEC      = 5'd18;
 parameter SCR1_DBG_COMMAND_ACCESSREG_TRANSFER      = 5'd17;
@@ -112,12 +117,14 @@ parameter SCR1_DBG_ABSTRACTCS_BUSY                 = 5'd12;
 parameter SCR1_DBG_ABSTRACTCS_RESERVEDB            = 5'd11;
 parameter SCR1_DBG_ABSTRACTCS_CMDERR_HI            = 5'd10;
 parameter SCR1_DBG_ABSTRACTCS_CMDERR_LO            = 5'd8;
+parameter SCR1_DBG_ABSTRACTCS_CMDERR_WDTH          = SCR1_DBG_ABSTRACTCS_CMDERR_HI
+                                                   - SCR1_DBG_ABSTRACTCS_CMDERR_LO;
 parameter SCR1_DBG_ABSTRACTCS_RESERVEDA_HI         = 5'd7;
 parameter SCR1_DBG_ABSTRACTCS_RESERVEDA_LO         = 5'd4;
 parameter SCR1_DBG_ABSTRACTCS_DATACOUNT_HI         = 5'd3;
 parameter SCR1_DBG_ABSTRACTCS_DATACOUNT_LO         = 5'd0;
-    
-// HARTINFO 
+
+// HARTINFO
 parameter SCR1_DBG_HARTINFO_RESERVEDB_HI           = 5'd31;
 parameter SCR1_DBG_HARTINFO_RESERVEDB_LO           = 5'd24;
 parameter SCR1_DBG_HARTINFO_NSCRATCH_HI            = 5'd23;

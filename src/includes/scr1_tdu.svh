@@ -1,21 +1,22 @@
-`ifndef SCR1_INCLUDE_TDU_DEFS
-`define SCR1_INCLUDE_TDU_DEFS
-/// Copyright by Syntacore LLC © 2016-2019. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
 /// @file       <scr1_tdu.svh>
 /// @brief      Trigger Debug Module header
 ///
 
+`ifndef SCR1_INCLUDE_TDU_DEFS
+`define SCR1_INCLUDE_TDU_DEFS
+
 //`include "scr1_arch_description.svh"
 
-`ifdef SCR1_BRKM_EN
+`ifdef SCR1_TDU_EN
 //`include "scr1_csr.svh"
 
 `include "scr1_arch_description.svh"
 //`include "scr1_arch_types.svh"
 `include "scr1_csr.svh"
 
-parameter int unsigned  SCR1_TDU_MTRIG_NUM             = SCR1_BRKM_BRKPT_NUMBER;
-`ifdef SCR1_BRKM_BRKPT_ICOUNT_EN
+parameter int unsigned  SCR1_TDU_MTRIG_NUM             = SCR1_TDU_TRIG_NUM;
+`ifdef SCR1_TDU_ICOUNT_EN
 parameter int unsigned  SCR1_TDU_ALLTRIG_NUM           = SCR1_TDU_MTRIG_NUM + 1'b1;
 `else
 parameter int unsigned  SCR1_TDU_ALLTRIG_NUM           = SCR1_TDU_MTRIG_NUM;
@@ -112,12 +113,9 @@ typedef struct packed {
     logic                                           vd;
     logic                                           load;
     logic                                           store;
-`ifndef SCR1_BRKM_EN
-    type_scr1_op_width_e                            width;
-`endif // SCR1_BRKM_EN
     logic [`SCR1_XLEN-1:0]                          addr;
 } type_scr1_brkm_lsu_mon_s;
 
-`endif // SCR1_BRKM_EN
+`endif // SCR1_TDU_EN
 
 `endif // SCR1_INCLUDE_TDU_DEFS

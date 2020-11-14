@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
 /// @file       <scr1_top_tb_ahb.sv>
 /// @brief      SCR1 top testbench AHB
 ///
@@ -19,7 +19,6 @@ module scr1_top_tb_ahb (
 // Local parameters
 //-------------------------------------------------------------------------------
 localparam                          SCR1_MEM_SIZE       = 1024*1024;
-localparam logic [`SCR1_XLEN-1:0]   SCR1_EXIT_ADDR      = 32'h000000F8;
 
 //-------------------------------------------------------------------------------
 // Local signal declaration
@@ -32,22 +31,22 @@ logic                                   rtc_clk     = 1'b0;
 `ifdef SCR1_IPIC_EN
 logic [SCR1_IRQ_LINES_NUM-1:0]          irq_lines;
 `else // SCR1_IPIC_EN
-logic                                   ext_irq     = 1'b0;
+logic                                   ext_irq;
 `endif // SCR1_IPIC_EN
-logic                                   soft_irq    = 1'b0;
+logic                                   soft_irq;
 logic [31:0]                            fuse_mhartid;
 integer                                 imem_req_ack_stall;
 integer                                 dmem_req_ack_stall;
 
 logic                                   test_mode   = 1'b0;
-`ifdef SCR1_DBGC_EN
+`ifdef SCR1_DBG_EN
 logic                                   trst_n;
 logic                                   tck;
 logic                                   tms;
 logic                                   tdi;
 logic                                   tdo;
 logic                                   tdo_en;
-`endif // SCR1_DBGC_EN
+`endif // SCR1_DBG_EN
 
 // Instruction Memory Interface
 logic   [3:0]                           imem_hprot;
@@ -73,8 +72,13 @@ logic                                   dmem_hresp;
 
 int unsigned                            f_results;
 int unsigned                            f_info;
+
 string                                  s_results;
 string                                  s_info;
+`ifdef SIGNATURE_OUT
+string                                  s_testname;
+bit                                     b_single_run_flag;
+`endif  //  SIGNATURE_OUT
 `ifdef VERILATOR
 logic [255:0]                           test_file;
 `else // VERILATOR
@@ -101,7 +105,11 @@ begin
             return ~res;
         end
     end
-    return res;
+    `ifdef SIGNATURE_OUT
+        return ~res;
+    `else
+        return res;
+    `endif
 end
 endfunction : is_compliance
 
@@ -161,6 +169,19 @@ begin
 end
 endfunction : get_ref_filename
 
+function logic [2047:0] remove_trailing_whitespaces (logic [2047:0] str);
+int i;
+begin
+    for (i = 0; i <= 2040; i += 8) begin
+        if (str[i+:8] != 8'h20) begin
+            break;
+        end
+    end
+    str = str >> i;
+    return str;
+end
+endfunction: remove_trailing_whitespaces
+
 `else // VERILATOR
 function bit is_compliance (string testname);
 begin
@@ -175,7 +196,7 @@ begin
     testname[length-1] = "f";
     testname[length-2] = "l";
     testname[length-3] = "e";
-    
+
     return testname;
 end
 endfunction : get_filename
@@ -202,7 +223,7 @@ always_ff @(posedge clk) begin
 end
 
 
-`ifdef SCR1_DBGC_EN
+`ifdef SCR1_DBG_EN
 initial begin
     trst_n  = 1'b0;
     tck     = 1'b0;
@@ -213,141 +234,15 @@ initial begin
     #500ns trst_n   = 1'b0;
     #100ns tms      = 1'b1;
 end
-`endif // SCR1_DBGC_EN
+`endif // SCR1_DBG_EN
+
+
 
 //-------------------------------------------------------------------------------
 // Run tests
 //-------------------------------------------------------------------------------
 
-initial begin
-    $value$plusargs("imem_pattern=%h", imem_req_ack_stall);
-    $value$plusargs("dmem_pattern=%h", dmem_req_ack_stall);
-    $value$plusargs("test_info=%s", s_info);
-    $value$plusargs("test_results=%s", s_results);
-
-    fuse_mhartid = 0;
-
-    f_info      = $fopen(s_info, "r");
-    f_results   = $fopen(s_results, "a");
-end
-
-always_ff @(posedge clk) begin
-    if (test_running) begin
-        rst_init <= 1'b0;
-        if ((i_top.i_core_top.i_pipe_top.curr_pc == SCR1_EXIT_ADDR) & ~rst_init & &rst_cnt) begin
-        `ifdef VERILATOR
-        logic [255:0] full_filename;
-        full_filename = test_file;
-        `else // VERILATOR
-        string full_filename;
-        full_filename = test_file;
-        `endif // VERILATOR
-
-            if (is_compliance(test_file)) begin
-                bit test_pass;
-                logic [31:0] tmpv, start, stop, ref_data, test_data;
-                integer fd;
-                `ifdef VERILATOR
-                logic [2047:0] tmpstr;
-                `else // VERILATOR
-                string tmpstr;
-                `endif // VERILATOR
-                
-                test_running <= 1'b0;
-                test_pass = 1;
-
-                $sformat(tmpstr, "riscv64-unknown-elf-readelf -s %s | grep 'begin_signature\\|end_signature' | awk '{print $2}' > elfinfo", get_filename(test_file));
-                fd = $fopen("script.sh", "w");
-                if (fd == 0) begin
-                    $write("Can't open script.sh\n");
-                    test_pass = 0;
-                end
-                $fwrite(fd, "%s", tmpstr);
-                $fclose(fd);
-
-                $system("sh script.sh");
-
-                fd = $fopen("elfinfo", "r");
-                if (fd == 0) begin
-                    $write("Can't open elfinfo\n");
-                    test_pass = 0;
-                end
-                if ($fscanf(fd,"%h\n%h", start, stop) != 2) begin
-                    $write("Wrong elfinfo data\n");
-                    test_pass = 0;
-                end
-                if (start > stop) begin
-                    tmpv = start;
-                    start = stop;
-                    stop = tmpv;
-                end
-                $fclose(fd);
-
-                $sformat(tmpstr, "riscv_compliance/ref_data/%s", get_ref_filename(test_file));
-                fd = $fopen(tmpstr,"r");
-                if (fd == 0) begin
-                    $write("Can't open reference_data file: %s\n", tmpstr);
-                    test_pass = 0;
-                end
-                while (!$feof(fd) && (start != stop)) begin
-                    $fscanf(fd, "0x%h,\n", ref_data);
-                    test_data = {i_memory_tb.memory[start+3], i_memory_tb.memory[start+2], i_memory_tb.memory[start+1], i_memory_tb.memory[start]};
-                    test_pass &= (ref_data == test_data);
-                    start += 4;
-                end
-                $fclose(fd);
-
-                tests_total += 1;
-                tests_passed += test_pass;
-                $fwrite(f_results, "%s\t\t%s\n", test_file, (test_pass ? "PASS" : "__FAIL"));
-                if (test_pass) begin
-                    $write("\033[0;32mTest passed\033[0m\n");
-                end else begin
-                    $write("\033[0;31mTest failed\033[0m\n");
-                end
-            end else begin
-                bit test_pass;
-                test_running <= 1'b0;
-                test_pass = (i_top.i_core_top.i_pipe_top.i_pipe_mprf.mprf_int[10] == 0);
-                tests_total     += 1;
-                tests_passed    += test_pass;
-                $fwrite(f_results, "%s\t\t%s\n", test_file, (test_pass ? "PASS" : "__FAIL"));
-                if (test_pass) begin
-                    $write("\033[0;32mTest passed\033[0m\n");
-                end else begin
-                    $write("\033[0;31mTest failed\033[0m\n");
-                end
-            end
-        end
-    end else begin
-`ifdef VERILATOR
-        if ($fgets(test_file,f_info)) begin
-            test_file = test_file >> 8; // < Removing trailing LF symbol ('\n')
-`else // VERILATOR
-        if (!$feof(f_info)) begin
-            $fscanf(f_info, "%s\n", test_file);
-`endif // VERILATOR
-            // Launch new test
-`ifdef SCR1_TRACE_LOG_EN
-            i_top.i_core_top.i_pipe_top.i_tracelog.test_name = test_file;
-`endif
-            i_memory_tb.test_file = test_file;
-            i_memory_tb.test_file_init = 1'b1;
-            $write("\033[0;34m---Test: %s\033[0m\n", test_file);
-            test_running <= 1'b1;
-            rst_init <= 1'b1;
-        end else begin
-            // Exit
-            $display("\n#--------------------------------------");
-            $display("# Summary: %0d/%0d tests passed", tests_passed, tests_total);
-            $display("#--------------------------------------\n");
-            $fclose(f_info);
-            $fclose(f_results);
-            $finish();
-        end
-    end
-end
-
+`include "scr1_top_tb_runtests.sv"
 //-------------------------------------------------------------------------------
 // Core instance
 //-------------------------------------------------------------------------------
@@ -356,9 +251,10 @@ scr1_top_ahb i_top (
     .pwrup_rst_n            (rst_n                  ),
     .rst_n                  (rst_n                  ),
     .cpu_rst_n              (rst_n                  ),
-`ifdef SCR1_DBGC_EN
-    .ndm_rst_n_out          (),
-`endif // SCR1_DBGC_EN
+`ifdef SCR1_DBG_EN
+    .sys_rst_n_o            (                       ),
+    .sys_rdc_qlfy_o         (                       ),
+`endif // SCR1_DBG_EN
 
     // Clock
     .clk                    (clk                    ),
@@ -366,9 +262,9 @@ scr1_top_ahb i_top (
 
     // Fuses
     .fuse_mhartid           (fuse_mhartid           ),
-`ifdef SCR1_DBGC_EN
+`ifdef SCR1_DBG_EN
     .fuse_idcode            (`SCR1_TAP_IDCODE       ),
-`endif // SCR1_DBGC_EN
+`endif // SCR1_DBG_EN
 
     // IRQ
 `ifdef SCR1_IPIC_EN
@@ -382,7 +278,7 @@ scr1_top_ahb i_top (
     .test_mode              (1'b0                   ),
     .test_rst_n             (1'b1                   ),
 
-`ifdef SCR1_DBGC_EN
+`ifdef SCR1_DBG_EN
     // JTAG
     .trst_n                 (trst_n                 ),
     .tck                    (tck                    ),
@@ -390,7 +286,7 @@ scr1_top_ahb i_top (
     .tdi                    (tdi                    ),
     .tdo                    (tdo                    ),
     .tdo_en                 (tdo_en                 ),
-`endif // SCR1_DBGC_EN
+`endif // SCR1_DBG_EN
 
     // Instruction Memory Interface
     .imem_hprot         (imem_hprot     ),
@@ -428,9 +324,12 @@ scr1_memory_tb_ahb #(
     .clk                    (clk),
 `ifdef SCR1_IPIC_EN
     .irq_lines              (irq_lines),
+`else // SCR1_IPIC_EN
+    .ext_irq                (ext_irq),
 `endif // SCR1_IPIC_EN
+    .soft_irq               (soft_irq),
     .imem_req_ack_stall_in  (imem_req_ack_stall),
-    .dmem_req_ack_stall_in  (dmem_req_ack_stall ),
+    .dmem_req_ack_stall_in  (dmem_req_ack_stall),
 
     // Instruction Memory Interface
     // .imem_hprot             (imem_hprot ),
@@ -456,3 +355,4 @@ scr1_memory_tb_ahb #(
 );
 
 endmodule : scr1_top_tb_ahb
+

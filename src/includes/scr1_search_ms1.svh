@@ -1,9 +1,10 @@
-`ifndef SCR1_SEARCH_MS1_SVH
-`define SCR1_SEARCH_MS1_SVH
-/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
 /// @file       <scr1_search_ms1.svh>
 /// @brief      Most significant one search function
 ///
+
+`ifndef SCR1_SEARCH_MS1_SVH
+`define SCR1_SEARCH_MS1_SVH
 
 //-------------------------------------------------------------------------------
 // Local types declaration

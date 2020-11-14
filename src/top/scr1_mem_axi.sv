@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
 /// @file       <scr1_mem_axi.sv>
 /// @brief      Memory AXI bridge
 ///
@@ -341,8 +341,10 @@ assign wlast    = 1'd1;
 assign wuser    = '0;
 
 
-`ifdef SCR1_SIM_ENV
-`ifndef VERILATOR
+`ifdef SCR1_TRGT_SIMULATION
+//-------------------------------------------------------------------------------
+// Assertion
+//-------------------------------------------------------------------------------
 
 // X checks
 SCR1_SVA_AXI_X_CHECK0  : assert property (@(negedge clk) disable iff (~rst_n)   !$isunknown({core_req, awready, wready, bvalid, arready, rvalid}) )
@@ -356,7 +358,6 @@ SCR1_SVA_AXI_X_CHECK2  : assert property (@(negedge clk) disable iff (~rst_n)   
 SCR1_SVA_AXI_X_CHECK3  : assert property (@(negedge clk) disable iff (~rst_n)   rvalid |->
                                                                                     !$isunknown({rid, rresp}) )
                                                                                                         else $error("AXI bridge: X state on input");
-`endif // VERILATOR
-`endif // SCR1_SIM_ENV
+`endif // SCR1_TRGT_SIMULATION
 
 endmodule : scr1_mem_axi

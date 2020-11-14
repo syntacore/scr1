@@ -1,3 +1,3 @@
-pipeline/scr1_tracelog.sv
+core/pipeline/scr1_tracelog.sv
 tb/scr1_memory_tb_axi.sv
 tb/scr1_top_tb_axi.sv

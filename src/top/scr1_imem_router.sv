@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
 /// @file       <scr1_imem_router.sv>
 /// @brief      Instruction memory router
 ///
@@ -160,8 +160,7 @@ end
 assign port1_cmd   = (port_sel) ? imem_cmd  : SCR1_MEM_CMD_ERROR;
 assign port1_addr  = (port_sel) ? imem_addr : 'x;
 
-`ifdef SCR1_SIM_ENV
-`ifndef VERILATOR
+`ifdef SCR1_TRGT_SIMULATION
 //-------------------------------------------------------------------------------
 // Assertion
 //-------------------------------------------------------------------------------
@@ -171,7 +170,6 @@ SCR1_SVA_IMEM_RT_XCHECK : assert property (
     imem_req |-> !$isunknown({port_sel, imem_cmd})
     ) else $error("IMEM router Error: unknown values");
 
-`endif // VERILATOR
-`endif // SCR1_SIM_ENV
+`endif // SCR1_TRGT_SIMULATION
 
 endmodule : scr1_imem_router

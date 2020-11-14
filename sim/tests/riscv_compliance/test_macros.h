@@ -61,7 +61,7 @@
     fsw destreg, offset(swreg); \
     RVTEST_IO_ASSERT_SFPR_EQ(destreg, t1, correctval) \
     .pushsection .data; \
-    .align 3; \
+    .balign 8; \
     test_ ## test_num ## _data: \
       .float val1; \
       .float val2; \
@@ -75,7 +75,7 @@
     fsw destreg, offset(swreg); \
     RVTEST_IO_ASSERT_SFPR_EQ(destreg, t1, correctval) \
     .pushsection .data; \
-    .align 1; \
+    .balign 2; \
     test_ ## test_num ## _data: \
       .word correctval; \
     .popsection
@@ -88,7 +88,7 @@
     sw destreg, offset(swreg); \
     RVTEST_IO_ASSERT_GPR_EQ(x31, destreg, correctval) \
     .pushsection .data; \
-    .align 2; \
+    .balign 4; \
     test_ ## test_num ## _data: \
       .float val; \
       .word correctval; \
@@ -104,7 +104,7 @@
     fsw destreg, offset(swreg); \
     RVTEST_IO_ASSERT_SFPR_EQ(destreg, t1, correctval) \
     .pushsection .data; \
-    .align 4; \
+    .balign 16; \
     test_ ## test_num ## _data: \
       .float val1; \
       .float val2; \
@@ -119,7 +119,7 @@
     sw destreg, offset(swreg); \
     RVTEST_IO_ASSERT_GPR_EQ(x31, destreg, correctval) \
     .pushsection .data; \
-    .align 1; \
+    .balign 2; \
     test_ ## test_num ## _data: \
       .float val; \
     .popsection
@@ -132,7 +132,7 @@
     lw a1, 0(a0); \
     RVTEST_IO_ASSERT_SFPR_EQ(destreg, a1, correctval) \
     .pushsection .data; \
-    .align 1; \
+    .balign 2; \
     test_ ## test_num ## _data: \
       .word correctval; \
     .popsection
@@ -152,7 +152,7 @@
     lw a2, 4(a0); \
     RVTEST_IO_ASSERT_DFPR_EQ(destreg, t2, t1, a2, a1, correctval) \
     .pushsection .data; \
-    .align 3; \
+    .balign 8; \
     test_ ## test_num ## _data: \
       .double val1; \
       .double val2; \
@@ -175,7 +175,7 @@
     lw a2, 4(a0); \
     RVTEST_IO_ASSERT_DFPR_EQ(destreg, t2, t1, a2, a1, correctval) \
     .pushsection .data; \
-    .align 1; \
+    .balign 2; \
     test_ ## test_num ## _data: \
       .dword correctval; \
     .popsection; \
@@ -191,7 +191,7 @@
     sw destreg, offset(swreg); \
     RVTEST_IO_ASSERT_GPR_EQ(x31, destreg, correctval) \
     .pushsection .data; \
-    .align 2; \
+    .balign 4; \
     test_ ## test_num ## _data: \
       .double val; \
       .word correctval; \
@@ -212,7 +212,7 @@
     lw a2, 4(a0); \
     RVTEST_IO_ASSERT_DFPR_EQ(destreg, t2, t1, a2, a1, correctval) \
     .pushsection .data; \
-    .align 4; \
+    .balign 16; \
     test_ ## test_num ## _data: \
       .double val1; \
       .double val2; \
@@ -507,7 +507,7 @@ test_ ## testnum: \
     bne testreg1, x29, fail;\
     bne testreg2, x31, fail;\
     .pushsection .data; \
-    .align 3; \
+    .balign 8; \
     test_ ## testnum ## _data: \
     .dword correctval; \
     .popsection
@@ -528,7 +528,7 @@ test_ ## testnum: \
   bne t1, t2, fail; \
   bne a1, a2, fail; \
   .pushsection .data; \
-  .align 3; \
+  .balign 8; \
   test_ ## testnum ## _data: \
   .double val1; \
   .double val2; \
@@ -546,7 +546,7 @@ test_ ## testnum: \
             fld fa0, 0(a0); \
             fclass.d a0, fa0) \
     .pushsection .data; \
-    .align 3; \
+    .balign 8; \
     test_ ## testnum ## _data: \
     .dword input; \
     .popsection
@@ -572,7 +572,7 @@ test_ ## testnum: \
   bne a0, a3, fail; \
   bne a1, a4, fail; \
   .pushsection .data; \
-  .align 3; \
+  .balign 8; \
   test_ ## testnum ## _data: \
   .double result; \
   .popsection

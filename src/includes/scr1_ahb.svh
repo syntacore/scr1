@@ -1,9 +1,10 @@
-`ifndef SCR1_AHB_SVH
-`define SCR1_AHB_SVH
-/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
 /// @file       <scr1_ahb.svh>
 /// @brief      AHB header file
 ///
+
+`ifndef SCR1_AHB_SVH
+`define SCR1_AHB_SVH
 
 `include "scr1_arch_description.svh"
 

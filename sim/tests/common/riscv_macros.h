@@ -61,14 +61,14 @@
   csrw pmpaddr0, t0;                                                    \
   li t0, PMP_NAPOT | PMP_R | PMP_W | PMP_X;                             \
   csrw pmpcfg0, t0;                                                     \
-  .align 2;                                                             \
+  .balign 4;                                                             \
 1:
 
 #define INIT_SPTBR                                                      \
   la t0, 1f;                                                            \
   csrw mtvec, t0;                                                       \
   csrwi sptbr, 0;                                                       \
-  .align 2;                                                             \
+  .balign 4;                                                             \
 1:
 
 #define DELEGATE_NO_TRAPS
@@ -104,7 +104,7 @@
 #define RVTEST_CODE_BEGIN                                               \
         .section .text.init;                                            \
         .org 0xC0, 0x00;                                                \
-        .align  6;                                                      \
+        .balign  64;                                                    \
         .weak stvec_handler;                                            \
         .weak mtvec_handler;                                            \
 trap_vector:                                                            \
@@ -131,7 +131,7 @@ other_exception:                                                        \
         li   a0, 0x1;                                                   \
 _report:                                                                \
         j sc_exit;                                                      \
-        .align  6;                                                      \
+        .balign  64;                                                    \
         .globl _start;                                                  \
 _start:                                                                 \
         RISCV_MULTICORE_DISABLE;                                        \
@@ -198,15 +198,15 @@ _run_test:
 #define RVTEST_DATA_BEGIN                                                       \
         EXTRA_DATA                                                              \
         .pushsection .tohost,"aw",@progbits;                                    \
-        .align 6; .global tohost; tohost: .dword 0;                             \
-        .align 6; .global fromhost; fromhost: .dword 0;                         \
+        .balign 64; .global tohost; tohost: .dword 0;                           \
+        .balign 64; .global fromhost; fromhost: .dword 0;                       \
         .popsection;                                                            \
-        .align 4;                                                               \
+        .balign 16;                                                             \
         .global begin_regstate;  begin_regstate: .dword 0; .dword 0; .dword 0;  \
-        .align 4;                                                               \
+        .balign 16;                                                             \
         .global begin_signature; begin_signature:
 
-#define RVTEST_DATA_END .align 4; .global end_signature; end_signature:
+#define RVTEST_DATA_END .balign 16; .global end_signature; end_signature:
 
 #-----------------------------------------------------------------------
 # Helper macros
@@ -667,7 +667,7 @@ test_ ## testnum: \
   bne a0, a3, fail; \
   bne a1, a2, fail; \
   j 2f; \
-  .align 2; \
+  .balign 4; \
   .data; \
   test_ ## testnum ## _data: \
   .float val1; \
@@ -692,7 +692,7 @@ test_ ## testnum: \
   bne a1, a2, fail; \
   j 2f; \
   .data; \
-  .align 3; \
+  .balign 8; \
   test_ ## testnum ## _data: \
   .double val1; \
   .double val2; \
@@ -776,7 +776,7 @@ test_ ## testnum: \
   fmv.x.s a0, f0; \
   bne a0, a3, fail; \
   j 1f; \
-  .align 2; \
+  .balign 4; \
   test_ ## testnum ## _data: \
   .float result; \
 1:
@@ -792,7 +792,7 @@ test_ ## testnum: \
   fmv.x.d a0, f0; \
   bne a0, a3, fail; \
   j 1f; \
-  .align 3; \
+  .balign 8; \
   test_ ## testnum ## _data: \
   .double result; \
 1:

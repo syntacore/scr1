@@ -4,6 +4,7 @@
 
 #include "riscv_csr_encoding.h"
 #include "reloc.h"
+#include "sc_test.h"
 
 # define LREG lw
 # define SREG sw
@@ -14,7 +15,7 @@
     .globl trap_entry
     .globl handle_trap
     .globl sc_exit
-    .weak trap_entry, handle_trap, sc_exit
+    .weak trap_entry, handle_trap
 
     .section .text.init
     .org (64*3)
@@ -24,6 +25,11 @@ machine_trap_entry:
 
     .align 6
 _start:
+#ifndef __RVE_EXT
+    zero_int_regs 1, 31
+#else
+    zero_int_regs 1, 15
+#endif
     # Global pointer init
     .option push
     .option norelax
@@ -63,7 +69,8 @@ _start:
     li    a1, 0
 9:  auipc t0, %pcrel_hi(main)
     jalr  t0, %pcrel_lo(9b)
-    j     sc_exit
+    la    t0, sc_exit
+    //j     sc_exit
 
 trap_entry:
     addi sp, sp, -272
@@ -145,7 +152,6 @@ trap_entry:
     mret
 
 handle_trap:
-sc_exit:
     j SIM_EXIT
 
 // end of crt.S

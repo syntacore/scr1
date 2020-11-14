@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2018. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
 /// @file       <scr1_tcm.sv>
 /// @brief      Tightly-Coupled Memory (TCM)
 ///
@@ -83,11 +83,11 @@ always_comb begin
     case ( dmem_width )
         SCR1_MEM_WIDTH_BYTE : begin
             dmem_writedata  = {(`SCR1_DMEM_DWIDTH /  8){dmem_wdata[7:0]}};
-            dmem_byteen     = 1'b1 << dmem_addr[1:0];
+            dmem_byteen     = 4'b0001 << dmem_addr[1:0];
         end
         SCR1_MEM_WIDTH_HWORD : begin
             dmem_writedata  = {(`SCR1_DMEM_DWIDTH / 16){dmem_wdata[15:0]}};
-            dmem_byteen     = 2'b11 << {dmem_addr[1], 1'b0};
+            dmem_byteen     = 4'b0011 << {dmem_addr[1], 1'b0};
         end
         default : begin
         end
