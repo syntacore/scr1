@@ -171,8 +171,6 @@ After all the tests have finished, the results can be found in `build/<SIM_CFG>/
     make clean
 ```
 
-Please, refer to [SCR1 User Manual](https://github.com/syntacore/scr1/blob/master/docs/scr1_um.pdf) chapter *"Simulation environment"* for further details.
-
 Please refer to the *"Simulation environment"* chapter of the [SCR1 User Manual](https://github.com/syntacore/scr1/blob/master/docs/scr1_um.pdf) for more information on setting up a simulation run.
 
 ## SCR1 SDKs
