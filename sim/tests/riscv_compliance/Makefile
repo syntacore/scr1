@@ -119,7 +119,7 @@ $(foreach SRC,$(filtered_im),$(eval $(call compile_template,$(SRC),-march=rv32im
 $(foreach SRC,$(filtered_imc),$(eval $(call compile_template,$(SRC),-march=rv32imc)))
 
 
-log_requested_tgt: $(bld_dir) 
+log_requested_tgt: $(bld_dir)
 	$(foreach test_name, $(filtered), $(eval $(shell echo compliance_$(test_name).hex >> $(bld_dir)/../test_info)))
 
 $(bld_dir) :
@@ -156,7 +156,7 @@ cp_asm:
 
 
 riscv_compliance_tests_dir    := $(if $(RISCV_COMPLIANCE_TESTS), $(RISCV_COMPLIANCE_TESTS), ./undefined)
-riscv_tests_commit := de98a9da780b417ec581ffb812a9586da7b3953b
+riscv_tests_commit := d51259b2a949be3af02e776c39e135402675ac9b
 ## commit hash readed from local copy of https://github.com/riscv/riscv-compliance
 tmp_commit = $(shell cd $(riscv_compliance_tests_dir) 2>/dev/null && git log -1 | grep "commit" | cut -f2 -d ' ')
 is_commit_good = $(if $(subst $(riscv_tests_commit),,$(tmp_commit)),false,true)

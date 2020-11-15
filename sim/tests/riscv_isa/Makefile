@@ -17,13 +17,13 @@ test_elf  := $(addprefix $(bld_dir)/,$(test_list:%=%.elf))
 test_hex  := $(addprefix $(bld_dir)/,$(test_list:%=%.hex))
 test_dump := $(addprefix $(bld_dir)/,$(test_list:%=%.dump))
 
-CFLAGS := -I$(inc_dir) -I$(src_dir) -DASM -Wa,-march=rv32$(ARCH) -march=rv32$(ARCH) -mabi=ilp32f -D__riscv_xlen=32 
+CFLAGS := -I$(inc_dir) -I$(src_dir) -DASM -Wa,-march=rv32$(ARCH) -march=rv32$(ARCH) -mabi=ilp32f -D__riscv_xlen=32
 LDFLAGS := -static -fvisibility=hidden -nostdlib -nostartfiles -T$(inc_dir)/link.ld -march=rv32$(ARCH) -mabi=ilp32f
 RISCV_TESTS := $(src_dir)/../../../dependencies/riscv-tests/
 
 VPATH += $(src_dir) $(bld_dir) $(obj_dir) $(RISCV_TESTS)
 
-default: log_requested_tgt check_riscv_tests $(test_elf) $(test_hex) $(test_dump) 
+default: log_requested_tgt check_riscv_tests $(test_elf) $(test_hex) $(test_dump)
 
 define compile_template
 $(obj_dir)/$$(basename $(notdir $(SRC))).o: $$(SRC) | $(obj_dir)
@@ -55,7 +55,7 @@ clean:
 .PHONY: check_riscv_tests
 
 riscv_tests_dir    := $(if $(RISCV_TESTS), $(RISCV_TESTS), ./undefined)
-riscv_tests_commit := f68760e7e0295a03ccf3147571f4254cc352e4fc
+riscv_tests_commit := 5f8a4918c6482e65c67a2b7decd5c2af3e3fe0e5
 ## commit hash readed from local copy of https://github.com/riscv/riscv-tests
 tmp_commit = $(shell cd $(riscv_tests_dir) 2>/dev/null && git log -1 | grep "commit" | cut -f2 -d ' ')
 is_commit_good = $(if $(subst $(riscv_tests_commit),,$(tmp_commit)),false,true)
