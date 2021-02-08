@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
 /// @file       <scr1_arch_description.svh>
 /// @brief      Architecture description file
 ///
@@ -11,7 +11,7 @@
 //------------------------------------------------------------------------------
 
 // SCR1 core identifiers
-`define SCR1_MIMPID             32'h20111300
+`define SCR1_MIMPID             32'h21020800
 `define SCR1_MVENDORID          32'h00000000
 
 // Width of main registers and busses

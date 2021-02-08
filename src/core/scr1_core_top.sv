@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
 /// @file       <scr1_core_top.sv>
 /// @brief      SCR1 core top
 ///
@@ -509,7 +509,7 @@ scr1_dm i_dm (
 //-------------------------------------------------------------------------------
 scr1_clk_ctrl i_clk_ctrl (
     .clk                            (clk        ),
-    .rst_n                          (rst_n      ),
+    .rst_n                          (core_rst_n ),
     .test_mode                      (test_mode  ),
     .test_rst_n                     (test_rst_n ),
 
