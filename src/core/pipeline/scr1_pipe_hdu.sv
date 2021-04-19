@@ -330,6 +330,10 @@ always_ff @(negedge rst_n, posedge clk) begin
 end
 
 always_comb begin
+    dfsm_trans_next  = 1'b0;
+    dfsm_update_next = 1'b0;
+    dfsm_event_next  = 1'b0;
+
     if (~pipe2hdu_rdc_qlfy_i) begin
         dfsm_trans_next  = 1'b0;
         dfsm_update_next = 1'b0;
@@ -355,6 +359,12 @@ always_comb begin
                 dfsm_update_next = ~dfsm_update & dfsm_trans;
                 dfsm_event_next  = dfsm_update;
             end
+
+            default : begin
+                dfsm_trans_next  = 'X;
+                dfsm_update_next = 'X;
+                dfsm_event_next  = 'X;
+            end
         endcase
     end
 end
@@ -371,6 +381,8 @@ end
 
 // Control logic
 always_comb begin
+    hart_cmd_req = 1'b0;
+
     if (~pipe2hdu_rdc_qlfy_i) begin
         hart_cmd_req = 1'b0;
     end else begin
@@ -379,6 +391,7 @@ always_comb begin
             SCR1_HDU_DBGSTATE_DHALTED: hart_cmd_req = (dfsm_update | dfsm_trans);
             SCR1_HDU_DBGSTATE_RUN,
             SCR1_HDU_DBGSTATE_DRUN   : hart_cmd_req = ~dfsm_update & dfsm_trans;
+            default                  : hart_cmd_req = 'X;        
         endcase
     end
 end
@@ -746,6 +759,8 @@ assign hdu2dm_cmd_rcode_o = dbg_state_reset
                           : ~pipe2hdu_rdc_qlfy_i | ~dfsm_update;
 
 always_comb begin
+    hdu2dm_cmd_resp_o   = 1'b0;
+
     case (dbg_state)
         SCR1_HDU_DBGSTATE_RESET: begin
             hdu2dm_cmd_resp_o  = pipe2hdu_rdc_qlfy_i & pipe2hdu_init_pc_i & dm2hdu_cmd_req_i;
@@ -761,6 +776,10 @@ always_comb begin
 
         SCR1_HDU_DBGSTATE_DRUN: begin
             hdu2dm_cmd_resp_o  = (~pipe2hdu_rdc_qlfy_i | dfsm_update) & dm2hdu_cmd_req_i;
+        end
+
+        default: begin
+            hdu2dm_cmd_resp_o  = 'X;
         end
     endcase
 end

@@ -292,6 +292,7 @@ always_comb begin
     case (tap_ir_ff)
         SCR1_TAP_INSTR_DTMCS     : tapc2tapcsync_ch_id_o = 'd1;
         SCR1_TAP_INSTR_DMI_ACCESS: tapc2tapcsync_ch_id_o = 'd2;
+        default                  : tapc2tapcsync_ch_id_o = '0;
     endcase
 end
 

@@ -525,7 +525,7 @@ always_comb begin
     if (cicsr_wr_req) begin
         ipic_ier_next[irq_serv_idx] = irq_serv_vd
                                     ? csr2ipic_wdata_i[SCR1_IPIC_ICSR_IE]
-                                    : ipic_ier_ff;
+                                    : ipic_ier_ff[irq_serv_idx];
     end else if (icsr_wr_req) begin
         ipic_ier_next[ipic_idxr_ff] = csr2ipic_wdata_i[SCR1_IPIC_ICSR_IE];
     end

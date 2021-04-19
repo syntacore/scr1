@@ -148,15 +148,21 @@ module scr1_top_axi (
 );
 
 //-------------------------------------------------------------------------------
+// Local parameters
+//-------------------------------------------------------------------------------
+localparam int unsigned SCR1_CLUSTER_TOP_RST_SYNC_STAGES_NUM            = 2;
+
+//-------------------------------------------------------------------------------
 // Local signal declaration
 //-------------------------------------------------------------------------------
 // Reset logic
 logic                                               pwrup_rst_n_sync;
 logic                                               rst_n_sync;
 logic                                               cpu_rst_n_sync;
-logic                                               reset_n_sync;
-logic                                               reset_n;
 logic                                               core_rst_n_local;
+`ifdef SCR1_DBG_EN
+logic                                               tapc_trst_n;
+`endif // SCR1_DBG_EN
 
 // Instruction memory interface from core to router
 logic                                               core_imem_req_ack;
@@ -235,43 +241,50 @@ logic                                               axi_dmem_idle;
 // Reset logic
 //-------------------------------------------------------------------------------
 // Power-Up Reset synchronizer
-scr1_reset_sync_cell i_pwrup_rstn_reset_sync (
+scr1_reset_sync_cell #(
+    .STAGES_AMOUNT       (SCR1_CLUSTER_TOP_RST_SYNC_STAGES_NUM)
+) i_pwrup_rstn_reset_sync (
     .rst_n          (pwrup_rst_n     ),
     .clk            (clk             ),
     .test_rst_n     (test_rst_n      ),
     .test_mode      (test_mode       ),
+    .rst_n_in       (1'b1            ),
     .rst_n_out      (pwrup_rst_n_sync)
 );
 
 // Regular Reset synchronizer
-scr1_reset_sync_cell i_rstn_reset_sync (
-    .rst_n          (rst_n     ),
-    .clk            (clk       ),
-    .test_rst_n     (test_rst_n),
-    .test_mode      (test_mode ),
-    .rst_n_out      (rst_n_sync)
+scr1_reset_sync_cell #(
+    .STAGES_AMOUNT       (SCR1_CLUSTER_TOP_RST_SYNC_STAGES_NUM)
+) i_rstn_reset_sync (
+    .rst_n          (pwrup_rst_n     ),
+    .clk            (clk             ),
+    .test_rst_n     (test_rst_n      ),
+    .test_mode      (test_mode       ),
+    .rst_n_in       (rst_n           ),
+    .rst_n_out      (rst_n_sync      )
 );
 
 // CPU Reset synchronizer
-scr1_reset_sync_cell i_cpu_rstn_reset_sync (
-    .rst_n          (cpu_rst_n     ),
-    .clk            (clk           ),
-    .test_rst_n     (test_rst_n    ),
-    .test_mode      (test_mode     ),
-    .rst_n_out      (cpu_rst_n_sync)
+scr1_reset_sync_cell #(
+    .STAGES_AMOUNT       (SCR1_CLUSTER_TOP_RST_SYNC_STAGES_NUM)
+) i_cpu_rstn_reset_sync (
+    .rst_n          (pwrup_rst_n     ),
+    .clk            (clk             ),
+    .test_rst_n     (test_rst_n      ),
+    .test_mode      (test_mode       ),
+    .rst_n_in       (cpu_rst_n       ),
+    .rst_n_out      (cpu_rst_n_sync  )
 );
 
-// Combo Reset (Power-Up and Regular Resets): reset_n
-scr1_reset_buf_cell i_reset_buf_cell (
-    .rst_n              (reset_n_sync),
-    .clk                (clk         ),
-    .test_mode          (test_mode   ),
-    .test_rst_n         (test_rst_n  ),
-    .reset_n_in         (1'b1        ),
-    .reset_n_out        (reset_n     ),
-    .reset_n_status     (            )
+`ifdef SCR1_DBG_EN
+// TAPC Reset
+scr1_reset_and2_cell i_tapc_rstn_and2_cell (
+    .rst_n_in       ({trst_n, pwrup_rst_n}),
+    .test_rst_n     (test_rst_n      ),
+    .test_mode      (test_mode       ),
+    .rst_n_out      (tapc_trst_n     )
 );
-assign reset_n_sync = rst_n_sync & pwrup_rst_n_sync;
+`endif // SCR1_DBG_EN
 
 //-------------------------------------------------------------------------------
 // SCR1 core instance
@@ -311,7 +324,7 @@ scr1_core_top i_core_top (
 
 `ifdef SCR1_DBG_EN
     // Debug interface
-    .tapc_trst_n                (trst_n           ),
+    .tapc_trst_n                (tapc_trst_n      ),
     .tapc_tck                   (tck              ),
     .tapc_tms                   (tms              ),
     .tapc_tdi                   (tdi              ),
@@ -531,7 +544,7 @@ scr1_mem_axi #(
 `endif // SCR1_IMEM_AXI_RESP_BP
 ) i_imem_axi (
     .clk            (clk                    ),
-    .rst_n          (reset_n                ),
+    .rst_n          (rst_n_sync             ),
     .axi_reinit     (axi_reinit             ),
 
     // Interface to core
@@ -609,7 +622,7 @@ scr1_mem_axi #(
 `endif // SCR1_DMEM_AXI_RESP_BP
 ) i_dmem_axi (
     .clk            (clk                    ),
-    .rst_n          (reset_n                ),
+    .rst_n          (rst_n_sync             ),
     .axi_reinit     (axi_reinit             ),
 
     // Interface to core

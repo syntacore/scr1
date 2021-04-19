@@ -290,7 +290,6 @@ logic [11:0]                                      abs_cmd_regno;
 logic [11:0]                                      abs_cmd_regno_ff;
 logic [1:0]                                       abs_cmd_size_ff;
 logic [1:0]                                       abs_cmd_size_next;
-logic                                             abs_cmd_size_word;
 
 logic                                             abs_reg_access_csr;
 logic                                             abs_reg_access_mprf;
@@ -545,6 +544,10 @@ always_comb begin
         SCR1_DBG_PROGBUF4    : dm2dmi_rdata_o    = abs_progbuf4_ff;
         SCR1_DBG_PROGBUF5    : dm2dmi_rdata_o    = abs_progbuf5_ff;
         SCR1_DBG_HALTSUM0    : dm2dmi_rdata_o[0] = dmstatus_allany_halted_ff;
+
+        default: begin
+            dm2dmi_rdata_o = '0;
+        end
     endcase
 end
 
@@ -725,19 +728,19 @@ always_comb begin
     abs_cmd_regwr       = abs_cmd[SCR1_DBG_COMMAND_ACCESSREG_WRITE];
     abs_cmd_execprogbuf = abs_cmd[SCR1_DBG_COMMAND_ACCESSREG_POSTEXEC];
 
-    abs_cmd_regvalid    = !{abs_cmd[SCR1_DBG_COMMAND_ACCESSREG_RESERVEDB],
-                            abs_cmd[SCR1_DBG_COMMAND_ACCESSREG_RESERVEDA]};
+    abs_cmd_regvalid    = ~(|{abs_cmd[SCR1_DBG_COMMAND_ACCESSREG_RESERVEDB],
+                              abs_cmd[SCR1_DBG_COMMAND_ACCESSREG_RESERVEDA]});
 
     abs_cmd_memsize     = abs_cmd[SCR1_DBG_COMMAND_ACCESSMEM_AAMSIZE_HI:
                                   SCR1_DBG_COMMAND_ACCESSMEM_AAMSIZE_LO];
     abs_cmd_memwr       = abs_cmd[SCR1_DBG_COMMAND_ACCESSMEM_WRITE];
 
-    abs_cmd_memvalid    = !{abs_cmd[SCR1_DBG_COMMAND_ACCESSMEM_AAMVIRTUAL],
-                            abs_cmd[SCR1_DBG_COMMAND_ACCESSMEM_AAMPOSTINC],
-                            abs_cmd[SCR1_DBG_COMMAND_ACCESSMEM_RESERVEDB_HI:
-                                    SCR1_DBG_COMMAND_ACCESSMEM_RESERVEDB_HI],
-                            abs_cmd[SCR1_DBG_COMMAND_ACCESSMEM_RESERVEDA_HI:
-                                    SCR1_DBG_COMMAND_ACCESSMEM_RESERVEDA_HI]};
+    abs_cmd_memvalid    = ~(|{abs_cmd[SCR1_DBG_COMMAND_ACCESSMEM_AAMVIRTUAL],
+                              abs_cmd[SCR1_DBG_COMMAND_ACCESSMEM_AAMPOSTINC],
+                              abs_cmd[SCR1_DBG_COMMAND_ACCESSMEM_RESERVEDB_HI:
+                                      SCR1_DBG_COMMAND_ACCESSMEM_RESERVEDB_HI],
+                              abs_cmd[SCR1_DBG_COMMAND_ACCESSMEM_RESERVEDA_HI:
+                                      SCR1_DBG_COMMAND_ACCESSMEM_RESERVEDA_HI]});
 end
 
 assign abs_reg_access_csr  = (abs_cmd_regtype == ABS_CMD_HARTREG_CSR);
@@ -762,7 +765,7 @@ assign abs_cmd_execprogbuf_req  = abs_cmd_hartreg_vd     & abs_cmd_execprogbuf;
 // Abstract command access valid flags
 assign abs_cmd_csr_ro_access_vd = abs_cmd_csr_access_req  & abs_cmd_regsize_vd & ~abs_cmd_regwr
                                 & ~abs_cmd_execprogbuf    & abs_cmd_csr_ro     & hart_state_run;
-assign abs_cmd_csr_rw_access_vd = abs_cmd_csr_access_req  & abs_cmd_regsize_vd &
+assign abs_cmd_csr_rw_access_vd = abs_cmd_csr_access_req  & abs_cmd_regsize_vd
                                 & (abs_cmd_regwr | ~abs_cmd_csr_ro_access_vd);
 assign abs_cmd_mprf_access_vd   = abs_cmd_mprf_access_req & abs_cmd_regsize_vd;
 assign abs_cmd_mem_access_vd    = abs_cmd_hartmem_vd & abs_cmd_memsize_vd;
@@ -798,7 +801,6 @@ always_comb begin
     end
 end
 
-assign abs_cmd_size_word  = (abs_cmd_size_ff == 2'b10);
 
 //------------------------------------------------------------------------------
 // Abstract command FSM
@@ -1123,6 +1125,7 @@ always_comb begin
                 case (1'b1)
                     abs_err_exc_ff     : abstractcs_cmderr_next = ABS_ERR_EXCEPTION;
                     abs_err_acc_busy_ff: abstractcs_cmderr_next = ABS_ERR_BUSY;
+                    default:             abstractcs_cmderr_next = abstractcs_cmderr_ff;
                 endcase
             end
         end
@@ -1133,6 +1136,9 @@ always_comb begin
                                        & (~dmi2dm_wdata_i[SCR1_DBG_ABSTRACTCS_CMDERR_HI:
                                                           SCR1_DBG_ABSTRACTCS_CMDERR_LO]));
             end
+        end
+
+        default: begin
         end
     endcase
 
@@ -1259,8 +1265,9 @@ always_ff @(posedge clk, negedge rst_n) begin
 end
 
 always_comb begin
-    dhi_fsm_next = DHI_STATE_IDLE;
+    dhi_fsm_next = dhi_fsm_ff;
     if (~hart_rst_unexp & dmcontrol_dmactive_ff) begin
+        // Normal work
         case (dhi_fsm_ff)
             DHI_STATE_IDLE      : dhi_fsm_next = dhi_req;
             DHI_STATE_EXEC      : dhi_fsm_next = cmd_resp_ok      ? DHI_STATE_EXEC_RUN   : DHI_STATE_EXEC;
@@ -1271,6 +1278,9 @@ always_comb begin
             DHI_STATE_RESUME_RUN: dhi_fsm_next = hart_state_run   ? DHI_STATE_IDLE       : DHI_STATE_RESUME_RUN;
             default             : dhi_fsm_next = dhi_fsm_ff;
         endcase
+    end else begin
+        // In case of DM reset or core unexpected reset
+        dhi_fsm_next = DHI_STATE_IDLE;
     end
 end
 
@@ -1359,6 +1369,7 @@ always_comb begin
             3'h3: dm2pipe_pbuf_instr_o = abs_progbuf3_ff;
             3'h4: dm2pipe_pbuf_instr_o = abs_progbuf4_ff;
             3'h5: dm2pipe_pbuf_instr_o = abs_progbuf5_ff;
+            default: ;
         endcase
     end else if (pipe2dm_pbuf_addr_i == 3'b0) begin
         dm2pipe_pbuf_instr_o = abs_exec_instr_ff;

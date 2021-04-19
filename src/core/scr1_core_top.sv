@@ -136,7 +136,6 @@ logic                                           tapc_ch_tdo;
 // SCU nets
 logic                                           sys_rst_n;
 logic                                           sys_rst_status;
-logic                                           tapc_rst_n;
 logic                                           hdu_rst_n;
 logic                                           hdu2dm_rdc_qlfy;
 logic                                           ndm_rst_n;
@@ -227,14 +226,6 @@ scr1_scu    i_scu (
     .core2hdu_rdc_qlfy_o        (core2hdu_rdc_qlfy  ),
     .core2dm_rdc_qlfy_o         (core2dm_rdc_qlfy   ),
     .hdu2dm_rdc_qlfy_o          (hdu2dm_rdc_qlfy    )
-);
-
-// TAPC reset
-scr1_reset_and2_cell i_tapc_rstn_and2_cell (
-    .rst_n_in       ({tapc_trst_n, pwrup_rst_n}),
-    .test_rst_n     (test_rst_n                ),
-    .test_mode      (test_mode                 ),
-    .rst_n_out      (tapc_rst_n                )
 );
 
 assign sys_rst_n_o      = sys_rst_n;
@@ -368,7 +359,7 @@ scr1_pipe_top i_pipe_top (
 //-------------------------------------------------------------------------------
 scr1_tapc i_tapc (
     // JTAG signals
-    .tapc_trst_n                    (tapc_rst_n                ),
+    .tapc_trst_n                    (tapc_trst_n               ),
     .tapc_tck                       (tapc_tck                  ),
     .tapc_tms                       (tapc_tms                  ),
     .tapc_tdi                       (tapc_tdi                  ),
@@ -396,7 +387,7 @@ scr1_tapc_synchronizer i_tapc_synchronizer (
     .clk                            (clk                       ),
 
     // JTAG common signals
-    .tapc_trst_n                    (tapc_rst_n                ),
+    .tapc_trst_n                    (tapc_trst_n               ),
     .tapc_tck                       (tapc_tck                  ),
 
     // DMI/SCU scan-chains

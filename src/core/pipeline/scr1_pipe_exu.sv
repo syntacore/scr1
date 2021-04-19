@@ -218,7 +218,6 @@ logic                               exu_exc_req;
 `ifdef SCR1_DBG_EN
 logic                               exu_exc_req_ff;
 logic                               exu_exc_req_next;
-logic                               exu_exc_req_upd;
 `endif // SCR1_DBG_EN
 type_scr1_exc_code_e                exc_code;
 logic [`SCR1_XLEN-1:0]              exc_trap_val;
@@ -491,7 +490,6 @@ assign exu_exc_req  = exu_queue_vd & (exu_queue.exc_req | lsu_exc_req
 //------------------------------------------------------------------------------
 
 `ifdef SCR1_DBG_EN
-assign exu_exc_req_upd = hdu2exu_dbg_halt2run_i | exu2pipe_instret_o;
 
 always_ff @(posedge clk, negedge rst_n) begin
     if (~rst_n) begin
@@ -832,11 +830,11 @@ assign mprf_rs2_req = exu_queue_vd & idu2exu_use_rs2_i;
 `else // SCR1_NO_EXE_STAGE
  `ifdef  SCR1_MPRF_RAM
 assign mprf_rs1_req = exu_queue_en
-                    ? exu_queue_vd_next & idu2exu_use_rs1_i;
-                    : exu_queue_vd_next & idu2exu_use_rs1_ff;
+                    ? (exu_queue_vd_next & idu2exu_use_rs1_i)
+                    : (exu_queue_vd_next & idu2exu_use_rs1_ff);
 assign mprf_rs2_req = exu_queue_en
-                    ? exu_queue_vd_next & idu2exu_use_rs2_i;
-                    : exu_queue_vd_next & idu2exu_use_rs2_ff;
+                    ? (exu_queue_vd_next & idu2exu_use_rs2_i)
+                    : (exu_queue_vd_next & idu2exu_use_rs2_ff);
  `else // SCR1_MPRF_RAM
 assign mprf_rs1_req = exu_queue_vd & idu2exu_use_rs1_ff;
 assign mprf_rs2_req = exu_queue_vd & idu2exu_use_rs2_ff;
@@ -846,8 +844,8 @@ assign mprf_rs2_req = exu_queue_vd & idu2exu_use_rs2_ff;
 // If exu_queue isn't enabled we need previous addresses and usage flags because
 // RAM blocks read operation is SYNCHRONOUS
 `ifdef SCR1_MPRF_RAM
-assign mprf_rs1_addr = exu_queue_en ? idu2exu_cmd.rs1_addr : exu_queue.rs1_addr;
-assign mprf_rs2_addr = exu_queue_en ? idu2exu_cmd.rs2_addr : exu_queue.rs2_addr;
+assign mprf_rs1_addr = exu_queue_en ? idu2exu_cmd_i.rs1_addr : exu_queue.rs1_addr;
+assign mprf_rs2_addr = exu_queue_en ? idu2exu_cmd_i.rs2_addr : exu_queue.rs2_addr;
 `else // SCR1_MPRF_RAM
 assign mprf_rs1_addr = exu_queue.rs1_addr;
 assign mprf_rs2_addr = exu_queue.rs2_addr;

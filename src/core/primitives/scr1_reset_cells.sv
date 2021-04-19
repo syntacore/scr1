@@ -53,6 +53,7 @@ module scr1_reset_sync_cell #(
     input   logic           clk,
     input   logic           test_rst_n,
     input   logic           test_mode,
+    input   logic           rst_n_in,
     output  logic           rst_n_out
 );
 
@@ -70,7 +71,7 @@ begin : gen_reset_sync_cell_single
         if (~local_rst_n_in) begin
             rst_n_dff <= 1'b0;
         end else begin
-            rst_n_dff <= 1'b1;
+            rst_n_dff <= rst_n_in;
         end
     end
 end : gen_reset_sync_cell_single
@@ -83,7 +84,7 @@ begin : gen_reset_sync_cell_multi
         if (~local_rst_n_in) begin
             rst_n_dff <= '0;
         end else begin
-            rst_n_dff <= {rst_n_dff[STAGES_AMOUNT-2:0], 1'b1};
+            rst_n_dff <= {rst_n_dff[STAGES_AMOUNT-2:0], rst_n_in};
         end
     end
 end : gen_reset_sync_cell_multi
@@ -181,7 +182,7 @@ assign reset_n_out_qlfy = reset_n_front_ff;
 
 // Reset output buffer
 scr1_reset_buf_cell
-i_reset_ouput_buf (
+i_reset_output_buf (
     .rst_n              (rst_n),
     .clk                (clk),
     .test_mode          (test_mode),
