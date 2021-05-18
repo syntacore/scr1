@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC Â© 2016-2020. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
 /// @file       <scr1_tapc.svh>
 /// @brief      TAPC header file
 ///
@@ -40,8 +40,11 @@ typedef enum logic [SCR1_TAP_STATE_WIDTH-1:0] {
     SCR1_TAP_STATE_IR_EXIT1,
     SCR1_TAP_STATE_IR_PAUSE,
     SCR1_TAP_STATE_IR_EXIT2,
-    SCR1_TAP_STATE_IR_UPDATE,
+    SCR1_TAP_STATE_IR_UPDATE
+`ifdef SCR1_XPROP_EN
+    ,
     SCR1_TAP_STATE_XXX       = 'X
+`endif // SCR1_XPROP_EN
 } type_scr1_tap_state_e;
 
 typedef enum logic [SCR1_TAP_INSTRUCTION_WIDTH - 1:0] {
@@ -52,8 +55,11 @@ typedef enum logic [SCR1_TAP_INSTRUCTION_WIDTH - 1:0] {
     SCR1_TAP_INSTR_DTMCS             = 5'h10,
     SCR1_TAP_INSTR_DMI_ACCESS        = 5'h11,
 
-    SCR1_TAP_INSTR_BYPASS            = 5'h1F,
+    SCR1_TAP_INSTR_BYPASS            = 5'h1F
+`ifdef SCR1_XPROP_EN
+    ,
     SCR1_TAP_INSTR_XXX               = 'X
+`endif // SCR1_XPROP_EN
 } type_scr1_tap_instr_e;
 
 `endif // SCR1_DBG_EN

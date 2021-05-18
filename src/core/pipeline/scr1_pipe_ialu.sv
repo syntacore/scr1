@@ -126,7 +126,9 @@ logic                                       rem_corr_req;       // Correction re
 type_scr1_ialu_fsm_state                    mdu_fsm_ff;         // Current FSM state
 type_scr1_ialu_fsm_state                    mdu_fsm_next;       // Next FSM state
 logic                                       mdu_fsm_idle;       // MDU FSM is in IDLE state
+`ifdef SCR1_TRGT_SIMULATION
 logic                                       mdu_fsm_iter;       // MDU FSM is in ITER state
+`endif // SCR1_TRGT_SIMULATION
 logic                                       mdu_fsm_corr;       // MDU FSM is in CORR state
 
 // MDU command signals
@@ -365,7 +367,9 @@ always_comb begin
 end
 
 assign mdu_fsm_idle = (mdu_fsm_ff == SCR1_IALU_MDU_FSM_IDLE);
+`ifdef SCR1_TRGT_SIMULATION
 assign mdu_fsm_iter = (mdu_fsm_ff == SCR1_IALU_MDU_FSM_ITER);
+`endif // SCR1_TRGT_SIMULATION
 assign mdu_fsm_corr = (mdu_fsm_ff == SCR1_IALU_MDU_FSM_CORR);
 
 //-------------------------------------------------------------------------------
@@ -462,8 +466,6 @@ always_comb begin
         div_res_quo   = mdu_fsm_idle
                       ? {'0, div_quo_bit}
                       : {mdu_res_lo_ff[`SCR1_XLEN-2:0], div_quo_bit};
-        div_quo_bit   = ~(div_op1_is_neg ^ div_res_rem_c)
-                      | (div_op1_is_neg & ({mdu_sum_res, div_dvdnd_lo_next} == '0));
     end
 end
 

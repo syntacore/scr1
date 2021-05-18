@@ -55,6 +55,9 @@ logic    [`SCR1_XLEN-1:0]    rs2_data_ff;
  `elsif SCR1_TRGT_FPGA_INTEL_ARRIAV
 (* ramstyle = "M10K" *)     logic   [`SCR1_XLEN-1:0]    mprf_int   [1:`SCR1_MPRF_SIZE-1];
 (* ramstyle = "M10K" *)     logic   [`SCR1_XLEN-1:0]    mprf_int2  [1:`SCR1_MPRF_SIZE-1];
+ `else
+logic   [`SCR1_XLEN-1:0]    mprf_int   [1:`SCR1_MPRF_SIZE-1];
+logic   [`SCR1_XLEN-1:0]    mprf_int2  [1:`SCR1_MPRF_SIZE-1];
  `endif
 `else  // distributed logic implementation
 type_scr1_mprf_v [1:`SCR1_MPRF_SIZE-1]                  mprf_int;

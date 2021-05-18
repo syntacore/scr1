@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC Â© 2016-2020. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
 /// @file       <scr1_csr.svh>
 /// @brief      CSR mapping/description file
 ///
@@ -186,8 +186,11 @@ parameter bit [6:0] SCR1_CSR_ADDR_MHPMEVENT_MASK    = 7'b0011001;
 //-------------------------------------------------------------------------------
 typedef enum logic {
     SCR1_CSR_RESP_OK,
-    SCR1_CSR_RESP_ER,
+    SCR1_CSR_RESP_ER
+`ifdef SCR1_XPROP_EN
+    ,
     SCR1_CSR_RESP_ERROR = 'x
+`endif // SCR1_XPROP_EN
 } type_scr1_csr_resp_e;
 
 `endif // SCR1_CSR_SVH

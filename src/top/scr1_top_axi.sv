@@ -160,6 +160,7 @@ logic                                               pwrup_rst_n_sync;
 logic                                               rst_n_sync;
 logic                                               cpu_rst_n_sync;
 logic                                               core_rst_n_local;
+logic                                               axi_rst_n;
 `ifdef SCR1_DBG_EN
 logic                                               tapc_trst_n;
 `endif // SCR1_DBG_EN
@@ -284,6 +285,12 @@ scr1_reset_and2_cell i_tapc_rstn_and2_cell (
     .test_mode      (test_mode       ),
     .rst_n_out      (tapc_trst_n     )
 );
+`endif // SCR1_DBG_EN
+
+`ifdef SCR1_DBG_EN
+assign axi_rst_n = sys_rst_n_o;
+`else // SCR1_DBG_EN
+assign axi_rst_n = rst_n_sync;
 `endif // SCR1_DBG_EN
 
 //-------------------------------------------------------------------------------
@@ -544,7 +551,7 @@ scr1_mem_axi #(
 `endif // SCR1_IMEM_AXI_RESP_BP
 ) i_imem_axi (
     .clk            (clk                    ),
-    .rst_n          (rst_n_sync             ),
+    .rst_n          (axi_rst_n              ),
     .axi_reinit     (axi_reinit             ),
 
     // Interface to core
@@ -622,7 +629,7 @@ scr1_mem_axi #(
 `endif // SCR1_DMEM_AXI_RESP_BP
 ) i_dmem_axi (
     .clk            (clk                    ),
-    .rst_n          (rst_n_sync             ),
+    .rst_n          (axi_rst_n              ),
     .axi_reinit     (axi_reinit             ),
 
     // Interface to core

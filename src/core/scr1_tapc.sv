@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC Â© 2016-2020. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
 /// @file       <scr1_tapc.sv>
 /// @brief      TAP Controller (TAPC)
 ///
@@ -158,7 +158,11 @@ always_comb begin
         SCR1_TAP_STATE_IR_PAUSE   : tap_fsm_next = tapc_tms ? SCR1_TAP_STATE_IR_EXIT2     : SCR1_TAP_STATE_IR_PAUSE;
         SCR1_TAP_STATE_IR_EXIT2   : tap_fsm_next = tapc_tms ? SCR1_TAP_STATE_IR_UPDATE    : SCR1_TAP_STATE_IR_SHIFT;
         SCR1_TAP_STATE_IR_UPDATE  : tap_fsm_next = tapc_tms ? SCR1_TAP_STATE_DR_SEL_SCAN  : SCR1_TAP_STATE_IDLE;
+`ifdef SCR1_XPROP_EN
         default                   : tap_fsm_next = SCR1_TAP_STATE_XXX;
+`else // SCR1_XPROP_EN
+        default                   : tap_fsm_next = tap_fsm_ff;
+`endif // SCR1_XPROP_EN
     endcase
 end
 

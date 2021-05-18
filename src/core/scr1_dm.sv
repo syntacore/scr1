@@ -801,7 +801,6 @@ always_comb begin
     end
 end
 
-
 //------------------------------------------------------------------------------
 // Abstract command FSM
 //------------------------------------------------------------------------------
@@ -1391,9 +1390,9 @@ assign dm2pipe_dreg_rdata_o = abs_fsm_use_addr ? abs_data1_ff : abs_data0_ff;
 
 SVA_DM_X_CONTROL : assert property (
     @(negedge clk) disable iff (~rst_n)
-    !$isunknown({rst_n, clk, dmi2dm_req_i, pipe2dm_dreg_req_i, pipe2dm_cmd_resp_i,
+    !$isunknown({dmi2dm_req_i, pipe2dm_dreg_req_i, pipe2dm_cmd_resp_i,
                  pipe2dm_hart_event_i})
-) else $error("DM error: control signals is X - %0b", {rst_n, clk, dmi2dm_req_i,
+) else $error("DM error: control signals is X - %0b", {dmi2dm_req_i,
               pipe2dm_dreg_req_i, pipe2dm_cmd_resp_i, pipe2dm_hart_event_i});
 
 SVA_DM_X_DMI : assert property (

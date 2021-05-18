@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC Â© 2016-2020. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
 /// @file       <scr1_pipe_hdu.sv>
 /// @brief      HART Debug Unit (HDU)
 ///
@@ -303,7 +303,11 @@ always_comb begin
                                                      : SCR1_HDU_DBGSTATE_DRUN;
             end
             default: begin
+`ifdef SCR1_XPROP_EN
                 dbg_state_next = SCR1_HDU_DBGSTATE_XXX;
+`else // SCR1_XPROP_EN
+                dbg_state_next = dbg_state;
+`endif // SCR1_XPROP_EN
             end
         endcase
     end
@@ -391,7 +395,7 @@ always_comb begin
             SCR1_HDU_DBGSTATE_DHALTED: hart_cmd_req = (dfsm_update | dfsm_trans);
             SCR1_HDU_DBGSTATE_RUN,
             SCR1_HDU_DBGSTATE_DRUN   : hart_cmd_req = ~dfsm_update & dfsm_trans;
-            default                  : hart_cmd_req = 'X;        
+            default                  : hart_cmd_req = 'X;
         endcase
     end
 end

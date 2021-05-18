@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC Â© 2016-2020. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
 /// @file       <scr1_riscv_isa_decoding.svh>
 /// @brief      RISC-V ISA definitions file
 ///
@@ -91,9 +91,12 @@ typedef enum logic [SCR1_IALU_CMD_WIDTH_E-1:0] {
 localparam SCR1_SUM2_OP_ALL_NUM_E    = 2;
 localparam SCR1_SUM2_OP_WIDTH_E      = $clog2(SCR1_SUM2_OP_ALL_NUM_E);
 typedef enum logic [SCR1_SUM2_OP_WIDTH_E-1:0] {
-    SCR1_SUM2_OP_PC_IMM,            // op1 = curr_pc; op2 = imm (AUIPC, target new_pc for JAL and branches)
-    SCR1_SUM2_OP_REG_IMM,           // op1 = rs1; op2 = imm (target new_pc for JALR, LOAD/STORE address)
+    SCR1_SUM2_OP_PC_IMM,        // op1 = curr_pc; op2 = imm (AUIPC, target new_pc for JAL and branches)
+    SCR1_SUM2_OP_REG_IMM        // op1 = rs1; op2 = imm (target new_pc for JALR, LOAD/STORE address)
+`ifdef SCR1_XPROP_EN
+    ,
     SCR1_SUM2_OP_ERROR = 'x
+`endif // SCR1_XPROP_EN
 } type_scr1_ialu_sum2_op_sel_e;
 
 //-------------------------------------------------------------------------------

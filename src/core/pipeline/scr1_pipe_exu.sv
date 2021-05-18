@@ -831,10 +831,10 @@ assign mprf_rs2_req = exu_queue_vd & idu2exu_use_rs2_i;
  `ifdef  SCR1_MPRF_RAM
 assign mprf_rs1_req = exu_queue_en
                     ? (exu_queue_vd_next & idu2exu_use_rs1_i)
-                    : (exu_queue_vd_next & idu2exu_use_rs1_ff);
+                    : (exu_queue_vd      & idu2exu_use_rs1_ff);
 assign mprf_rs2_req = exu_queue_en
                     ? (exu_queue_vd_next & idu2exu_use_rs2_i)
-                    : (exu_queue_vd_next & idu2exu_use_rs2_ff);
+                    : (exu_queue_vd      & idu2exu_use_rs2_ff);
  `else // SCR1_MPRF_RAM
 assign mprf_rs1_req = exu_queue_vd & idu2exu_use_rs1_ff;
 assign mprf_rs2_req = exu_queue_vd & idu2exu_use_rs2_ff;

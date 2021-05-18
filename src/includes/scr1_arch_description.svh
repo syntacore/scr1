@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC Â© 2016-2021. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
 /// @file       <scr1_arch_description.svh>
 /// @brief      Architecture description file
 ///
@@ -12,7 +12,7 @@
 //------------------------------------------------------------------------------
 
 // SCR1 core identifiers
-`define SCR1_MIMPID             32'h21041400
+`define SCR1_MIMPID             32'h21051400
 `define SCR1_MVENDORID          32'h00000000
 
 // Width of main registers and buses
@@ -204,6 +204,7 @@ parameter bit [`SCR1_DMEM_AWIDTH-1:0]   SCR1_TIMER_ADDR_PATTERN     = 'h00490000
 
 //`define SCR1_TRGT_SIMULATION            // enable simulation code (automatically defined by root makefile)
 //`define SCR1_TRACE_LOG_EN               // enable tracelog
+//`define SCR1_XPROP_EN                   // enable X-propagation
 
 // Addresses used in testbench
 localparam [`SCR1_XLEN-1:0]      SCR1_SIM_EXIT_ADDR      = 32'h0000_00F8;

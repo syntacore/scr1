@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
 /// @file       <scr1_imem_router.sv>
 /// @brief      Instruction memory router
 ///
@@ -135,8 +135,13 @@ always_comb begin
     endcase
 end
 
+`ifdef SCR1_XPROP_EN
 assign port0_cmd   = (~port_sel) ? imem_cmd  : SCR1_MEM_CMD_ERROR;
 assign port0_addr  = (~port_sel) ? imem_addr : 'x;
+`else // SCR1_XPROP_EN
+assign port0_cmd   = imem_cmd ;
+assign port0_addr  = imem_addr;
+`endif // SCR1_XPROP_EN
 
 //-------------------------------------------------------------------------------
 // Interface to PORT1
@@ -157,8 +162,13 @@ always_comb begin
     endcase
 end
 
+`ifdef SCR1_XPROP_EN
 assign port1_cmd   = (port_sel) ? imem_cmd  : SCR1_MEM_CMD_ERROR;
 assign port1_addr  = (port_sel) ? imem_addr : 'x;
+`else // SCR1_XPROP_EN
+assign port1_cmd   = imem_cmd ;
+assign port1_addr  = imem_addr;
+`endif // SCR1_XPROP_EN
 
 `ifdef SCR1_TRGT_SIMULATION
 //-------------------------------------------------------------------------------

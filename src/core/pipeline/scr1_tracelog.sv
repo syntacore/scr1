@@ -15,7 +15,11 @@ module scr1_tracelog (
     input   logic [`SCR1_XLEN-1:0]                soc2pipe_fuse_mhartid_i,      // Fuse MHARTID
 
     // MPRF
-    type_scr1_mprf_v [1:`SCR1_MPRF_SIZE-1]        mprf2trace_int_i,             // MPRF registers content
+`ifdef  SCR1_MPRF_RAM
+    input   logic   [`SCR1_XLEN-1:0]            mprf2trace_int_i   [1:`SCR1_MPRF_SIZE-1], // MPRF registers content
+`else // SCR1_MPRF_RAM
+    input   type_scr1_mprf_v [1:`SCR1_MPRF_SIZE-1] mprf2trace_int_i,             // MPRF registers content
+`endif // SCR1_MPRF_RAM
     input   logic                                 mprf2trace_wr_en_i,           // MPRF write enable
     input   logic [`SCR1_MPRF_AWIDTH-1:0]         mprf2trace_wr_addr_i,         // MPRF write address
     input   logic [`SCR1_XLEN-1:0]                mprf2trace_wr_data_i,         // MPRF write data
