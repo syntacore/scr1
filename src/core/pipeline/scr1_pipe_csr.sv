@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
 /// @file       <scr1_pipe_csr.sv>
 /// @brief      Control Status Registers (CSR)
 ///
@@ -48,9 +48,11 @@ module scr1_pipe_csr (
     // Common
     input   logic                                       rst_n,                      // CSR reset
     input   logic                                       clk,                        // Gated CSR clock
-`ifdef SCR1_CLKCTRL_EN
+`ifndef SCR1_CSR_REDUCED_CNT
+ `ifdef SCR1_CLKCTRL_EN
     input   logic                                       clk_alw_on,                 // Not-gated CSR clock
-`endif // SCR1_CLKCTRL_EN
+ `endif // SCR1_CLKCTRL_EN
+`endif // SCR1_CSR_REDUCED_CNT
 
     // SOC signals
     // IRQ

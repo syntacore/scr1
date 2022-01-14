@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
 /// @file       <scr1_pipe_top.sv>
 /// @brief      SCR1 pipeline top
 ///
@@ -52,6 +52,7 @@ module scr1_pipe_top (
     input  logic                                        dbg_en,                     // 1 - debug operations enabled
     // DM <-> Pipeline: HART Run Control i/f
     input  logic                                        dm2pipe_active_i,           // Debug Module active flag
+
     input  logic                                        dm2pipe_cmd_req_i,          // Request from Debug Module
     input  type_scr1_hdu_dbgstates_e                    dm2pipe_cmd_i,              // Command from Debug Module
     output logic                                        pipe2dm_cmd_resp_o,         // Response to Debug Module
@@ -116,12 +117,16 @@ logic                                       brkpt;                  // Breakpoin
 logic                                       exu_init_pc;            // Reset exit
 logic                                       wfi_run2halt;           // Transition to WFI halted state
 logic                                       instret;                // Instruction retirement (with or without exception)
+`ifndef SCR1_CSR_REDUCED_CNT
 logic                                       instret_nexc;           // Instruction retirement (without exception)
+`endif // SCR1_CSR_REDUCED_CNT
 `ifdef SCR1_IPIC_EN
 logic                                       ipic2csr_irq;           // IRQ request from IPIC
 `endif // SCR1_IPIC_EN
 `ifdef SCR1_TDU_EN
+ `ifdef SCR1_DBG_EN
 logic                                       brkpt_hw;               // Hardware breakpoint on current instruction
+ `endif // SCR1_DBG_EN
 `endif // SCR1_TDU_EN
 `ifdef SCR1_CLKCTRL_EN
 logic                                       imem_txns_pending;      // There are pending imem transactions
@@ -140,8 +145,10 @@ logic                                       idu2exu_req;            // IDU reque
 type_scr1_exu_cmd_s                         idu2exu_cmd;            // IDU command (see scr1_riscv_isa_decoding.svh)
 logic                                       idu2exu_use_rs1;        // Instruction uses rs1
 logic                                       idu2exu_use_rs2;        // Instruction uses rs2
+`ifndef SCR1_NO_EXE_STAGE
 logic                                       idu2exu_use_rd;         // Instruction uses rd
 logic                                       idu2exu_use_imm;        // Instruction uses immediate
+`endif // SCR1_NO_EXE_STAGE
 logic                                       exu2idu_rdy;            // EXU ready for new data
 
 // EXU <-> MPRF
@@ -345,8 +352,10 @@ scr1_pipe_idu i_pipe_idu (
     .idu2exu_cmd_o          (idu2exu_cmd       ),
     .idu2exu_use_rs1_o      (idu2exu_use_rs1   ),
     .idu2exu_use_rs2_o      (idu2exu_use_rs2   ),
+`ifndef SCR1_NO_EXE_STAGE
     .idu2exu_use_rd_o       (idu2exu_use_rd    ),
     .idu2exu_use_imm_o      (idu2exu_use_imm   ),
+`endif // SCR1_NO_EXE_STAGE
     .exu2idu_rdy_i          (exu2idu_rdy       )
 );
 
@@ -436,7 +445,9 @@ scr1_pipe_exu i_pipe_exu (
     .tdu2lsu_dbrkpt_match_i         (tdu2lsu_d_match         ),
     .tdu2lsu_dbrkpt_exc_req_i       (tdu2lsu_d_x_req         ),
     .exu2tdu_ibrkpt_ret_o           (exu2tdu_bp_retire       ),
+ `ifdef SCR1_DBG_EN
     .exu2hdu_ibrkpt_hw_o            (brkpt_hw                ),
+ `endif // SCR1_DBG_EN
 `endif // SCR1_TDU_EN
 
     // EXU control
@@ -445,7 +456,9 @@ scr1_pipe_exu i_pipe_exu (
     .exu2pipe_init_pc_o             (exu_init_pc             ),
     .exu2pipe_wfi_run2halt_o        (wfi_run2halt            ),
     .exu2pipe_instret_o             (instret                 ),
+`ifndef SCR1_CSR_REDUCED_CNT
     .exu2csr_instret_no_exc_o       (instret_nexc            ),
+`endif // SCR1_CSR_REDUCED_CNT
     .exu2pipe_exu_busy_o            (exu_busy                ),
 
     // PC interface
@@ -483,9 +496,11 @@ scr1_pipe_mprf i_pipe_mprf (
 scr1_pipe_csr i_pipe_csr (
     .rst_n                      (pipe_rst_n              ),
     .clk                        (clk                     ),
-`ifdef SCR1_CLKCTRL_EN
+`ifndef SCR1_CSR_REDUCED_CNT
+ `ifdef SCR1_CLKCTRL_EN
     .clk_alw_on                 (clkctl2pipe_clk_alw_on_i),
-`endif // SCR1_CLKCTRL_EN
+ `endif // SCR1_CLKCTRL_EN
+`endif // SCR1_CSR_REDUCED_CNT
 
     // EXU <-> CSR read/write interface
     .exu2csr_r_req_i            (exu2csr_r_req           ),
@@ -764,7 +779,9 @@ assign ifu2hdu_pbuf_rdy_qlfy    = ifu2hdu_pbuf_rdy  & {$bits(ifu2hdu_pbuf_rdy){p
 
 scr1_tracelog i_tracelog (
     .rst_n                          (pipe_rst_n                         ),
-    .clk                            (clk                                ),
+    .clk                            (clk                                )
+`ifdef SCR1_TRACE_LOG_EN
+    ,
     .soc2pipe_fuse_mhartid_i        (soc2pipe_fuse_mhartid_i            ),
 
     // MPRF
@@ -795,13 +812,12 @@ scr1_tracelog i_tracelog (
     .csr2trace_mcause_irq_i         (i_pipe_csr.csr_mcause_i_ff         ),
     .csr2trace_mcause_ec_i          (i_pipe_csr.csr_mcause_ec_ff        ),
     .csr2trace_mtval_i              (i_pipe_csr.csr_mtval_ff            ),
-    .csr2trace_mstatus_mie_up_i     (i_pipe_csr.csr2exu_mstatus_mie_up_o),
 
     // Events
     .csr2trace_e_exc_i              (i_pipe_csr.e_exc                   ),
     .csr2trace_e_irq_i              (i_pipe_csr.e_irq                   ),
-    .pipe2trace_e_wake_i            (pipe2clkctl_wake_req_o             ),
-    .csr2trace_e_mret_i             (i_pipe_csr.e_mret                  )
+    .pipe2trace_e_wake_i            (pipe2clkctl_wake_req_o             )
+`endif // SCR1_TRACE_LOG_EN
 );
 
 `endif // SCR1_TRGT_SIMULATION

@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
 /// @file       <scr1_tdu.svh>
 /// @brief      Trigger Debug Module header
 ///
@@ -27,10 +27,10 @@ parameter int unsigned  SCR1_TDU_DATA_W                = `SCR1_XLEN;
 
 // Register map
 parameter                                     SCR1_CSR_ADDR_TDU_OFFS_W        = 3;
-parameter bit [SCR1_CSR_ADDR_TDU_OFFS_W-1:0]  SCR1_CSR_ADDR_TDU_OFFS_TSELECT  = 'h0;
-parameter bit [SCR1_CSR_ADDR_TDU_OFFS_W-1:0]  SCR1_CSR_ADDR_TDU_OFFS_TDATA1   = 'h1;
-parameter bit [SCR1_CSR_ADDR_TDU_OFFS_W-1:0]  SCR1_CSR_ADDR_TDU_OFFS_TDATA2   = 'h2;
-parameter bit [SCR1_CSR_ADDR_TDU_OFFS_W-1:0]  SCR1_CSR_ADDR_TDU_OFFS_TINFO    = 'h4;
+parameter bit [SCR1_CSR_ADDR_TDU_OFFS_W-1:0]  SCR1_CSR_ADDR_TDU_OFFS_TSELECT  = SCR1_CSR_ADDR_TDU_OFFS_W'(0);
+parameter bit [SCR1_CSR_ADDR_TDU_OFFS_W-1:0]  SCR1_CSR_ADDR_TDU_OFFS_TDATA1   = SCR1_CSR_ADDR_TDU_OFFS_W'(1);
+parameter bit [SCR1_CSR_ADDR_TDU_OFFS_W-1:0]  SCR1_CSR_ADDR_TDU_OFFS_TDATA2   = SCR1_CSR_ADDR_TDU_OFFS_W'(2);
+parameter bit [SCR1_CSR_ADDR_TDU_OFFS_W-1:0]  SCR1_CSR_ADDR_TDU_OFFS_TINFO    = SCR1_CSR_ADDR_TDU_OFFS_W'(4);
 
 
 parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_TDU_TSELECT       = SCR1_CSR_ADDR_TDU_MBASE + SCR1_CSR_ADDR_TDU_OFFS_TSELECT;

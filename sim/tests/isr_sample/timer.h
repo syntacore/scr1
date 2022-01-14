@@ -1,8 +1,6 @@
 #ifndef __TIMER__H
 #define __TIMER__H
 
-
-
 #define MEM_MTIME_MASK  0xF0000000
 #define MEM_MTIME_CTRL  0x00490000
 #define MEM_MTIME_DIV   0x00490004
@@ -14,6 +12,8 @@
 #define TMP   t0
 #define TMP2  t1
 #define TMP3  t2
+
+#if defined(__ASSEMBLER__)
 
 // Reset
 .macro _reset_mtime
@@ -92,6 +92,89 @@
     sw          TMP2, 0(TMP)
 .endm
 
+#else  /// #if defined(__ASSEMBLER__)
 
+#include <stdint.h>
+#include "scr1_specific.h"
+
+static inline void reset_mtime(void)
+{
+    volatile uint32_t *mem_mtime = (volatile uint32_t *)MEM_MTIME;
+    mem_mtime[0] = 0;
+    mem_mtime[1] = 0;
+}
+
+static inline void reset_mtimecmp(void)
+{
+    volatile uint32_t *reset_mtimecmp = (volatile uint32_t *)MEM_MTIMECMP;
+    reset_mtimecmp[0] = -1;
+    reset_mtimecmp[1] = -1;
+}
+
+static inline void write_mtime_ctrl(uint32_t val)
+{
+    volatile uint32_t *mem_mtime_ctrl = (volatile uint32_t *)MEM_MTIME_CTRL;
+    *mem_mtime_ctrl = val;
+}
+
+static inline void write_mtime_div(uint32_t val)
+{
+    volatile uint32_t *mem_mtime_div = (volatile uint32_t *)MEM_MTIME_DIV;
+    *mem_mtime_div = val;
+}
+
+
+static inline void write_mtimecmp_32(uint32_t val)
+{
+    volatile uint32_t *mem_mtime_cmp = (volatile uint32_t *)MEM_MTIMECMP;
+    mem_mtime_cmp[0] = -1;
+    mem_mtime_cmp[1] = 0;
+    mem_mtime_cmp[0] = val;
+}
+
+static inline void write_mtime(uint32_t val)
+{
+    volatile uint32_t *mem_mtime = (volatile uint32_t *)MEM_MTIME;
+    *mem_mtime = val;
+}
+
+static inline uint32_t read_mtime(void)
+{
+    volatile uint32_t *mem_mtime = (volatile uint32_t *)MEM_MTIME;
+    return *mem_mtime;
+}
+
+static inline uint32_t read_mtimecmp(void)
+{
+    volatile uint32_t *mem_mtime_cmp = (volatile uint32_t *)MEM_MTIMECMP;
+    return *mem_mtime_cmp;
+}
+
+static inline uint32_t read_mtime_ctrl(void)
+{
+    volatile uint32_t *mem_mtime_ctrl = (volatile uint32_t *)MEM_MTIME_CTRL;
+    return *mem_mtime_ctrl;
+}
+
+static inline uint32_t read_mtime_div(void)
+{
+    volatile uint32_t *mem_mtime_div = (volatile uint32_t *)MEM_MTIME_DIV;
+    return *mem_mtime_div;
+}
+
+static inline void run_timer(void)
+{
+    volatile uint32_t *mem_mtime_ctrl = (volatile uint32_t *)MEM_MTIME_CTRL;
+    *mem_mtime_ctrl |= 1 << SCR1_MTIME_CTRL_EN;
+}
+
+
+static inline void stop_timer(void)
+{
+    volatile uint32_t *mem_mtime_ctrl = (volatile uint32_t *)MEM_MTIME_CTRL;
+    *mem_mtime_ctrl &= ~(1 << SCR1_MTIME_CTRL_EN);
+}
+
+#endif  /// #else #if defined(__ASSEMBLER__)
 
 #endif // #ifndef __TIMER__H

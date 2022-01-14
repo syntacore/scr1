@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
 /// @file       <scr1_pipe_ialu.sv>
 /// @brief      Integer Arithmetic Logic Unit (IALU)
 ///
@@ -203,8 +203,8 @@ logic        [`SCR1_XLEN-1:0]               mdu_res_lo_next;
 // width equals to the maximum width of both the right-hand and left-hand side variables
 always_comb begin
     main_sum_res = (exu2ialu_cmd_i != SCR1_IALU_CMD_ADD)
-                 ? (exu2ialu_main_op1_i - exu2ialu_main_op2_i)   // Subtraction and comparison
-                 : (exu2ialu_main_op1_i + exu2ialu_main_op2_i);  // Addition
+                 ? ({1'b0, exu2ialu_main_op1_i} - {1'b0, exu2ialu_main_op2_i})   // Subtraction and comparison
+                 : ({1'b0, exu2ialu_main_op1_i} + {1'b0, exu2ialu_main_op2_i});  // Addition
 
     main_sum_pos_ovflw = ~exu2ialu_main_op1_i[`SCR1_XLEN-1]
                        &  exu2ialu_main_op2_i[`SCR1_XLEN-1]
@@ -406,7 +406,7 @@ assign mul_op2_sgn    = mul_op2_is_sgn & exu2ialu_main_op2_i[`SCR1_XLEN-1];
 `ifdef SCR1_FAST_MUL
 assign mul_op1 = mdu_cmd_mul ? $signed({mul_op1_sgn, exu2ialu_main_op1_i}) : '0;
 assign mul_op2 = mdu_cmd_mul ? $signed({mul_op2_sgn, exu2ialu_main_op2_i}) : '0;
-assign mul_res = mdu_cmd_mul ? mul_op1 * mul_op2                           : 'sb0;
+assign mul_res = mdu_cmd_mul ? mul_op1 * mul_op2                           : $signed('0);
 `else // ~SCR1_FAST_MUL
 assign mul_op1 = mdu_cmd_mul  ? $signed({mul_op1_sgn, exu2ialu_main_op1_i}) : '0;
 assign mul_op2 = ~mdu_cmd_mul ? '0
@@ -414,7 +414,7 @@ assign mul_op2 = ~mdu_cmd_mul ? '0
                               : $signed({(mdu_iter_cnt[0] & mul_op2_is_sgn & mdu_res_lo_ff[SCR1_MUL_WIDTH-1]),
                                           mdu_res_lo_ff[SCR1_MUL_WIDTH-1:0]});
 
-assign mul_part_prod            = mdu_cmd_mul  ? mul_op1 * mul_op2 : 'sb0;
+assign mul_part_prod            = mdu_cmd_mul  ? mul_op1 * mul_op2 : $signed('0);
 assign {mul_res_hi, mul_res_lo} = ~mdu_cmd_mul ? '0
                                 : mdu_fsm_idle ? ({mdu_sum_res, exu2ialu_main_op2_i[`SCR1_XLEN-1:SCR1_MUL_WIDTH]})
                                                : ({mdu_sum_res, mdu_res_lo_ff[`SCR1_XLEN-1:SCR1_MUL_WIDTH]});

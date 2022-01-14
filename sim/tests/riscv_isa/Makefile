@@ -1,6 +1,10 @@
 
 include rv32_tests.inc
 
+ifneq (,$(findstring e,$(ARCH_lowercase)))
+    $(error >>> there is no compliance tests for RV32E)
+endif
+
 ARCH_tmp := imf
 
 ifneq (,$(findstring c,$(ARCH_lowercase)))
@@ -45,7 +49,7 @@ $(bld_dir)/%.hex: $(bld_dir)/%.elf
 	$(RISCV_OBJCOPY) $^ $@
 
 $(bld_dir)/%.dump: $(bld_dir)/%.elf
-	$(RISCV_OBJDUMP) $^ > $@
+	$(RISCV_OBJDUMP) -D -w -x -S $^ > $@
 
 clean:
 	$(RM) $(test_elf) $(test_hex) $(test_dump) $(objs)

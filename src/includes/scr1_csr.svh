@@ -23,62 +23,62 @@
 //-------------------------------------------------------------------------------
 
 // Machine Information Registers (read-only)
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MVENDORID     = 'hF11;
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MARCHID       = 'hF12;
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MIMPID        = 'hF13;
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MHARTID       = 'hF14;
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MVENDORID     = SCR1_CSR_ADDR_WIDTH'('hF11);
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MARCHID       = SCR1_CSR_ADDR_WIDTH'('hF12);
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MIMPID        = SCR1_CSR_ADDR_WIDTH'('hF13);
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MHARTID       = SCR1_CSR_ADDR_WIDTH'('hF14);
 
 // Machine Trap Setup (read-write)
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MSTATUS       = 'h300;
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MISA          = 'h301;
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MIE           = 'h304;
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MTVEC         = 'h305;
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MSTATUS       = SCR1_CSR_ADDR_WIDTH'('h300);
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MISA          = SCR1_CSR_ADDR_WIDTH'('h301);
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MIE           = SCR1_CSR_ADDR_WIDTH'('h304);
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MTVEC         = SCR1_CSR_ADDR_WIDTH'('h305);
 
 // Machine Trap Handling (read-write)
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MSCRATCH      = 'h340;
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MEPC          = 'h341;
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MCAUSE        = 'h342;
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MTVAL         = 'h343;
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MIP           = 'h344;
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MSCRATCH      = SCR1_CSR_ADDR_WIDTH'('h340);
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MEPC          = SCR1_CSR_ADDR_WIDTH'('h341);
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MCAUSE        = SCR1_CSR_ADDR_WIDTH'('h342);
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MTVAL         = SCR1_CSR_ADDR_WIDTH'('h343);
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MIP           = SCR1_CSR_ADDR_WIDTH'('h344);
 
 // Machine Counters/Timers (read-write)
 `ifndef SCR1_CSR_REDUCED_CNT
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MCYCLE        = 'hB00;
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MINSTRET      = 'hB02;
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MCYCLEH       = 'hB80;
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MINSTRETH     = 'hB82;
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MCYCLE        = SCR1_CSR_ADDR_WIDTH'('hB00);
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MINSTRET      = SCR1_CSR_ADDR_WIDTH'('hB02);
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MCYCLEH       = SCR1_CSR_ADDR_WIDTH'('hB80);
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MINSTRETH     = SCR1_CSR_ADDR_WIDTH'('hB82);
 `endif // SCR1_CSR_REDUCED_CNT
 
 // Shadow Counters/Timers (read-only)
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_TIME          = 'hC01;
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_TIME          = SCR1_CSR_ADDR_WIDTH'('hC01);
 `ifndef SCR1_CSR_REDUCED_CNT
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_CYCLE         = 'hC00;
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_INSTRET       = 'hC02;
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_TIMEH         = 'hC81;
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_CYCLEH        = 'hC80;
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_INSTRETH      = 'hC82;
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_CYCLE         = SCR1_CSR_ADDR_WIDTH'('hC00);
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_INSTRET       = SCR1_CSR_ADDR_WIDTH'('hC02);
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_TIMEH         = SCR1_CSR_ADDR_WIDTH'('hC81);
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_CYCLEH        = SCR1_CSR_ADDR_WIDTH'('hC80);
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_INSTRETH      = SCR1_CSR_ADDR_WIDTH'('hC82);
 `endif // SCR1_CSR_REDUCED_CNT
 
 `ifdef SCR1_DBG_EN
 //parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_DBGC_SCRATCH  = 'h7C8;
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_HDU_MBASE    = 'h7B0;
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_HDU_MSPAN    = 'h004;    // must be power of 2
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_HDU_MBASE    = SCR1_CSR_ADDR_WIDTH'('h7B0);
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_HDU_MSPAN    = SCR1_CSR_ADDR_WIDTH'('h004);    // must be power of 2
 `endif // SCR1_DBG_EN
 
 //-------------------------------------------------------------------------------
 // CSR addresses (non-standard)
 //-------------------------------------------------------------------------------
 `ifdef SCR1_MCOUNTEN_EN
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MCOUNTEN      = 'h7E0;
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_MCOUNTEN      = SCR1_CSR_ADDR_WIDTH'('h7E0);
 `endif // SCR1_MCOUNTEN_EN
 
 `ifdef SCR1_TDU_EN
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_TDU_MBASE    = 'h7A0;
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_TDU_MSPAN    = 'h008;    // must be power of 2
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_TDU_MBASE    = SCR1_CSR_ADDR_WIDTH'('h7A0);
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_TDU_MSPAN    = SCR1_CSR_ADDR_WIDTH'('h008);    // must be power of 2
 `endif // SCR1_TDU_EN
 
 `ifdef SCR1_IPIC_EN
-parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_IPIC_BASE     = 'hBF0;
+parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_IPIC_BASE     = SCR1_CSR_ADDR_WIDTH'('hBF0);
 parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_IPIC_CISV     = (SCR1_CSR_ADDR_IPIC_BASE + SCR1_IPIC_CISV );
 parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_IPIC_CICSR    = (SCR1_CSR_ADDR_IPIC_BASE + SCR1_IPIC_CICSR);
 parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_IPIC_IPR      = (SCR1_CSR_ADDR_IPIC_BASE + SCR1_IPIC_IPR  );
@@ -97,7 +97,7 @@ parameter bit [SCR1_CSR_ADDR_WIDTH-1:0] SCR1_CSR_ADDR_IPIC_ICSR     = (SCR1_CSR_
 // General
 parameter bit [`SCR1_XLEN-1:0] SCR1_RST_VECTOR      = SCR1_ARCH_RST_VECTOR;
 
-// Reset values TBD
+// Reset values
 parameter bit SCR1_CSR_MIE_MSIE_RST_VAL             = 1'b0;
 parameter bit SCR1_CSR_MIE_MTIE_RST_VAL             = 1'b0;
 parameter bit SCR1_CSR_MIE_MEIE_RST_VAL             = 1'b0;

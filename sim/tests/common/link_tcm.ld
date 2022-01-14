@@ -61,6 +61,7 @@ SECTIONS {
 
   
   .sdata ALIGN(CL_SIZE) : {
+    *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2) *(.srodata*)
     *(.sdata .sdata.* .gnu.linkonce.s.*)
     . = ALIGN(CL_SIZE);
     PROVIDE(__DATA_END__ = .);

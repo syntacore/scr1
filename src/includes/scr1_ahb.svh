@@ -34,7 +34,7 @@ parameter logic [2:0] SCR1_HSIZE_32B   = 3'b010;
 `ifdef SCR1_XPROP_EN
 parameter logic [2:0] SCR1_HSIZE_ERR   = 'x;
 `else // SCR1_XPROP_EN
-parameter logic [1:0] SCR1_HSIZE_ERR   = '0;
+parameter logic [2:0] SCR1_HSIZE_ERR   = '0;
 `endif // SCR1_XPROP_EN
 
 // Encoding HPROT signal

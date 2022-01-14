@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
 /// @file       <scr1_pipe_exu.sv>
 /// @brief      Execution Unit (EXU)
 ///
@@ -117,7 +117,9 @@ module scr1_pipe_exu (
     output  logic                               exu2pipe_init_pc_o,         // Reset exit
     output  logic                               exu2pipe_wfi_run2halt_o,    // Transition to WFI halted state
     output  logic                               exu2pipe_instret_o,         // Instruction retired (with or without exception)
+`ifndef SCR1_CSR_REDUCED_CNT
     output  logic                               exu2csr_instret_no_exc_o,   // Instruction retired (without exception)
+`endif // SCR1_CSR_REDUCED_CNT
     output  logic                               exu2pipe_exu_busy_o,        // EXU busy
 
 `ifdef SCR1_DBG_EN
@@ -144,7 +146,9 @@ module scr1_pipe_exu (
     input  logic [SCR1_TDU_MTRIG_NUM-1:0]       tdu2lsu_dbrkpt_match_i,     // Data breakpoint(s) match
     input  logic                                tdu2lsu_dbrkpt_exc_req_i,   // Data breakpoint exception
     output logic [SCR1_TDU_ALLTRIG_NUM-1:0]     exu2tdu_ibrkpt_ret_o,       // Instruction with breakpoint flag retire
+  `ifdef SCR1_DBG_EN
     output logic                                exu2hdu_ibrkpt_hw_o,        // Hardware breakpoint on current instruction
+  `endif // SCR1_DBG_EN
 `endif // SCR1_TDU_EN
 
     // PC interface
@@ -482,7 +486,9 @@ assign exu_exc_req  = exu_queue_vd & (exu_queue.exc_req | lsu_exc_req
                                                         | jb_misalign
 `endif // ~SCR1_RVC_EXT
 `ifdef SCR1_TDU_EN
+  `ifdef SCR1_DBG_EN
                                                         | exu2hdu_ibrkpt_hw_o
+  `endif // SCR1_DBG_EN
 `endif // SCR1_TDU_EN
                                                         );
 
@@ -508,7 +514,9 @@ assign exu_exc_req_next = hdu2exu_dbg_halt2run_i ? 1'b0 : exu_exc_req;
 always_comb begin
     case (1'b1)
 `ifdef SCR1_TDU_EN
+  `ifdef SCR1_DBG_EN
         exu2hdu_ibrkpt_hw_o: exc_code = SCR1_EXC_CODE_BREAKPOINT;
+  `endif // SCR1_DBG_EN
 `endif // SCR1_TDU_EN
         exu_queue.exc_req  : exc_code = exu_queue.exc_code;
         lsu_exc_req        : exc_code = lsu_exc_code;
@@ -802,7 +810,9 @@ assign exu2pipe_init_pc_o       = init_pc;
 assign exu2idu_rdy_o            = exu_rdy & ~exu_queue_barrier;
 assign exu2pipe_exu_busy_o      = exu_queue_vd & ~exu_rdy;
 assign exu2pipe_instret_o       = exu_queue_vd & exu_rdy;
+`ifndef SCR1_CSR_REDUCED_CNT
 assign exu2csr_instret_no_exc_o = exu2pipe_instret_o & ~exu_exc_req;
+`endif // SCR1_CSR_REDUCED_CNT
 
 // Exceptions
 `ifdef SCR1_DBG_EN
@@ -814,7 +824,9 @@ assign exu2pipe_exc_req_o  = exu_exc_req;
 // Breakpoints
 assign exu2pipe_brkpt_o    = exu_queue_vd & (exu_queue.exc_code == SCR1_EXC_CODE_BREAKPOINT);
 `ifdef SCR1_TDU_EN
+  `ifdef SCR1_DBG_EN
 assign exu2hdu_ibrkpt_hw_o = tdu2exu_ibrkpt_exc_req_i | tdu2lsu_dbrkpt_exc_req_i;
+  `endif // SCR1_DBG_EN
 `endif // SCR1_TDU_EN
 
 //------------------------------------------------------------------------------
@@ -844,15 +856,15 @@ assign mprf_rs2_req = exu_queue_vd & idu2exu_use_rs2_ff;
 // If exu_queue isn't enabled we need previous addresses and usage flags because
 // RAM blocks read operation is SYNCHRONOUS
 `ifdef SCR1_MPRF_RAM
-assign mprf_rs1_addr = exu_queue_en ? idu2exu_cmd_i.rs1_addr : exu_queue.rs1_addr;
-assign mprf_rs2_addr = exu_queue_en ? idu2exu_cmd_i.rs2_addr : exu_queue.rs2_addr;
+assign mprf_rs1_addr = exu_queue_en ? idu2exu_cmd_i.rs1_addr[`SCR1_MPRF_AWIDTH-1:0] : exu_queue.rs1_addr[`SCR1_MPRF_AWIDTH-1:0];
+assign mprf_rs2_addr = exu_queue_en ? idu2exu_cmd_i.rs2_addr[`SCR1_MPRF_AWIDTH-1:0] : exu_queue.rs2_addr[`SCR1_MPRF_AWIDTH-1:0];
 `else // SCR1_MPRF_RAM
-assign mprf_rs1_addr = exu_queue.rs1_addr;
-assign mprf_rs2_addr = exu_queue.rs2_addr;
+assign mprf_rs1_addr = exu_queue.rs1_addr[`SCR1_MPRF_AWIDTH-1:0];
+assign mprf_rs2_addr = exu_queue.rs2_addr[`SCR1_MPRF_AWIDTH-1:0];
 `endif // SCR1_MPRF_RAM
 
-assign exu2mprf_rs1_addr_o = mprf_rs1_req ? `SCR1_MPRF_AWIDTH'(mprf_rs1_addr) : '0;
-assign exu2mprf_rs2_addr_o = mprf_rs2_req ? `SCR1_MPRF_AWIDTH'(mprf_rs2_addr) : '0;
+assign exu2mprf_rs1_addr_o = mprf_rs1_req ? mprf_rs1_addr[`SCR1_MPRF_AWIDTH-1:0] : '0;
+assign exu2mprf_rs2_addr_o = mprf_rs2_req ? mprf_rs2_addr[`SCR1_MPRF_AWIDTH-1:0] : '0;
 
 // Write back stage
 //------------------------------------------------------------------------------
@@ -1031,7 +1043,7 @@ SCR1_SVA_EXU_XCHECK_CTRL : assert property (
 
 SCR1_SVA_EXU_XCHECK_QUEUE : assert property (
     @(negedge clk) disable iff (~rst_n)
-    idu2exu_req_i |-> !$isunknown(idu2exu_cmd_i)
+    (idu2exu_req_i & exu_queue_vd) |-> !$isunknown(idu2exu_cmd_i)
     ) else $error("EXU Error: unknown values in queue");
 
 SCR1_SVA_EXU_XCHECK_CSR_RDATA : assert property (
@@ -1055,6 +1067,19 @@ SCR1_SVA_EXU_ONEHOT_EXC : assert property (
 `endif
     })
     ) else $error("EXU Error: exceptions $onehot0 failed");
+
+// No event can request current PC update before initial reset sequence is done
+SCR1_SVA_EXU_CURR_PC_UPD_BEFORE_INIT : assert property (
+    @(negedge clk) disable iff (~rst_n)
+    ~&init_pc_v |-> ~( pc_curr_upd & ~init_pc )
+    ) else $error("EXU Error: current PC updated before been initialized");
+
+// No event can generate a new PC request to IFU before initial reset sequence
+// is done
+SCR1_SVA_EXU_NEW_PC_REQ_BEFORE_INIT : assert property (
+    @(negedge clk) disable iff (~rst_n)
+    ~&init_pc_v |-> ~( exu2ifu_pc_new_req_o & ~init_pc )
+    ) else $error("EXU Error: new PC req generated before reset sequence is done");
 
 `endif // SCR1_TRGT_SIMULATION
 

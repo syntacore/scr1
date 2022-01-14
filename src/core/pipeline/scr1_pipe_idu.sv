@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
 /// @file       <scr1_pipe_idu.sv>
 /// @brief      Instruction Decoder Unit (IDU)
 ///
@@ -39,8 +39,10 @@ module scr1_pipe_idu
     output  type_scr1_exu_cmd_s             idu2exu_cmd_o,          // IDU command
     output  logic                           idu2exu_use_rs1_o,      // Instruction uses rs1
     output  logic                           idu2exu_use_rs2_o,      // Instruction uses rs2
+`ifndef SCR1_NO_EXE_STAGE
     output  logic                           idu2exu_use_rd_o,       // Instruction uses rd
     output  logic                           idu2exu_use_imm_o,      // Instruction uses immediate
+`endif // SCR1_NO_EXE_STAGE
     input   logic                           exu2idu_rdy_i           // EXU ready for new data
 );
 
@@ -115,8 +117,10 @@ always_comb begin
     // Clock gating
     idu2exu_use_rs1_o         = 1'b0;
     idu2exu_use_rs2_o         = 1'b0;
+`ifndef SCR1_NO_EXE_STAGE
     idu2exu_use_rd_o          = 1'b0;
     idu2exu_use_imm_o         = 1'b0;
+`endif // SCR1_NO_EXE_STAGE
 
     rvi_illegal             = 1'b0;
 `ifdef SCR1_RVE_EXT
@@ -139,8 +143,10 @@ always_comb begin
                 idu2exu_cmd_o.rd_addr     = instr[11:7];
                 case (rvi_opcode)
                     SCR1_OPCODE_AUIPC           : begin
+`ifndef SCR1_NO_EXE_STAGE
                         idu2exu_use_rd_o          = 1'b1;
                         idu2exu_use_imm_o         = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                         idu2exu_cmd_o.sum2_op     = SCR1_SUM2_OP_PC_IMM;
                         idu2exu_cmd_o.rd_wb_sel   = SCR1_RD_WB_SUM2;
                         idu2exu_cmd_o.imm         = {instr[31:12], 12'b0};
@@ -150,8 +156,10 @@ always_comb begin
                     end // SCR1_OPCODE_AUIPC
 
                     SCR1_OPCODE_LUI             : begin
+`ifndef SCR1_NO_EXE_STAGE
                         idu2exu_use_rd_o          = 1'b1;
                         idu2exu_use_imm_o         = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                         idu2exu_cmd_o.rd_wb_sel   = SCR1_RD_WB_IMM;
                         idu2exu_cmd_o.imm         = {instr[31:12], 12'b0};
 `ifdef SCR1_RVE_EXT
@@ -160,8 +168,10 @@ always_comb begin
                     end // SCR1_OPCODE_LUI
 
                     SCR1_OPCODE_JAL             : begin
+`ifndef SCR1_NO_EXE_STAGE
                         idu2exu_use_rd_o          = 1'b1;
                         idu2exu_use_imm_o         = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                         idu2exu_cmd_o.sum2_op     = SCR1_SUM2_OP_PC_IMM;
                         idu2exu_cmd_o.rd_wb_sel   = SCR1_RD_WB_INC_PC;
                         idu2exu_cmd_o.jump_req    = 1'b1;
@@ -173,8 +183,10 @@ always_comb begin
 
                     SCR1_OPCODE_LOAD            : begin
                         idu2exu_use_rs1_o         = 1'b1;
+`ifndef SCR1_NO_EXE_STAGE
                         idu2exu_use_rd_o          = 1'b1;
                         idu2exu_use_imm_o         = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                         idu2exu_cmd_o.sum2_op     = SCR1_SUM2_OP_REG_IMM;
                         idu2exu_cmd_o.rd_wb_sel   = SCR1_RD_WB_LSU;
                         idu2exu_cmd_o.imm         = {{21{instr[31]}}, instr[30:20]};
@@ -194,7 +206,9 @@ always_comb begin
                     SCR1_OPCODE_STORE           : begin
                         idu2exu_use_rs1_o         = 1'b1;
                         idu2exu_use_rs2_o         = 1'b1;
+`ifndef SCR1_NO_EXE_STAGE
                         idu2exu_use_imm_o         = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                         idu2exu_cmd_o.sum2_op     = SCR1_SUM2_OP_REG_IMM;
                         idu2exu_cmd_o.imm         = {{21{instr[31]}}, instr[30:25], instr[11:7]};
                         case (funct3)
@@ -211,7 +225,9 @@ always_comb begin
                     SCR1_OPCODE_OP              : begin
                         idu2exu_use_rs1_o         = 1'b1;
                         idu2exu_use_rs2_o         = 1'b1;
+`ifndef SCR1_NO_EXE_STAGE
                         idu2exu_use_rd_o          = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                         idu2exu_cmd_o.ialu_op     = SCR1_IALU_OP_REG_REG;
                         idu2exu_cmd_o.rd_wb_sel   = SCR1_RD_WB_IALU;
                         case (funct7)
@@ -258,8 +274,10 @@ always_comb begin
 
                     SCR1_OPCODE_OP_IMM          : begin
                         idu2exu_use_rs1_o         = 1'b1;
+`ifndef SCR1_NO_EXE_STAGE
                         idu2exu_use_rd_o          = 1'b1;
                         idu2exu_use_imm_o         = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                         idu2exu_cmd_o.imm         = {{21{instr[31]}}, instr[30:20]};
                         idu2exu_cmd_o.ialu_op     = SCR1_IALU_OP_REG_IMM;
                         idu2exu_cmd_o.rd_wb_sel   = SCR1_RD_WB_IALU;
@@ -323,7 +341,9 @@ always_comb begin
                     SCR1_OPCODE_BRANCH          : begin
                         idu2exu_use_rs1_o         = 1'b1;
                         idu2exu_use_rs2_o         = 1'b1;
+`ifndef SCR1_NO_EXE_STAGE
                         idu2exu_use_imm_o         = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                         idu2exu_cmd_o.imm         = {{20{instr[31]}}, instr[7], instr[30:25], instr[11:8], 1'b0};
                         idu2exu_cmd_o.branch_req  = 1'b1;
                         idu2exu_cmd_o.sum2_op     = SCR1_SUM2_OP_PC_IMM;
@@ -344,8 +364,10 @@ always_comb begin
 
                     SCR1_OPCODE_JALR        : begin
                         idu2exu_use_rs1_o     = 1'b1;
+`ifndef SCR1_NO_EXE_STAGE
                         idu2exu_use_rd_o      = 1'b1;
                         idu2exu_use_imm_o     = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                         case (funct3)
                             3'b000  : begin
                                 // JALR
@@ -362,13 +384,17 @@ always_comb begin
                     end // SCR1_OPCODE_JALR
 
                     SCR1_OPCODE_SYSTEM      : begin
+`ifndef SCR1_NO_EXE_STAGE
                         idu2exu_use_rd_o      = 1'b1;
                         idu2exu_use_imm_o     = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                         idu2exu_cmd_o.imm     = `SCR1_XLEN'({funct3, instr[31:20]});      // {funct3, CSR address}
                         case (funct3)
                             3'b000  : begin
+`ifndef SCR1_NO_EXE_STAGE
                                 idu2exu_use_rd_o    = 1'b0;
                                 idu2exu_use_imm_o   = 1'b0;
+`endif // SCR1_NO_EXE_STAGE
                                 case ({instr[19:15], instr[11:7]})
                                     10'd0 : begin
                                         case (funct12)
@@ -472,12 +498,16 @@ always_comb begin
             SCR1_INSTR_RVC0 : begin
                 idu2exu_cmd_o.instr_rvc   = 1'b1;
                 idu2exu_use_rs1_o         = 1'b1;
+`ifndef SCR1_NO_EXE_STAGE
                 idu2exu_use_imm_o         = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                 case (funct3)
                     3'b000  : begin
                         if (~|instr[12:5])      rvc_illegal = 1'b1;
                         // C.ADDI4SPN
+`ifndef SCR1_NO_EXE_STAGE
                         idu2exu_use_rd_o          = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                         idu2exu_cmd_o.ialu_cmd    = SCR1_IALU_CMD_ADD;
                         idu2exu_cmd_o.ialu_op     = SCR1_IALU_OP_REG_IMM;
                         idu2exu_cmd_o.rd_wb_sel   = SCR1_RD_WB_IALU;
@@ -487,7 +517,9 @@ always_comb begin
                     end
                     3'b010  : begin
                         // C.LW
+`ifndef SCR1_NO_EXE_STAGE
                         idu2exu_use_rd_o          = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                         idu2exu_cmd_o.sum2_op     = SCR1_SUM2_OP_REG_IMM;
                         idu2exu_cmd_o.lsu_cmd     = SCR1_LSU_CMD_LW;
                         idu2exu_cmd_o.rd_wb_sel   = SCR1_RD_WB_LSU;
@@ -513,8 +545,10 @@ always_comb begin
             // Quadrant 1
             SCR1_INSTR_RVC1 : begin
                 idu2exu_cmd_o.instr_rvc   = 1'b1;
+`ifndef SCR1_NO_EXE_STAGE
                 idu2exu_use_rd_o          = 1'b1;
                 idu2exu_use_imm_o         = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                 case (funct3)
                     3'b000  : begin
                         // C.ADDI / C.NOP
@@ -572,12 +606,16 @@ always_comb begin
                         idu2exu_cmd_o.rd_addr     = {2'b01, instr[9:7]};
                         idu2exu_cmd_o.rs2_addr    = {2'b01, instr[4:2]};
                         idu2exu_use_rs1_o         = 1'b1;
+`ifndef SCR1_NO_EXE_STAGE
                         idu2exu_use_rd_o          = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                         case (instr[11:10])
                             2'b00   : begin
                                 if (instr[12])          rvc_illegal = 1'b1;
                                 // C.SRLI
+`ifndef SCR1_NO_EXE_STAGE
                                 idu2exu_use_imm_o         = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                                 idu2exu_cmd_o.imm         = {27'd0, instr[6:2]};
                                 idu2exu_cmd_o.ialu_cmd    = SCR1_IALU_CMD_SRL;
                                 idu2exu_cmd_o.ialu_op     = SCR1_IALU_OP_REG_IMM;
@@ -586,7 +624,9 @@ always_comb begin
                             2'b01   : begin
                                 if (instr[12])          rvc_illegal = 1'b1;
                                 // C.SRAI
+`ifndef SCR1_NO_EXE_STAGE
                                 idu2exu_use_imm_o         = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                                 idu2exu_cmd_o.imm         = {27'd0, instr[6:2]};
                                 idu2exu_cmd_o.ialu_cmd    = SCR1_IALU_CMD_SRA;
                                 idu2exu_cmd_o.ialu_op     = SCR1_IALU_OP_REG_IMM;
@@ -594,7 +634,9 @@ always_comb begin
                             end
                             2'b10   : begin
                                 // C.ANDI
+`ifndef SCR1_NO_EXE_STAGE
                                 idu2exu_use_imm_o         = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                                 idu2exu_cmd_o.ialu_cmd    = SCR1_IALU_CMD_AND;
                                 idu2exu_cmd_o.ialu_op     = SCR1_IALU_OP_REG_IMM;
                                 idu2exu_cmd_o.rd_wb_sel   = SCR1_RD_WB_IALU;
@@ -636,7 +678,9 @@ always_comb begin
                     end // funct3 == 3'b100
                     3'b101  : begin
                         // C.J
+`ifndef SCR1_NO_EXE_STAGE
                         idu2exu_use_imm_o         = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                         idu2exu_cmd_o.sum2_op     = SCR1_SUM2_OP_PC_IMM;
                         idu2exu_cmd_o.jump_req    = 1'b1;
                         idu2exu_cmd_o.imm         = {{21{instr[12]}}, instr[8], instr[10:9], instr[6], instr[7], instr[2], instr[11], instr[5:3], 1'b0};
@@ -645,7 +689,9 @@ always_comb begin
                         // C.BEQZ
                         idu2exu_use_rs1_o         = 1'b1;
                         idu2exu_use_rs2_o         = 1'b1;
+`ifndef SCR1_NO_EXE_STAGE
                         idu2exu_use_imm_o         = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                         idu2exu_cmd_o.ialu_cmd    = SCR1_IALU_CMD_SUB_EQ;
                         idu2exu_cmd_o.ialu_op     = SCR1_IALU_OP_REG_REG;
                         idu2exu_cmd_o.sum2_op     = SCR1_SUM2_OP_PC_IMM;
@@ -658,7 +704,9 @@ always_comb begin
                         // C.BNEZ
                         idu2exu_use_rs1_o         = 1'b1;
                         idu2exu_use_rs2_o         = 1'b1;
+`ifndef SCR1_NO_EXE_STAGE
                         idu2exu_use_imm_o         = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                         idu2exu_cmd_o.ialu_cmd    = SCR1_IALU_CMD_SUB_NE;
                         idu2exu_cmd_o.ialu_op     = SCR1_IALU_OP_REG_REG;
                         idu2exu_cmd_o.sum2_op     = SCR1_SUM2_OP_PC_IMM;
@@ -678,8 +726,10 @@ always_comb begin
                     3'b000  : begin
                         if (instr[12])          rvc_illegal = 1'b1;
                         // C.SLLI
+`ifndef SCR1_NO_EXE_STAGE
                         idu2exu_use_rd_o          = 1'b1;
                         idu2exu_use_imm_o         = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                         idu2exu_cmd_o.rs1_addr    = instr[11:7];
                         idu2exu_cmd_o.rd_addr     = instr[11:7];
                         idu2exu_cmd_o.imm         = {27'd0, instr[6:2]};
@@ -693,8 +743,10 @@ always_comb begin
                     3'b010  : begin
                         if (~|instr[11:7])      rvc_illegal = 1'b1;
                         // C.LWSP
+`ifndef SCR1_NO_EXE_STAGE
                         idu2exu_use_rd_o          = 1'b1;
                         idu2exu_use_imm_o         = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                         idu2exu_cmd_o.sum2_op     = SCR1_SUM2_OP_REG_IMM;
                         idu2exu_cmd_o.lsu_cmd     = SCR1_LSU_CMD_LW;
                         idu2exu_cmd_o.rd_wb_sel   = SCR1_RD_WB_LSU;
@@ -710,7 +762,9 @@ always_comb begin
                             if (|instr[6:2]) begin
                                 // C.MV
                                 idu2exu_use_rs2_o         = 1'b1;
+`ifndef SCR1_NO_EXE_STAGE
                                 idu2exu_use_rd_o          = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                                 idu2exu_cmd_o.ialu_cmd    = SCR1_IALU_CMD_ADD;
                                 idu2exu_cmd_o.ialu_op     = SCR1_IALU_OP_REG_REG;
                                 idu2exu_cmd_o.rd_wb_sel   = SCR1_RD_WB_IALU;
@@ -723,7 +777,9 @@ always_comb begin
                             end else begin
                                 if (~|instr[11:7])      rvc_illegal = 1'b1;
                                 // C.JR
+`ifndef SCR1_NO_EXE_STAGE
                                 idu2exu_use_imm_o         = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                                 idu2exu_cmd_o.sum2_op     = SCR1_SUM2_OP_REG_IMM;
                                 idu2exu_cmd_o.jump_req    = 1'b1;
                                 idu2exu_cmd_o.rs1_addr    = instr[11:7];
@@ -740,8 +796,10 @@ always_comb begin
                             end else if (~|instr[6:2]) begin
                                 // C.JALR
                                 idu2exu_use_rs1_o         = 1'b1;
+`ifndef SCR1_NO_EXE_STAGE
                                 idu2exu_use_rd_o          = 1'b1;
                                 idu2exu_use_imm_o         = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                                 idu2exu_cmd_o.sum2_op     = SCR1_SUM2_OP_REG_IMM;
                                 idu2exu_cmd_o.rd_wb_sel   = SCR1_RD_WB_INC_PC;
                                 idu2exu_cmd_o.jump_req    = 1'b1;
@@ -755,7 +813,9 @@ always_comb begin
                                 // C.ADD
                                 idu2exu_use_rs1_o         = 1'b1;
                                 idu2exu_use_rs2_o         = 1'b1;
+`ifndef SCR1_NO_EXE_STAGE
                                 idu2exu_use_rd_o          = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                                 idu2exu_cmd_o.ialu_cmd    = SCR1_IALU_CMD_ADD;
                                 idu2exu_cmd_o.ialu_op     = SCR1_IALU_OP_REG_REG;
                                 idu2exu_cmd_o.rd_wb_sel   = SCR1_RD_WB_IALU;
@@ -772,7 +832,9 @@ always_comb begin
                         // C.SWSP
                         idu2exu_use_rs1_o         = 1'b1;
                         idu2exu_use_rs2_o         = 1'b1;
+`ifndef SCR1_NO_EXE_STAGE
                         idu2exu_use_imm_o         = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
                         idu2exu_cmd_o.sum2_op     = SCR1_SUM2_OP_REG_IMM;
                         idu2exu_cmd_o.lsu_cmd     = SCR1_LSU_CMD_SW;
                         idu2exu_cmd_o.rs1_addr    = SCR1_MPRF_SP_ADDR;
@@ -789,10 +851,13 @@ always_comb begin
             end // Quadrant 2
 
             default         : begin
+`ifdef SCR1_XPROP_EN
+                rvi_illegal             = 1'b1;
+`endif // SCR1_XPROP_EN
             end
 `else   // SCR1_RVC_EXT
             default         : begin
-                idu2exu_cmd_o.instr_rvc   = 1'b1;
+                idu2exu_cmd_o.instr_rvc = 1'b1;
                 rvi_illegal             = 1'b1;
             end
 `endif  // SCR1_RVC_EXT
@@ -824,12 +889,16 @@ always_comb begin
 
         idu2exu_use_rs1_o             = 1'b0;
         idu2exu_use_rs2_o             = 1'b0;
+`ifndef SCR1_NO_EXE_STAGE
         idu2exu_use_rd_o              = 1'b0;
+`endif // SCR1_NO_EXE_STAGE
 
 `ifndef SCR1_MTVAL_ILLEGAL_INSTR_EN
         idu2exu_use_imm_o             = 1'b0;
 `else // SCR1_MTVAL_ILLEGAL_INSTR_EN
+`ifndef SCR1_NO_EXE_STAGE
         idu2exu_use_imm_o             = 1'b1;
+`endif // SCR1_NO_EXE_STAGE
         idu2exu_cmd_o.imm             = instr;
 `endif // SCR1_MTVAL_ILLEGAL_INSTR_EN
 
@@ -849,11 +918,6 @@ end // RV32I(MC) decode
 SCR1_SVA_IDU_XCHECK : assert property (
     @(negedge clk) disable iff (~rst_n)
     !$isunknown({ifu2idu_vd_i, exu2idu_rdy_i})
-    ) else $error("IDU Error: unknown values");
-
-SCR1_SVA_IDU_XCHECK2 : assert property (
-    @(negedge clk) disable iff (~rst_n)
-    ifu2idu_vd_i |-> !$isunknown({ifu2idu_imem_err_i, (ifu2idu_imem_err_i ? 0 : ifu2idu_instr_i)})
     ) else $error("IDU Error: unknown values");
 
 // Behavior checks

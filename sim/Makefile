@@ -47,7 +47,7 @@ build_vcs: $(sv_list)
 	-lca \
 	-sverilog \
 	-notice \
-	+lint=all,noVCDE,noSVA-DIU,noSVA-CE,noSVA-NSVU \
+	+lint=all,noVCDE,noNS,noVNGS,noSVA-DIU,noSVA-CE,noSVA-NSVU \
 	-timescale=1ns/1ps \
 	+incdir+$(rtl_inc_dir) \
 	+incdir+$(rtl_inc_tb_dir) \

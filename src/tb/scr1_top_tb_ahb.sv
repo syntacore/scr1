@@ -19,6 +19,12 @@ module scr1_top_tb_ahb (
 // Local parameters
 //-------------------------------------------------------------------------------
 localparam                          SCR1_MEM_SIZE       = 1024*1024;
+localparam                          TIMEOUT             = 'd2000_000;//20ms;
+localparam                          ARCH                = 'h1;
+localparam                          COMPLIANCE          = 'h2;
+localparam                          ADDR_START          = 'h200;
+localparam                          ADDR_TRAP_VECTOR    = 'h240;
+localparam                          ADDR_TRAP_DEFAULT   = 'h1C0;
 
 //-------------------------------------------------------------------------------
 // Local signal declaration
@@ -70,6 +76,9 @@ logic                                   dmem_hready;
 logic   [SCR1_AHB_WIDTH-1:0]            dmem_hrdata;
 logic                                   dmem_hresp;
 
+// Wathdogs
+int unsigned                            watchdogs_cnt;
+
 int unsigned                            f_results;
 int unsigned                            f_info;
 
@@ -94,15 +103,22 @@ bit                                     rst_init;
 
 
 `ifdef VERILATOR
-function bit is_compliance (logic [255:0] testname);
+function int identify_test (logic [255:0] testname);
     bit res;
-    logic [79:0] pattern;
+    logic [79:0] pattern_compliance;
+    logic [22:0] pattern_arch;
 begin
-    pattern = 80'h636f6d706c69616e6365; // compliance
+    pattern_compliance = 80'h636f6d706c69616e6365; // compliance
+    pattern_arch       = 'h61726368;             // arch
     res = 0;
     for (int i = 0; i<= 176; i++) begin
-        if(testname[i+:80] == pattern) begin
-            return ~res;
+        if(testname[i+:80] == pattern_compliance) begin
+            return COMPLIANCE;
+        end
+    end
+    for (int i = 0; i<= 233; i++) begin
+        if(testname[i+:23] == pattern_arch) begin
+            return ARCH;
         end
     end
     `ifdef SIGNATURE_OUT
@@ -111,7 +127,7 @@ begin
         return res;
     `endif
 end
-endfunction : is_compliance
+endfunction : identify_test
 
 function logic [255:0] get_filename (logic [255:0] testname);
 logic [255:0] res;
@@ -142,13 +158,22 @@ endfunction : get_filename
 function logic [255:0] get_ref_filename (logic [255:0] testname);
 logic [255:0] res;
 int i, j;
-logic [79:0] pattern;
+logic [79:0] pattern_compliance;
+logic [22:0] pattern_arch;
 begin
-    pattern = 80'h636f6d706c69616e6365; // compliance
+    pattern_compliance = 80'h636f6d706c69616e6365; // compliance
+    pattern_arch       = 'h61726368;             // arch
 
     for(int i = 0; i <= 176; i++) begin
-        if(testname[i+:80] == pattern) begin
+        if(testname[i+:80] == pattern_compliance) begin
             testname[(i-8)+:88] = 0;
+            break;
+        end
+    end
+
+    for(int i = 0; i <= 233; i++) begin
+        if(testname[i+:23] == pattern_arch) begin
+            testname[(i-8)+:31] = 0;
             break;
         end
     end
@@ -183,28 +208,38 @@ end
 endfunction: remove_trailing_whitespaces
 
 `else // VERILATOR
-function bit is_compliance (string testname);
-begin
-    return (testname.substr(0, 9) == "compliance");
-end
-endfunction : is_compliance
+function int identify_test (string testname);
+    begin
+        if (testname.substr(0, 3) == "arch") begin
+            return ARCH;
+        end else if (testname.substr(0, 9) == "compliance") begin
+            return COMPLIANCE;
+        end else begin
+            return 0;
+        end
+    end
+endfunction : identify_test
 
 function string get_filename (string testname);
-int length;
-begin
-    length = testname.len();
-    testname[length-1] = "f";
-    testname[length-2] = "l";
-    testname[length-3] = "e";
+        int length;
+        begin
+            length = testname.len();
+            testname[length-1] = "f";
+            testname[length-2] = "l";
+            testname[length-3] = "e";
 
-    return testname;
-end
+            return testname;
+        end
 endfunction : get_filename
 
 function string get_ref_filename (string testname);
-begin
-    return testname.substr(11, testname.len() - 5);
-end
+    begin
+        if (identify_test(test_file) == COMPLIANCE) begin
+            return testname.substr(11, testname.len() - 5);
+        end else if (identify_test(test_file) == ARCH) begin
+            return testname.substr(5, testname.len() - 5);
+        end
+    end
 endfunction : get_ref_filename
 
 `endif // VERILATOR

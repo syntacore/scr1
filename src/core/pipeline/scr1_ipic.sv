@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
 /// @file       <scr1_ipic.sv>
 /// @brief      Integrated Programmable Interrupt Controller (IPIC)
 ///
@@ -65,7 +65,7 @@ typedef struct {
 
 typedef struct {
     logic                                   vd;
-    logic   [SCR1_IRQ_VECT_WIDTH-1:0]       idx;
+    logic   [SCR1_IRQ_IDX_WIDTH-1:0]        idx;
 } type_scr1_search_one_16_s;
 
 typedef struct packed {
@@ -73,7 +73,7 @@ typedef struct packed {
     logic                                   ie;
     logic                                   im;
     logic                                   inv;
-    logic                                   is;
+    logic                                   isv;
     logic   [SCR1_IRQ_LINES_WIDTH-1:0]      line;
 } type_scr1_icsr_m_s;
 
@@ -216,15 +216,15 @@ type_scr1_icsr_m_s                      ipic_icsr;              // Interrupt Con
 
 // Serviced interrupt signals
 logic                                   irq_serv_vd;            // There is an interrupt in service
-logic [SCR1_IRQ_VECT_WIDTH-1:0]         irq_serv_idx;           // Index of an interrupt that is currently in service
+logic [SCR1_IRQ_IDX_WIDTH-1:0]          irq_serv_idx;           // Index of an interrupt that is currently in service
 
 // Requested interrupt signals
 logic                                   irq_req_vd;             // There is a requested interrupt
-logic [SCR1_IRQ_VECT_WIDTH-1:0]         irq_req_idx;            // Index of a requested interrupt
+logic [SCR1_IRQ_IDX_WIDTH-1:0]          irq_req_idx;            // Index of a requested interrupt
 
 // Interrupt requested on "end of the previous interrupt" signals
 logic                                   irq_eoi_req_vd;         // There is a requested interrupt when the previous one has ended
-logic [SCR1_IRQ_VECT_WIDTH-1:0]         irq_eoi_req_idx;        // Index of an interrupt requested when the previous one has ended
+logic [SCR1_IRQ_IDX_WIDTH-1:0]          irq_eoi_req_idx;        // Index of an interrupt requested when the previous one has ended
 
 logic [SCR1_IRQ_VECT_NUM-1:0]           irq_req_v;              // Vector of interrupts that are pending and enabled
 
@@ -316,7 +316,7 @@ always_comb begin
                 ipic2csr_rdata_o[SCR1_IPIC_ICSR_INV]     = ipic_icsr.inv;
                 ipic2csr_rdata_o[SCR1_IPIC_ICSR_PRV_MSB:
                                  SCR1_IPIC_ICSR_PRV_LSB] = SCR1_IPIC_PRV_M;
-                ipic2csr_rdata_o[SCR1_IPIC_ICSR_IS]      = ipic_icsr.is;
+                ipic2csr_rdata_o[SCR1_IPIC_ICSR_IS]      = ipic_icsr.isv;
                 ipic2csr_rdata_o[SCR1_IPIC_ICSR_LN_MSB-1:
                                  SCR1_IPIC_ICSR_LN_LSB]  = ipic_icsr.line;
             end
@@ -392,8 +392,8 @@ always_ff @(negedge rst_n, posedge clk) begin
     end
 end
 
-assign ipic_cisv_next = irq_start_vd ? irq_req_idx
-                      : ipic_eoi_req ? irq_eoi_req_vd ? irq_eoi_req_idx
+assign ipic_cisv_next = irq_start_vd ? {1'b0, irq_req_idx}
+                      : ipic_eoi_req ? irq_eoi_req_vd ? {1'b0, irq_eoi_req_idx}
                                                       : SCR1_IRQ_VOID_VECT_NUM
                                      : 1'b0;
 
@@ -577,7 +577,7 @@ assign ipic_icsr.ip    = ipic_ipr_ff  [ipic_idxr_ff];
 assign ipic_icsr.ie    = ipic_ier_ff  [ipic_idxr_ff];
 assign ipic_icsr.im    = ipic_imr_ff  [ipic_idxr_ff];
 assign ipic_icsr.inv   = ipic_iinvr_ff[ipic_idxr_ff];
-assign ipic_icsr.is    = ipic_isvr_ff [ipic_idxr_ff];
+assign ipic_icsr.isv   = ipic_isvr_ff [ipic_idxr_ff];
 assign ipic_icsr.line  = SCR1_IRQ_LINES_WIDTH'(ipic_idxr_ff);
 
 //------------------------------------------------------------------------------

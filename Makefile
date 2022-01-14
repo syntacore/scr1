@@ -75,6 +75,9 @@ else
         ARCH_tmp   := $(ARCH_tmp)c
         EXT_CFLAGS += -D__RVC_EXT
     endif
+    ifneq (,$(findstring b,$(ARCH_lowercase)))
+        ARCH_tmp   := $(ARCH_tmp)b
+    endif
 endif
 
 override ARCH=$(ARCH_tmp)
@@ -93,10 +96,11 @@ endif
 SIM_BUILD_OPTS ?=
 
 # Use this parameter to set the list of tests to run
-# TARGETS = <riscv_isa, riscv_compliance, coremark, dhrystone21, hello, isr_sample>
+# TARGETS = <riscv_isa, riscv_compliance, riscv_arch, coremark, dhrystone21, hello, isr_sample>
 export TARGETS :=
 
 
+export XLEN  ?= 32
 export ABI   ?= ilp32
 # Testbench memory delay patterns\
   (FFFFFFFF - no delay, 00000000 - random delay, 00000001 - max delay)
@@ -151,13 +155,17 @@ endif
 
 #--
 ifeq (,$(findstring e,$(ARCH_lowercase)))
-# These tests cannot be compiled for RVE
-
     # Comment this target if you don't want to run the riscv_isa
     TARGETS += riscv_isa
 
     # Comment this target if you don't want to run the riscv_compliance
     TARGETS += riscv_compliance
+
+    # Comment this target if you don't want to run the riscv_arch
+    TARGETS += riscv_arch
+else
+    # Comment this target if you don't want to run the riscv_arch
+    TARGETS += riscv_arch
 endif
 
 # Comment this target if you don't want to run the isr_sample
@@ -171,6 +179,9 @@ TARGETS += dhrystone21
 
 # Comment this target if you don't want to run the hello test
 TARGETS += hello
+
+# Comment this target if you don't want to run the watchdog test
+TARGETS += watchdog
 
 # Targets
 .PHONY: tests run_modelsim run_vcs run_ncsim run_verilator run_verilator_wf
@@ -186,7 +197,7 @@ echo_out: tests
 
 tests: $(TARGETS)
 
-$(test_info): clean_hex tests
+$(test_info): clean_test_list clean_hex tests
 	cd $(bld_dir)
 
 isr_sample: | $(bld_dir)
@@ -204,8 +215,14 @@ riscv_isa: | $(bld_dir)
 riscv_compliance: | $(bld_dir)
 	$(MAKE) -C $(tst_dir)/riscv_compliance ARCH=$(ARCH)
 
+riscv_arch: | $(bld_dir)
+	$(MAKE) -C $(tst_dir)/riscv_arch ARCH=$(ARCH)
+
 hello: | $(bld_dir)
 	-$(MAKE) -C $(tst_dir)/hello EXT_CFLAGS="$(EXT_CFLAGS)" ARCH=$(ARCH)
+
+watchdog: | $(bld_dir)
+	-$(MAKE) -C $(tst_dir)/watchdog EXT_CFLAGS="$(EXT_CFLAGS)" ARCH=$(ARCH)
 
 clean_hex: | $(bld_dir)
 	$(RM) $(bld_dir)/*.hex
@@ -214,7 +231,7 @@ $(bld_dir):
 	mkdir -p $(bld_dir)
 
 run_vcs: $(test_info)
-	$(MAKE) -C $(root_dir)/sim build_vcs SIM_CFG_DEF=$(SIM_CFG_DEF) SIM_TRACE_DEF=$(SIM_TRACE_DEF) SIM_BUILD_OPTS=$(SIM_BUILD_OPTS);
+	$(MAKE) -C $(root_dir)/sim build_vcs SIM_CFG_DEF=$(SIM_CFG_DEF) SIM_TRACE_DEF=$(SIM_TRACE_DEF) SIM_BUILD_OPTS="$(SIM_BUILD_OPTS)";
 	printf "" > $(test_results);
 	cd $(bld_dir); \
 	$(bld_dir)/simv  -V \
@@ -226,7 +243,7 @@ run_vcs: $(test_info)
 	printf "                          Test               | build | simulation \n" ; \
 	printf "$$(cat $(test_results)) \n"
 run_modelsim: $(test_info)
-	$(MAKE) -C $(root_dir)/sim build_modelsim SIM_CFG_DEF=$(SIM_CFG_DEF) SIM_TRACE_DEF=$(SIM_TRACE_DEF) SIM_BUILD_OPTS=$(SIM_BUILD_OPTS); \
+	$(MAKE) -C $(root_dir)/sim build_modelsim SIM_CFG_DEF=$(SIM_CFG_DEF) SIM_TRACE_DEF=$(SIM_TRACE_DEF) SIM_BUILD_OPTS="$(SIM_BUILD_OPTS)"; \
 	printf "" > $(test_results); \
 	cd $(bld_dir); \
 	vsim -c -do "run -all" +nowarn3691 \
@@ -241,7 +258,7 @@ run_modelsim: $(test_info)
 	printf "$$(cat $(test_results)) \n"
 
 run_ncsim: $(test_info)
-	$(MAKE) -C $(root_dir)/sim build_ncsim SIM_CFG_DEF=$(SIM_CFG_DEF) SIM_TRACE_DEF=$(SIM_TRACE_DEF) SIM_BUILD_OPTS=$(SIM_BUILD_OPTS);
+	$(MAKE) -C $(root_dir)/sim build_ncsim SIM_CFG_DEF=$(SIM_CFG_DEF) SIM_TRACE_DEF=$(SIM_TRACE_DEF) SIM_BUILD_OPTS="$(SIM_BUILD_OPTS)";
 	printf "" > $(test_results);
 	cd $(bld_dir); \
 	irun \
@@ -257,7 +274,7 @@ run_ncsim: $(test_info)
 	printf "$$(cat $(test_results)) \n"
 
 run_verilator: $(test_info)
-	$(MAKE) -C $(root_dir)/sim build_verilator SIM_CFG_DEF=$(SIM_CFG_DEF) SIM_TRACE_DEF=$(SIM_TRACE_DEF) SIM_BUILD_OPTS=$(SIM_BUILD_OPTS);
+	$(MAKE) -C $(root_dir)/sim build_verilator SIM_CFG_DEF=$(SIM_CFG_DEF) SIM_TRACE_DEF=$(SIM_TRACE_DEF) SIM_BUILD_OPTS="$(SIM_BUILD_OPTS)";
 	printf "" > $(test_results);
 	cd $(bld_dir); \
 	echo $(top_module) | tee $(sim_results); \
@@ -272,7 +289,7 @@ run_verilator: $(test_info)
 	printf "$$(cat $(test_results)) \n"
 
 run_verilator_wf: $(test_info)
-	$(MAKE) -C $(root_dir)/sim build_verilator_wf SIM_CFG_DEF=$(SIM_CFG_DEF) SIM_TRACE_DEF=$(SIM_TRACE_DEF) SIM_BUILD_OPTS=$(SIM_BUILD_OPTS);
+	$(MAKE) -C $(root_dir)/sim build_verilator_wf SIM_CFG_DEF=$(SIM_CFG_DEF) SIM_TRACE_DEF=$(SIM_TRACE_DEF) SIM_BUILD_OPTS="$(SIM_BUILD_OPTS)";
 	printf "" > $(test_results);
 	cd $(bld_dir); \
 	echo $(top_module) | tee $(sim_results); \
@@ -286,8 +303,9 @@ run_verilator_wf: $(test_info)
 	printf "                          Test               | build | simulation \n" ; \
 	printf "$$(cat $(test_results)) \n"
 clean:
-	$(MAKE) -C $(tst_dir)/benchmarks/dhrystone21 clean
-	$(MAKE) -C $(tst_dir)/riscv_isa clean
-	$(MAKE) -C $(tst_dir)/riscv_compliance clean
 	$(RM) -R $(root_dir)/build/*
-	$(RM) $(test_info)
+#	$(MAKE) -C $(tst_dir)/benchmarks/dhrystone21 clean
+#	$(MAKE) -C $(tst_dir)/riscv_isa clean
+#	$(MAKE) -C $(tst_dir)/riscv_compliance clean
+#	$(MAKE) -C $(tst_dir)/riscv_arch clean
+#	$(RM) $(test_info)

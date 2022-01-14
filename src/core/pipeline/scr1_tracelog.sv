@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
 /// @file       <scr1_tracelog.sv>
 /// @brief      Core tracelog module
 ///
@@ -11,7 +11,9 @@
 
 module scr1_tracelog (
     input   logic                                 rst_n,                        // Tracelog reset
-    input   logic                                 clk,                          // Tracelog clock
+    input   logic                                 clk                           // Tracelog clock
+`ifdef SCR1_TRACE_LOG_EN
+    ,
     input   logic [`SCR1_XLEN-1:0]                soc2pipe_fuse_mhartid_i,      // Fuse MHARTID
 
     // MPRF
@@ -50,18 +52,18 @@ module scr1_tracelog (
     input   logic                                 csr2trace_mcause_irq_i,       // CSR MCAUSE.interrupt bit
     input   type_scr1_exc_code_e                  csr2trace_mcause_ec_i,        // CSR MCAUSE.exception_code bit
     input   logic [`SCR1_XLEN-1:0]                csr2trace_mtval_i,            // CSR MTVAL register
-    input   logic                                 csr2trace_mstatus_mie_up_i,   // CSR MSTATUS.mie update flag
 
     // Events
     input   logic                                 csr2trace_e_exc_i,            // exception event
     input   logic                                 csr2trace_e_irq_i,            // interrupt event
-    input   logic                                 pipe2trace_e_wake_i,          // pipe wakeup event
-    input   logic                                 csr2trace_e_mret_i            // MRET instruction
+    input   logic                                 pipe2trace_e_wake_i           // pipe wakeup event
+`endif // SCR1_TRACE_LOG_EN
 );
 
 //-------------------------------------------------------------------------------
 // Local types declaration
 //-------------------------------------------------------------------------------
+`ifdef SCR1_TRACE_LOG_EN
 typedef struct {
     logic [`SCR1_XLEN-1:0]      INT_00_ZERO ;
     logic [`SCR1_XLEN-1:0]      INT_01_RA   ;
@@ -108,14 +110,15 @@ typedef struct packed {
     logic [`SCR1_XLEN-1:0]  mcause;
     logic [`SCR1_XLEN-1:0]  mtval;
 } type_scr1_csr_trace_s;
+`endif // SCR1_TRACE_LOG_EN
 
 //-------------------------------------------------------------------------------
 // Local Signal Declaration
 //-------------------------------------------------------------------------------
+`ifdef SCR1_TRACE_LOG_EN
 
 type_scr1_ireg_name_s               mprf_int_alias;
 
-`ifdef SCR1_TRACE_LOG_EN
 
 time                                current_time;
 
@@ -201,8 +204,6 @@ task trace_write_int_walias;
     endcase
 endtask
 
-`endif // SCR1_TRACE_LOG_EN
-
 //-------------------------------------------------------------------------------
 // MPRF Registers assignment
 //-------------------------------------------------------------------------------
@@ -240,6 +241,7 @@ assign mprf_int_alias.INT_29_T4     = mprf2trace_int_i[29];
 assign mprf_int_alias.INT_30_T5     = mprf2trace_int_i[30];
 assign mprf_int_alias.INT_31_T6     = mprf2trace_int_i[31];
 `endif // SCR1_RVE_EXT
+`endif // SCR1_TRACE_LOG_EN
 
 //-------------------------------------------------------------------------------
 // Legacy time counter
@@ -285,7 +287,7 @@ end
 always @(posedge rst_n) begin
     $fwrite(trace_fhandler_core, "# =====================================================================================\n");
 `ifndef VERILATOR
-    $fwrite(trace_fhandler_core, "# %14t : Core Reset\n", $time());
+    $fwrite(trace_fhandler_core, "# %16d ns : Core Reset\n", $time());
 `else
     $fwrite(trace_fhandler_core, "# : Core Reset\n");
 `endif
@@ -348,10 +350,6 @@ always_ff @(posedge clk) begin
                 // Wake
                 event_type <= "W";
             end
-            // if (csr2trace_e_mret_i) begin
-            //     // MRET
-            //     event_type  <= "R";
-            // end
             else begin
                 // No event
                 event_type <= "N";

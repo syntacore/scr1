@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
 /// @file       <scr1_pipe_ifu.sv>
 /// @brief      Instruction Fetch Unit (IFU)
 ///
@@ -291,10 +291,10 @@ always_comb begin
                 instr_type = instr_hi_is_rvi ? SCR1_IFU_INSTR_RVI_LO_RVI_HI
                                              : SCR1_IFU_INSTR_RVC_RVI_HI;
             end else begin // SCR1_OTHER
-                casez ({instr_hi_is_rvi, instr_lo_is_rvi})
-                    2'b?1   : instr_type   = SCR1_IFU_INSTR_RVI_HI_RVI_LO;
+                case ({instr_hi_is_rvi, instr_lo_is_rvi})
                     2'b00   : instr_type   = SCR1_IFU_INSTR_RVC_RVC;
                     2'b10   : instr_type   = SCR1_IFU_INSTR_RVI_LO_RVC;
+                    default : instr_type   = SCR1_IFU_INSTR_RVI_HI_RVI_LO;
                 endcase
             end
         end
@@ -392,7 +392,7 @@ always_ff @(posedge clk, negedge rst_n) begin
 end
 
 assign q_wptr_next = q_flush_req ? '0
-                   : ~q_wr_none  ? q_wptr + (q_wr_full ? 2'd2 : 1'b1)
+                   : ~q_wr_none  ? q_wptr + (q_wr_full ? SCR1_IFU_QUEUE_PTR_W'('b010) : SCR1_IFU_QUEUE_PTR_W'('b001))
                                  : q_wptr;
 
 // Queue read pointer register
@@ -407,7 +407,7 @@ always_ff @(posedge clk, negedge rst_n) begin
 end
 
 assign q_rptr_next = q_flush_req ? '0
-                   : ~q_rd_none  ? q_rptr + (q_rd_hword ? 1'b1 : 2'd2)
+                   : ~q_rd_none  ? q_rptr + (q_rd_hword ? SCR1_IFU_QUEUE_PTR_W'('b001) : SCR1_IFU_QUEUE_PTR_W'('b010))
                                  : q_rptr;
 
 // Queue data and error flag registers

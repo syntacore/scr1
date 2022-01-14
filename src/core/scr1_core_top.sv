@@ -156,10 +156,12 @@ logic                                           dm_hart_event;
 logic                                           dm_hart_event_qlfy;
 type_scr1_hdu_hartstatus_s                      dm_hart_status;
 type_scr1_hdu_hartstatus_s                      dm_hart_status_qlfy;
+
 // Program Buffer - HART instruction execution i/f
 logic [SCR1_HDU_PBUF_ADDR_WIDTH-1:0]            dm_pbuf_addr;
 logic [SCR1_HDU_PBUF_ADDR_WIDTH-1:0]            dm_pbuf_addr_qlfy;
 logic [SCR1_HDU_CORE_INSTR_WIDTH-1:0]           dm_pbuf_instr;
+
 // HART Abstract Data regs i/f
 logic                                           dm_dreg_req;
 logic                                           dm_dreg_req_qlfy;

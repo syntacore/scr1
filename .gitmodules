@@ -7,3 +7,6 @@
 [submodule "dependencies/coremark"]
 	path = dependencies/coremark
 	url = https://github.com/eembc/coremark
+[submodule "dependencies/riscv-arch"]
+	path = dependencies/riscv-arch
+	url = https://github.com/riscv/riscv-arch-test

@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
 /// @file       <scr1_dm.sv>
 /// @brief      Debug Module (DM)
 ///
@@ -483,7 +483,7 @@ always_comb begin
             dm2dmi_rdata_o[SCR1_DBG_DMSTATUS_RESERVEDA]        = DMSTATUS_RESERVEDA;
             dm2dmi_rdata_o[SCR1_DBG_DMSTATUS_DEVTREEVALID]     = DMSTATUS_DEVTREEVALID;
             dm2dmi_rdata_o[SCR1_DBG_DMSTATUS_VERSION_HI:
-                           SCR1_DBG_DMSTATUS_VERSION_LO]       = DMSTATUS_VERSION;;
+                           SCR1_DBG_DMSTATUS_VERSION_LO]       = DMSTATUS_VERSION;
         end
 
         SCR1_DBG_DMCONTROL: begin
@@ -1368,7 +1368,7 @@ always_comb begin
             3'h3: dm2pipe_pbuf_instr_o = abs_progbuf3_ff;
             3'h4: dm2pipe_pbuf_instr_o = abs_progbuf4_ff;
             3'h5: dm2pipe_pbuf_instr_o = abs_progbuf5_ff;
-            default: ;
+            default: begin end
         endcase
     end else if (pipe2dm_pbuf_addr_i == 3'b0) begin
         dm2pipe_pbuf_instr_o = abs_exec_instr_ff;

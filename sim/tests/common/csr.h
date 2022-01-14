@@ -96,10 +96,10 @@
 #define rdcycle() read_csr(cycle)
 #define rdinstret() read_csr(instret)
 
-static inline unsigned long __attribute__((const)) cpuid()
+static inline unsigned long __attribute__((const)) hartid()
 {
   unsigned long res;
-  asm ("csrr %0, mcpuid" : "=r"(res));
+  asm ("csrr %0, mhartid" : "=r"(res));
   return res;
 }
 

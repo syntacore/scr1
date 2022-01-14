@@ -15,7 +15,7 @@ RISCV_COMPLIANCE_TESTS := $(src_dir)/../../../dependencies/riscv-compliance/
 #EM EMC EC
 
 ifeq (rv32e,$(findstring rv32e,$(ARCH)))
-    $(info >>> RV32E - no compliance tests)
+    $(error >>> there is no compliance tests for RV32E)
 else ## ifdef SCR_BASE_RVE_EXT
   #ifeq (rv32i,$(findstring rv32i,$(ARCH)))
   ifeq ($(ARCH),$(filter $(ARCH),rv32i rv32im rv32imc rv32ic))
@@ -144,8 +144,8 @@ ref_data:
 	sed_output=$$(basename $${files%.*}) ; \
 	sed "s/\r$$//; \
 	s/\(........\)/\1,/g; \
-	s/.$$//; s/\(.*\),\(.*\),\(.*\),\(.*\)/\4,\3,\2,\1/; \
-	s/\(.........\)/\10x/g; s/^/0x/; s/$$/,/; $$ s/.$$//" $$sed_input > $(bld_dir)/ref_data/$$sed_output; \
+	s/.$$//; s/\(.*\),\(.*\),\(.*\),\(.*\)/\4,\3,\2,\1/;" \
+	$$sed_input > $(bld_dir)/ref_data/$$sed_output; \
 	done
 
 cp_asm:

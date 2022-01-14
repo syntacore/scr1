@@ -3,6 +3,7 @@
 /// @brief      HART Debug Unit definitions file
 ///
 
+`ifdef SCR1_DBG_EN
 `ifndef SCR1_INCLUDE_HDU_DEFS
 `define SCR1_INCLUDE_HDU_DEFS
 
@@ -161,3 +162,4 @@ typedef struct packed {
 
 
 `endif // SCR1_INCLUDE_HDU_DEFS
+`endif // SCR1_DBG_EN

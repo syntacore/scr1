@@ -49,8 +49,11 @@ localparam  SCR1_FIFO_CNT_WIDTH = $clog2(SCR1_FIFO_WIDTH+1);
 //-------------------------------------------------------------------------------
 typedef enum logic {
     SCR1_FSM_ADDR = 1'b0,
-    SCR1_FSM_DATA = 1'b1,
+    SCR1_FSM_DATA = 1'b1
+`ifdef SCR1_XPROP_EN
+    ,
     SCR1_FSM_ERR  = 1'bx
+`endif // SCR1_XPROP_EN
 } type_scr1_fsm_e;
 
 typedef struct packed {
@@ -61,7 +64,6 @@ typedef struct packed {
 } type_scr1_req_fifo_s;
 
 typedef struct packed {
-    logic                           hwrite;
     logic   [2:0]                   hwidth;
     logic   [1:0]                   haddr;
     logic   [SCR1_AHB_WIDTH-1:0]    hwdata;
@@ -107,7 +109,11 @@ function automatic logic[SCR1_AHB_WIDTH-1:0] scr1_conv_mem2ahb_wdata (
 );
     logic   [SCR1_AHB_WIDTH-1:0]  tmp;
 begin
+`ifdef SCR1_XPROP_EN
     tmp = 'x;
+`else // SCR1_XPROP_EN
+    tmp = '0;
+`endif // SCR1_XPROP_EN
     case (dmem_width)
         SCR1_MEM_WIDTH_BYTE : begin
             case (dmem_addr)
@@ -156,7 +162,11 @@ function automatic logic[SCR1_AHB_WIDTH-1:0] scr1_conv_ahb2mem_rdata (
 );
     logic   [SCR1_AHB_WIDTH-1:0]  tmp;
 begin
+`ifdef SCR1_XPROP_EN
     tmp = 'x;
+`else // SCR1_XPROP_EN
+    tmp = '0;
+`endif // SCR1_XPROP_EN
     case (hwidth)
         SCR1_HSIZE_8B : begin
             case (haddr)
@@ -280,8 +290,10 @@ always_comb begin
             req_fifo_new[0] = req_fifo_new[1];
             req_fifo_new[1].hwrite = 1'b0;
             req_fifo_new[1].hwidth = SCR1_HSIZE_32B;
+`ifdef SCR1_XPROP_EN
             req_fifo_new[1].haddr  = 'x;
             req_fifo_new[1].hwdata = 'x;
+`endif // SCR1_XPROP_EN
             req_fifo_cnt_new = req_fifo_cnt - 1'b1;
         end
         2'b11 : begin
@@ -293,9 +305,11 @@ always_comb begin
             req_fifo_new[0].hwdata = scr1_conv_mem2ahb_wdata(dmem_addr[1:0], dmem_width, dmem_wdata);
         end
         default : begin
+`ifdef SCR1_XPROP_EN
             req_fifo_up      = 'x;
             req_fifo_cnt_new = 'x;
             req_fifo_new     = 'x;
+`endif // SCR1_XPROP_EN
         end
     endcase
 end
@@ -341,7 +355,9 @@ always_ff @(negedge rst_n, posedge clk) begin
                 end
             end
             default : begin
+`ifdef SCR1_XPROP_EN
                 fsm <= SCR1_FSM_ERR;
+`endif // SCR1_XPROP_EN
             end
         endcase
     end
@@ -373,7 +389,6 @@ always_ff @(posedge clk) begin
     case (fsm)
         SCR1_FSM_ADDR : begin
             if (~req_fifo_empty) begin
-                data_fifo.hwrite <= req_fifo[0].hwrite;
                 data_fifo.hwidth <= req_fifo[0].hwidth;
                 data_fifo.haddr  <= req_fifo[0].haddr[1:0];
                 data_fifo.hwdata <= req_fifo[0].hwdata;
@@ -383,7 +398,6 @@ always_ff @(posedge clk) begin
             if (hready) begin
                 if (hresp == SCR1_HRESP_OKAY) begin
                     if (~req_fifo_empty) begin
-                        data_fifo.hwrite <= req_fifo[0].hwrite;
                         data_fifo.hwidth <= req_fifo[0].hwidth;
                         data_fifo.haddr  <= req_fifo[0].haddr[1:0];
                         data_fifo.hwdata <= req_fifo[0].hwdata;

@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
 /// @file       <scr1_memory_tb_ahb.sv>
 /// @brief      AHB memory testbench
 ///
@@ -197,7 +197,7 @@ always_ff @(negedge rst_n, posedge clk) begin
         if (imem_req_ack_stall == '0) begin
             imem_req_ack_rnd <= $random;
         end else begin
-            imem_req_ack_stall <= {imem_req_ack_stall[0], imem_req_ack_stall[31:1]};
+            imem_req_ack_stall <= ((imem_ahb_state == SCR1_AHB_STATE_DATA) | ~imem_req_ack_stall[0]) ? {imem_req_ack_stall[0], imem_req_ack_stall[31:1]} : imem_req_ack_stall;
         end
     end
 end
@@ -213,7 +213,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     end else begin
         case (imem_ahb_state)
             SCR1_AHB_STATE_IDLE : begin
-                if (imem_req_ack) begin
+//                if (imem_req_ack) begin
                     case (imem_htrans)
                         SCR1_HTRANS_IDLE : begin
                             imem_ahb_state <= SCR1_AHB_STATE_IDLE;
@@ -225,7 +225,7 @@ always_ff @(negedge rst_n, posedge clk) begin
                             imem_ahb_state <= SCR1_AHB_STATE_ERR;
                         end
                     endcase
-                end
+ //               end
             end
             SCR1_AHB_STATE_DATA : begin
                 if (imem_req_ack) begin
@@ -262,7 +262,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     end else begin
         case (imem_ahb_state)
             SCR1_AHB_STATE_IDLE : begin
-                if (imem_req_ack) begin
+//                if (imem_req_ack) begin
                     case (imem_htrans)
                         SCR1_HTRANS_IDLE : begin
                         end
@@ -278,7 +278,7 @@ always_ff @(negedge rst_n, posedge clk) begin
                             imem_hrdata_l  <= 'x;
                         end
                     endcase
-                end
+ //               end
             end
             SCR1_AHB_STATE_DATA : begin
                 if (imem_req_ack) begin
@@ -313,14 +313,11 @@ end
 // Instruction Memory response
 //-------------------------------------------------------------------------------
 always_comb begin
-    imem_hready = 1'b0;
-    imem_hresp  = SCR1_HRESP_ERROR;
+    imem_hready = 1'b1;
+    imem_hresp  = SCR1_HRESP_OKAY;
     imem_hrdata = 'x;
     case (imem_ahb_state)
         SCR1_AHB_STATE_IDLE : begin
-            if (imem_req_ack) begin
-                imem_hready = 1'b1;
-            end
         end
         SCR1_AHB_STATE_DATA : begin
             if (imem_req_ack) begin
@@ -346,7 +343,7 @@ always_ff @(negedge rst_n, posedge clk) begin
         if (dmem_req_ack_stall == 32'd0) begin
             dmem_req_ack_rnd <= $random;
         end else begin
-            dmem_req_ack_stall <= {dmem_req_ack_stall[0], dmem_req_ack_stall[31:1]};
+            dmem_req_ack_stall <= ((dmem_ahb_state == SCR1_AHB_STATE_DATA) | ~dmem_req_ack_stall[0]) ? {dmem_req_ack_stall[0], dmem_req_ack_stall[31:1]} : dmem_req_ack_stall;
         end
     end
 end
@@ -362,7 +359,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     end else begin
         case (dmem_ahb_state)
             SCR1_AHB_STATE_IDLE : begin
-                if (dmem_req_ack) begin
+//                if (dmem_req_ack) begin
                     case (dmem_htrans)
                         SCR1_HTRANS_IDLE : begin
                             dmem_ahb_state <= SCR1_AHB_STATE_IDLE;
@@ -374,7 +371,7 @@ always_ff @(negedge rst_n, posedge clk) begin
                             dmem_ahb_state    <= SCR1_AHB_STATE_ERR;
                         end
                     endcase
-                end
+//                end
             end
             SCR1_AHB_STATE_DATA : begin
                 if (dmem_req_ack) begin
@@ -424,7 +421,7 @@ always_ff @(negedge rst_n, posedge clk) begin
     end else begin
         case (dmem_ahb_state)
             SCR1_AHB_STATE_IDLE : begin
-                if (dmem_req_ack) begin
+//                if (dmem_req_ack) begin
                     case (dmem_htrans)
                         SCR1_HTRANS_IDLE : begin
                         end
@@ -470,7 +467,7 @@ always_ff @(negedge rst_n, posedge clk) begin
                             dmem_hrdata_l  <= 'x;
                         end
                     endcase
-                end
+//                end
             end
             SCR1_AHB_STATE_DATA : begin
                 if (dmem_req_ack) begin

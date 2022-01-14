@@ -41,4 +41,4 @@ $(bld_dir)/%.hex: $(bld_dir)/%.elf
 	$(RISCV_OBJCOPY) $^ $@
 
 $(bld_dir)/%.dump: $(bld_dir)/%.elf
-	$(RISCV_OBJDUMP) $^ > $@
+	$(RISCV_OBJDUMP) -D -w -x -S $^ > $@

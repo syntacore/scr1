@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
 /// @file       <scr1_tapc_shift_reg.sv>
 /// @brief      TAPC shift register. Parameterized implementation of JTAG TAPC's Shift Register.
 ///

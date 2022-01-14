@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2020. See LICENSE for details
+/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
 /// @file <scr1_scu.sv>
 /// @brief System Control Unit (SCU)
 ///
@@ -472,7 +472,7 @@ assign dm_rst_n_in  = ~scu_mode_ff.dm_rst_bhv | sys_reset_n;
 // Preventing some assertions to be raised at 0 sim time or in the first cycle
 initial begin
 $assertoff(0, scr1_scu);
-repeat (2) @(posedge clk);
+repeat (2) @(posedge clk) begin end
 $asserton(0, scr1_scu);
 end
 `endif // VERILATOR
