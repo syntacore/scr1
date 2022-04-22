@@ -160,13 +160,10 @@ ifeq (,$(findstring e,$(ARCH_lowercase)))
 
     # Comment this target if you don't want to run the riscv_compliance
     TARGETS += riscv_compliance
-
-    # Comment this target if you don't want to run the riscv_arch
-    TARGETS += riscv_arch
-else
-    # Comment this target if you don't want to run the riscv_arch
-    TARGETS += riscv_arch
 endif
+
+# Comment this target if you don't want to run the riscv_arch
+TARGETS += riscv_arch
 
 # Comment this target if you don't want to run the isr_sample
 TARGETS += isr_sample
@@ -180,8 +177,17 @@ TARGETS += dhrystone21
 # Comment this target if you don't want to run the hello test
 TARGETS += hello
 
-# Comment this target if you don't want to run the watchdog test
-TARGETS += watchdog
+# When RVE extension is on, we want to exclude some tests, even if they are given from the command line
+ifneq (,$(findstring e,$(ARCH_lowercase)))
+    excluded := riscv_isa riscv_compliance
+    excluded := $(filter $(excluded), $(TARGETS))
+    $(foreach test,$(excluded),$(warning Warning! $(test) test is not intended to run on an RVE extension, skipping it))
+    override TARGETS := $(filter-out $(excluded), $(TARGETS))
+endif
+
+ifeq (,$(strip $(TARGETS)))
+    $(error Error! No tests included, aborting)
+endif
 
 # Targets
 .PHONY: tests run_modelsim run_vcs run_ncsim run_verilator run_verilator_wf
@@ -220,9 +226,6 @@ riscv_arch: | $(bld_dir)
 
 hello: | $(bld_dir)
 	-$(MAKE) -C $(tst_dir)/hello EXT_CFLAGS="$(EXT_CFLAGS)" ARCH=$(ARCH)
-
-watchdog: | $(bld_dir)
-	-$(MAKE) -C $(tst_dir)/watchdog EXT_CFLAGS="$(EXT_CFLAGS)" ARCH=$(ARCH)
 
 clean_hex: | $(bld_dir)
 	$(RM) $(bld_dir)/*.hex

@@ -67,10 +67,8 @@ _start:
 
     li    a0, 0
     li    a1, 0
-9:  auipc t0, %pcrel_hi(main)
-    jalr  t0, %pcrel_lo(9b)
-    la    t0, sc_exit
-    //j     sc_exit
+    call main
+    tail sc_exit
 
 trap_entry:
     addi sp, sp, -272
@@ -112,7 +110,7 @@ trap_entry:
     csrr a0, mcause
     csrr a1, mepc
     mv a2, sp
-    jal handle_trap
+    call handle_trap
 
     LREG x1, 1*REGBYTES(sp)
     LREG x2, 2*REGBYTES(sp)

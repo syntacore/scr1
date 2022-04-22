@@ -1,10 +1,6 @@
 
 include rv32_tests.inc
 
-ifneq (,$(findstring e,$(ARCH_lowercase)))
-    $(error >>> there is no compliance tests for RV32E)
-endif
-
 ARCH_tmp := imf
 
 ifneq (,$(findstring c,$(ARCH_lowercase)))

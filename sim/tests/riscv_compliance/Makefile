@@ -15,7 +15,7 @@ RISCV_COMPLIANCE_TESTS := $(src_dir)/../../../dependencies/riscv-compliance/
 #EM EMC EC
 
 ifeq (rv32e,$(findstring rv32e,$(ARCH)))
-    $(error >>> there is no compliance tests for RV32E)
+    $(info >>> RV32E - no compliance tests)
 else ## ifdef SCR_BASE_RVE_EXT
   #ifeq (rv32i,$(findstring rv32i,$(ARCH)))
   ifeq ($(ARCH),$(filter $(ARCH),rv32i rv32im rv32imc rv32ic))

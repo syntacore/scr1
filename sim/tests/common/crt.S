@@ -58,8 +58,8 @@ _start:
 
     li      a0, 0
     li      a1, 0
-    jal     main
-    j       sc_exit
+    call    main
+    tail    sc_exit
 
 trap_entry:
     addi sp, sp, -272
@@ -101,7 +101,7 @@ trap_entry:
     csrr a0, mcause
     csrr a1, mepc
     mv a2, sp
-    jal handle_trap
+    call handle_trap
 
     LREG x1, 1*REGBYTES(sp)
     LREG x2, 2*REGBYTES(sp)
