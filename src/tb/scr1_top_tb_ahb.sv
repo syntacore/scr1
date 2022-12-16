@@ -268,6 +268,7 @@ initial begin
     #800ns tms      = 1'b0;
     #500ns trst_n   = 1'b0;
     #100ns tms      = 1'b1;
+
 end
 `endif // SCR1_DBG_EN
 

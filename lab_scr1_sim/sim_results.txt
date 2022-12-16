@@ -1,0 +1,9 @@
+scr1_top_tb_ahb
+[0;34m---Test:                      illegal.hex[0m
+incorrect instruction[0;32mTest passed[0m
+
+#--------------------------------------
+# Summary: 1/1 tests passed
+#--------------------------------------
+
+- /home/quang/example/SCR1/src/tb/scr1_top_tb_runtests.sv:199: Verilog $finish

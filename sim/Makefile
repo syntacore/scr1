@@ -91,6 +91,7 @@ build_verilator: $(sv_list)
 	--clk clk \
 	--exe $(scr1_wrapper) \
 	--Mdir $(bld_dir)/verilator \
+	--timing \
 	-I$(rtl_inc_dir) \
 	-I$(rtl_inc_tb_dir) \
 	$(SIM_BUILD_OPTS) \
@@ -118,6 +119,7 @@ build_verilator_wf: $(sv_list)
     --trace-structs \
     --trace-underscore \
 	--Mdir $(bld_dir)/verilator \
+	--timing \
 	-I$(rtl_inc_dir) \
 	-I$(rtl_inc_tb_dir) \
 	$(SIM_BUILD_OPTS) \
