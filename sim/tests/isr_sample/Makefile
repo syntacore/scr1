@@ -1,6 +1,6 @@
 src_dir := $(dir $(lastword $(MAKEFILE_LIST)))
 
-LDFLAGS := -nostartfiles -nostdlib -march=rv32$(ARCH) -mabi=$(ABI)
+LDFLAGS := -nostartfiles -nostdlib -march=rv32$(ARCH)_zicsr_zifencei -mabi=$(ABI)
 ADD_ASM_MACRO := -DASM
 
 ifeq ($(IPIC) ,1)

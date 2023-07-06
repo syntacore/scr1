@@ -85,7 +85,7 @@ filtered_imc      := $(filter-out $(cut_list),$(testnames_imc))
 # ARCH_FLAGS := -Wa,-march=rv32im -march=rv32im
 # ARCH_FLAGS_C := -Wa,-march=rv32imc -march=rv32imc
 CFLAGS := -I$(inc_dir) -I$(src_dir) -DASM -mabi=ilp32 -D__riscv_xlen=32 -w
-LDFLAGS := -static -fvisibility=hidden -nostdlib -nostartfiles -T$(inc_dir)/link.ld -march=$(ARCH) -mabi=ilp32
+LDFLAGS := -static -fvisibility=hidden -nostdlib -nostartfiles -T$(inc_dir)/link.ld -march=$(ARCH)_zicsr_zifencei -mabi=ilp32
 GCCVERSIONGT7 := $(shell expr `$(RISCV_GCC) -dumpfullversion | cut -f1 -d'.'` \> 7)
 ifeq "$(GCCVERSIONGT7)" "1"
 	LDFLAGS += -mno-relax
@@ -114,9 +114,9 @@ $(RISCV_GCC) $(CFLAGS) -Wa,$(2) $(2) -E $$test_asm                        \
 done
 endef
 
-$(foreach SRC,$(filtered_i),$(eval $(call compile_template,$(SRC),-march=rv32i)))
-$(foreach SRC,$(filtered_im),$(eval $(call compile_template,$(SRC),-march=rv32im)))
-$(foreach SRC,$(filtered_imc),$(eval $(call compile_template,$(SRC),-march=rv32imc)))
+$(foreach SRC,$(filtered_i),$(eval $(call compile_template,$(SRC),-march=rv32i_zicsr_zifencei)))
+$(foreach SRC,$(filtered_im),$(eval $(call compile_template,$(SRC),-march=rv32im_zicsr_zifencei)))
+$(foreach SRC,$(filtered_imc),$(eval $(call compile_template,$(SRC),-march=rv32imc_zicsr_zifencei)))
 
 
 log_requested_tgt: $(bld_dir)
@@ -150,9 +150,9 @@ ref_data:
 
 cp_asm:
 	mkdir -p $(bld_dir)/compliance_asm
-	$(call preprocessing,$(included_i),-march=rv32i)
-	$(call preprocessing,$(included_im),-march=rv32im)
-	$(call preprocessing,$(included_imc),-march=rv32imc)
+	$(call preprocessing,$(included_i),-march=rv32i_zicsr_zifencei)
+	$(call preprocessing,$(included_im),-march=rv32im_zicsr_zifencei)
+	$(call preprocessing,$(included_imc),-march=rv32imc_zicsr_zifencei)
 
 
 riscv_compliance_tests_dir    := $(if $(RISCV_COMPLIANCE_TESTS), $(RISCV_COMPLIANCE_TESTS), ./undefined)

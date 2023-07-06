@@ -169,13 +169,13 @@ $(RISCV_GCC) $(CFLAGS) -Drvtest_mtrap_routine=True -Dmhandler -Wa,$(2) $(2) -E $
 done
 endef
 
-$(foreach SRC,$(filtered_i),$(eval $(call compile_template,$(SRC),-march=rv32i)))
-$(foreach SRC,$(filtered_im),$(eval $(call compile_template,$(SRC),-march=rv32im)))
-$(foreach SRC,$(filtered_ic),$(eval $(call compile_template,$(SRC),-march=rv32ic)))
+$(foreach SRC,$(filtered_i),$(eval $(call compile_template,$(SRC),-march=rv32i_zicsr_zifencei)))
+$(foreach SRC,$(filtered_im),$(eval $(call compile_template,$(SRC),-march=rv32im_zicsr_zifencei)))
+$(foreach SRC,$(filtered_ic),$(eval $(call compile_template,$(SRC),-march=rv32ic_zicsr_zifencei)))
 
-$(foreach SRC,$(filtered_e),$(eval $(call compile_template,$(SRC),-march=rv32e)))
-$(foreach SRC,$(filtered_em),$(eval $(call compile_template,$(SRC),-march=rv32em)))
-$(foreach SRC,$(filtered_ec),$(eval $(call compile_template,$(SRC),-march=rv32ec)))
+$(foreach SRC,$(filtered_e),$(eval $(call compile_template,$(SRC),-march=rv32e_zicsr_zifencei)))
+$(foreach SRC,$(filtered_em),$(eval $(call compile_template,$(SRC),-march=rv32em_zicsr_zifencei)))
+$(foreach SRC,$(filtered_ec),$(eval $(call compile_template,$(SRC),-march=rv32ec_zicsr_zifencei)))
 
 log_requested_tgt: $(bld_dir)
 	$(foreach test_name, $(filtered), $(eval $(shell echo arch_$(test_name).hex >> $(bld_dir)/../test_info)))
