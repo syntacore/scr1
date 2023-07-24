@@ -112,6 +112,22 @@ extern void Proc_6(Enumeration, Enumeration *);
 extern void Proc_7(One_Fifty, One_Fifty, One_Fifty *);
 extern void Proc_8(Arr_1_Dim, Arr_2_Dim, int, int);
 
+
+/* lightweight implementation of atoi(3) which does not depend on */
+/* locales and other stuff. No checks for invalid symbols too */
+int tiny_atoi(const unsigned char* str) {
+  int sign = 1;
+  int res = 0;
+
+  if (*str == '-') sign = -1;
+  if (*str == '-' || *str == '+') str++;
+  while (*str) {
+    res = res * 10 + *str - '0';
+    str++;
+  }
+  return res * sign;
+}
+
 int main (argc, argv)
 int	argc;
 char	*argv[];
@@ -158,7 +174,7 @@ char	*argv[];
 #ifdef SELF_TIMED
   Number_Of_Runs = 500;//500000;
   if (argc >= 2) {
-    Number_Of_Runs = atoi(argv[1]);
+    Number_Of_Runs = tiny_atoi(argv[1]);
     }
   printf ("\n");
   printf ("Dhrystone Benchmark, Version 2.1 (Language: C)\n");
@@ -192,7 +208,7 @@ char	*argv[];
     exit(1);
     }
 
-  duration = atoi(argv[1]);
+  duration = tiny_atoi(argv[1]);
   Run_Index = 0;
   wake_me(duration, report);
 #endif /* SELF_TIMED */
