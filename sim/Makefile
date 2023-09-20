@@ -20,6 +20,14 @@ ifeq ($(BUS),AXI)
 export scr1_wrapper  := $(root_dir)/sim/verilator_wrap/scr1_axi_wrapper.c
 endif
 export verilator_ver ?= $(shell  expr `verilator --version | cut -f2 -d' '`)
+
+export verilator_ver_5x ?= $(shell  expr `verilator --version | cut -f2 -d' '` \>= 5)
+
+ifeq "$(verilator_ver_5x)" "1"
+    VERILATOR_5X_OPTS ?= --no-timing # conservative way
+endif
+
+
 endif
 
 .PHONY: build_modelsim build_vcs build_ncsim build_verilator build_verilator_wf
@@ -84,6 +92,7 @@ build_verilator: $(sv_list)
 	-sv \
 	+1800-2017ext+sv \
 	-Wno-fatal \
+	$(VERILATOR_5X_OPTS) \
 	--top-module $(top_module) \
 	-DSCR1_TRGT_SIMULATION \
 	-D$(SIM_TRACE_DEF) \
@@ -105,6 +114,7 @@ build_verilator_wf: $(sv_list)
 	-sv \
 	+1800-2017ext+sv \
 	-Wno-fatal \
+	$(VERILATOR_5X_OPTS) \
 	--top-module $(top_module) \
 	-DSCR1_TRGT_SIMULATION \
 	-D$(SIM_TRACE_DEF) \

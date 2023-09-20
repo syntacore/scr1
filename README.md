@@ -109,11 +109,10 @@ After the building, be sure to add the `<GCC_INSTALL_PATH>/bin` folder to the $P
 
 Currently supported simulators:
 
-* Verilator (last verified version: v4.102)
-* Intel ModelSim (last verified version: INTEL FPGA STARTER EDITION vsim 2020.1_3)
-* Mentor Graphics ModelSim (last verified version: Modelsim PE Student Edition 10.4a)
-* Synopsys VCS (last verified version: vcs-mx_vL-2016.06)
-* Cadence NCSim
+* Verilator (last verified version: v5.014)
+* Mentor Graphics ModelSim (last verified version: INTEL FPGA STARTER EDITION 2020.1)
+* Synopsys VCS (last verified version: S-2021.09-1)
+* Cadence NCSim (last verified version: 22.09-s004)
 
 Please note that RTL simulator executables should be in your $PATH variable.
 
