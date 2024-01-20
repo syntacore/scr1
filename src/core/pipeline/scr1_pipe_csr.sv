@@ -67,8 +67,8 @@ module scr1_pipe_csr (
     input   logic [`SCR1_XLEN-1:0]                      soc2csr_fuse_mhartid_i,     // MHARTID fuse
 
     // CSR <-> EXU read/write interface
-    input   logic                                       exu2csr_r_req_i,            // CSR read/write address
-    input   logic [SCR1_CSR_ADDR_WIDTH-1:0]             exu2csr_rw_addr_i,          // CSR read request
+    input   logic                                       exu2csr_r_req_i,            // CSR read request
+    input   logic [SCR1_CSR_ADDR_WIDTH-1:0]             exu2csr_rw_addr_i,          // CSR read/write address
     output  logic [`SCR1_XLEN-1:0]                      csr2exu_r_data_o,           // CSR read data
     input   logic                                       exu2csr_w_req_i,            // CSR write request
     input   type_scr1_csr_cmd_sel_e                     exu2csr_w_cmd_i,            // CSR write command
