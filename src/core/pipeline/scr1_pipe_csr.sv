@@ -19,6 +19,7 @@
  // - Events (EXC, IRQ, MRET) logic
  // - CSR read/write interface
  // - CSR registers:
+ //   - Machine Endianness Setup registers
  //   - Machine Trap Setup registers
  //   - Machine Trap Handling registers
  //   - Machine Counters/Timers registers
@@ -141,6 +142,9 @@ module scr1_pipe_csr (
 
 // Machine Trap Setup registers
 //------------------------------------------------------------------------------
+
+// MSTATUSH register
+logic [`SCR1_XLEN-1:0]                              csr_mstatush;            // Aggregated MSTATUSH
 
 // MSTATUS register
 logic                                               csr_mstatus_upd;        // MSTATUS update enable
@@ -341,6 +345,9 @@ always_comb begin
         SCR1_CSR_ADDR_MIMPID    : csr_r_data    = SCR1_CSR_MIMPID;
         SCR1_CSR_ADDR_MHARTID   : csr_r_data    = soc2csr_fuse_mhartid_i;
 
+        // Machine Endianness Setup (read-write)
+        SCR1_CSR_ADDR_MSTATUSH   : csr_r_data    = csr_mstatush;
+
         // Machine Trap Setup (read-write)
         SCR1_CSR_ADDR_MSTATUS   : csr_r_data    = csr_mstatus;
         SCR1_CSR_ADDR_MISA      : csr_r_data    = SCR1_CSR_MISA;
@@ -505,6 +512,7 @@ always_comb begin
     if (exu2csr_w_req_i) begin
         casez (exu2csr_rw_addr_i)
             // Machine Trap Setup (read-write)
+            SCR1_CSR_ADDR_MSTATUSH  : begin end
             SCR1_CSR_ADDR_MSTATUS   : csr_mstatus_upd   = 1'b1;
             SCR1_CSR_ADDR_MISA      : begin end
             SCR1_CSR_ADDR_MIE       : csr_mie_upd       = 1'b1;
@@ -608,6 +616,12 @@ end
  // - MIE
  // - MTVEC
 //
+
+// MSTATUSH register
+//------------------------------------------------------------------------------
+// Consists of 1 bit - endianness control (MBE)
+always_comb
+    csr_mstatush = '0;
 
 // MSTATUS register
 //------------------------------------------------------------------------------
