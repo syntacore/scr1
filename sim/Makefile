@@ -82,6 +82,7 @@ build_verilator: $(sv_list)
 	verilator \
 	-cc \
 	-sv \
+	-timing \
 	+1800-2017ext+sv \
 	-Wno-fatal \
 	--top-module $(top_module) \
@@ -103,6 +104,7 @@ build_verilator_wf: $(sv_list)
 	verilator \
 	-cc \
 	-sv \
+	-timing \
 	+1800-2017ext+sv \
 	-Wno-fatal \
 	--top-module $(top_module) \
