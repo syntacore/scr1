@@ -640,13 +640,13 @@ end
 // Consists of 1 bit - machine mode endianness (MBE)
 
 always_comb begin // MSTATUSH aggregation
-    csr2exu_endianness_o=type_endianness'(csr_mstatush[SCR1_CSR_MSTATUSH_MBE_OFFSET]);
     csr_mstatush                                                           = '0;
 `ifdef SCR1_IMMUTABLE_ENDIANNES //bi-endian is not supported
-    csr_mstatush[SCR1_CSR_MSTATUSH_MBE_OFFSET]                             = SCR1_IMMUTABLE_ENDIANNES;
+    csr_mstatush[SCR1_CSR_MSTATUSH_MBE_OFFSET]                             = `SCR1_IMMUTABLE_ENDIANNES;
 end // MSTATUSH aggregation
 `else //bi-endian is supported
     csr_mstatush[SCR1_CSR_MSTATUSH_MBE_OFFSET]                             = csr_mstatush_mbe_ff;
+    csr2exu_endianness_o=type_endianness'(csr_mstatush[SCR1_CSR_MSTATUSH_MBE_OFFSET]);
 end // MSTATUSH aggregation
 
 always_ff @(negedge rst_n, posedge clk) begin
