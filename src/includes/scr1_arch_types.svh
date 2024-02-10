@@ -1,4 +1,4 @@
-/// Copyright by Syntacore LLC © 2016-2021. See LICENSE for details
+/// Copyright by Syntacore LLC ï¿½ 2016-2021. See LICENSE for details
 /// @file       <scr1_arch_types.svh>
 /// @brief      Pipeline types description file
 ///
@@ -68,5 +68,10 @@ typedef enum logic [1:0] {
     SCR1_OP_WIDTH_ERROR = 'x
 `endif // SCR1_XPROP_EN
 } type_scr1_op_width_e;
+
+typedef enum logic {
+    LITTLE_ENDIAN  = 1'b0,
+    BIG_ENDIAN  = 1'b1
+} type_endianness;
 
 `endif //SCR1_ARCH_TYPES_SVH

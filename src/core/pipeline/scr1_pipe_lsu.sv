@@ -41,6 +41,9 @@ module scr1_pipe_lsu (
     output  logic [`SCR1_XLEN-1:0]              lsu2exu_ldata_o,            // Load data
     output  logic                               lsu2exu_exc_o,              // Exception from LSU
     output  type_scr1_exc_code_e                lsu2exu_exc_code_o,         // Exception code
+`ifndef SCR1_IMMUTABLE_ENDIANNES
+    input   type_endianness                     exu2lsu_endianness_i,       // Endianness of the data access
+`endif // SCR1_IMMUTABLE_ENDIANNES
 
 `ifdef SCR1_TDU_EN
     // LSU <-> TDU interface

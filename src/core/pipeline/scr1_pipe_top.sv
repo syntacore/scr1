@@ -204,6 +204,11 @@ type_scr1_csr_resp_e                        tdu2csr_resp;          // TDU respon
 logic                                       csr2tdu_req_qlfy;      //     Request to TDU
  `endif // SCR1_DBG_EN
 
+ `ifndef SCR1_IMMUTABLE_ENDIANNES
+  // CSR -> EXU
+  type_endianness                            csr2exu_endianness;   // Endianness of the data access
+ `endif // SCR1_IMMUTABLE_ENDIANNES
+
 // EXU/LSU <-> TDU
 type_scr1_brkm_instr_mon_s                  exu2tdu_i_mon;         // Instruction monitor
 type_scr1_brkm_lsu_mon_s                    lsu2tdu_d_mon;         // Data monitor
@@ -411,6 +416,11 @@ scr1_pipe_exu i_pipe_exu (
     .csr2exu_ip_ie_i                (csr2exu_ip_ie           ),
     .csr2exu_mstatus_mie_up_i       (csr2exu_mstatus_mie_up  ),
 
+    `ifndef SCR1_IMMUTABLE_ENDIANNES
+    // EXU <- CSR LOAD/STORE interface
+    .csr2exu_endianness_i       (csr2exu_endianness      ),
+    `endif // SCR1_IMMUTABLE_ENDIANNES
+
     // EXU <-> DMEM interface
     .exu2dmem_req_o                 (pipe2dmem_req_o         ),
     .exu2dmem_cmd_o                 (pipe2dmem_cmd_o         ),
@@ -522,6 +532,11 @@ scr1_pipe_csr i_pipe_csr (
     .csr2exu_irq_o              (csr2exu_irq             ),
     .csr2exu_ip_ie_o            (csr2exu_ip_ie           ),
     .csr2exu_mstatus_mie_up_o   (csr2exu_mstatus_mie_up  ),
+
+    `ifndef SCR1_IMMUTABLE_ENDIANNES
+    // CSR -> EXU LOAD/STORE interface
+    .csr2exu_endianness_o       (csr2exu_endianness      ),
+    `endif // SCR1_IMMUTABLE_ENDIANNES
 
 `ifdef SCR1_IPIC_EN
     // CSR <-> IPIC interface
