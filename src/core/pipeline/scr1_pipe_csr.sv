@@ -150,7 +150,12 @@ module scr1_pipe_csr (
 //------------------------------------------------------------------------------
 
 // MSTATUSH register
-logic [`SCR1_XLEN-1:0]                              csr_mstatush;            // Aggregated MSTATUSH
+logic [`SCR1_XLEN-1:0]                              csr_mstatush;           // Aggregated MSTATUSH
+`ifndef SCR1_IMMUTABLE_ENDIANNES //bi-endian is supported
+logic                                               csr_mstatush_upd;       // MSTATUSH update enable
+type_endianness                                     csr_mstatush_mbe_ff;    // MSTATUSH: Machine mode endianess
+type_endianness                                     csr_mstatush_mbe_next;  // MSTATUSH: Machine mode endianess next value
+`endif // SCR1_IMMUTABLE_ENDIANNES
 
 // MSTATUS register
 logic                                               csr_mstatus_upd;        // MSTATUS update enable
@@ -501,6 +506,9 @@ always_comb begin
     csr_mcause_upd      = 1'b0;
     csr_mtval_upd       = 1'b0;
     csr_mtvec_upd       = 1'b0;
+`ifndef SCR1_IMMUTABLE_ENDIANNES //bi-endian is supported
+    csr_mstatush_upd    = 1'b0;
+`endif // SCR1_IMMUTABLE_ENDIANNES
 
 `ifndef SCR1_CSR_REDUCED_CNT
     csr_mcycle_upd      = 2'b00;
@@ -518,7 +526,11 @@ always_comb begin
     if (exu2csr_w_req_i) begin
         casez (exu2csr_rw_addr_i)
             // Machine Trap Setup (read-write)
-            SCR1_CSR_ADDR_MSTATUSH  : begin end
+            SCR1_CSR_ADDR_MSTATUSH  : begin
+                                      `ifndef SCR1_IMMUTABLE_ENDIANNES //bi-endian is supported
+                                      csr_mstatush_upd  = 1'b1;
+                                      `endif // SCR1_IMMUTABLE_ENDIANNES
+                                      end
             SCR1_CSR_ADDR_MSTATUS   : csr_mstatus_upd   = 1'b1;
             SCR1_CSR_ADDR_MISA      : begin end
             SCR1_CSR_ADDR_MIE       : csr_mie_upd       = 1'b1;
@@ -625,9 +637,30 @@ end
 
 // MSTATUSH register
 //------------------------------------------------------------------------------
-// Consists of 1 bit - endianness control (MBE)
-always_comb
-    csr_mstatush = '0;
+// Consists of 1 bit - machine mode endianness (MBE)
+
+always_comb begin // MSTATUSH aggregation
+    csr2exu_endianness_o=type_endianness'(csr_mstatush[SCR1_CSR_MSTATUSH_MBE_OFFSET]);
+    csr_mstatush                                                           = '0;
+`ifdef SCR1_IMMUTABLE_ENDIANNES //bi-endian is not supported
+    csr_mstatush[SCR1_CSR_MSTATUSH_MBE_OFFSET]                             = SCR1_IMMUTABLE_ENDIANNES;
+end // MSTATUSH aggregation
+`else //bi-endian is supported
+    csr_mstatush[SCR1_CSR_MSTATUSH_MBE_OFFSET]                             = csr_mstatush_mbe_ff;
+end // MSTATUSH aggregation
+
+always_ff @(negedge rst_n, posedge clk) begin
+    if (~rst_n) begin
+        csr_mstatush_mbe_ff  <= SCR1_CSR_MSTATUSH_MBE_RST_VAL;
+    end else begin
+        csr_mstatush_mbe_ff  <= csr_mstatush_mbe_next;
+    end
+end
+
+assign csr_mstatush_mbe_next =  csr_mstatush_upd?
+                                type_endianness'(csr_w_data[SCR1_CSR_MSTATUSH_MBE_OFFSET])
+                            :   csr_mstatush_mbe_ff;
+`endif // SCR1_IMMUTABLE_ENDIANNES
 
 // MSTATUS register
 //------------------------------------------------------------------------------

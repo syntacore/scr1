@@ -112,6 +112,8 @@ parameter bit SCR1_CSR_MIP_MEIP_RST_VAL             = 1'b0;
 parameter bit SCR1_CSR_MSTATUS_MIE_RST_VAL          = 1'b0;
 parameter bit SCR1_CSR_MSTATUS_MPIE_RST_VAL         = 1'b1;
 
+parameter type_endianness SCR1_CSR_MSTATUSH_MBE_RST_VAL = LITTLE_ENDIAN;
+
 // MISA
 `define SCR1_RVC_ENC                                `SCR1_XLEN'h0004
 `define SCR1_RVE_ENC                                `SCR1_XLEN'h0010
@@ -146,6 +148,9 @@ parameter bit [1:0] SCR1_CSR_MSTATUS_MPP            = 2'b11;
 parameter int unsigned SCR1_CSR_MSTATUS_MIE_OFFSET  = 3;
 parameter int unsigned SCR1_CSR_MSTATUS_MPIE_OFFSET = 7;
 parameter int unsigned SCR1_CSR_MSTATUS_MPP_OFFSET  = 11;
+
+//MSTATUSH
+parameter int unsigned SCR1_CSR_MSTATUSH_MBE_OFFSET  = 5;
 
 // MTVEC
 // bits [5:0] are always zero
