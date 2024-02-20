@@ -109,9 +109,42 @@ logic                       dmem_addr_mslgn_s;  // DMEM store address is misalig
 logic                       lsu_exc_hwbrk;      // LSU hardware breakpoint exception
 `endif // SCR1_TDU_EN
 
+// endianess related signals
+logic [`SCR1_DMEM_DWIDTH-1:0] ordered_dmem2lsu_rdata; // Data memory read data
+// ordered according to the selected endianness
+type_endianness endianness; // selected endianness for the data access
+logic [$clog2(`SCR1_XLEN)-4:0] swap_control;
+// controls how bytes are swapped are swapped according to the selected endianness:
+// If swap_control[0]=1 each even byte is swapped for the following (odd) byte
+// If swap_control[1]=1 each even halfword is swapped for the following halfword
+// (RV64 only) If swap_control[2]=1 the even word is swapped for the odd word
+logic [$clog2(`SCR1_XLEN)-4:0] swap_control_ff;  // swap_control register value
+
 //------------------------------------------------------------------------------
 // Control logic
 //------------------------------------------------------------------------------
+
+// Byte order control logic
+
+`ifndef SCR1_IMMUTABLE_ENDIANNES
+assign   endianness = exu2lsu_endianness_i;
+`else
+assign   endianness = `SCR1_IMMUTABLE_ENDIANNES;
+`endif // SCR1_IMMUTABLE_ENDIANNES
+
+ always_comb begin
+   case (1'b1)
+       dmem_wdth_byte  : swap_control = 2'b0;
+       dmem_wdth_hword : swap_control = {1'b0,endianness};
+       dmem_wdth_word  : swap_control = {endianness,endianness};
+   endcase
+ end
+
+ always_ff @(posedge clk) begin
+     if (lsu_cmd_upd) begin
+         swap_control_ff <= swap_control;
+     end
+ end
 
 // DMEM response and request control signals
 assign dmem_resp_ok       = (dmem2lsu_resp_i == SCR1_MEM_RESP_RDY_OK);
@@ -242,11 +275,11 @@ assign lsu2exu_exc_o = dmem_resp_er | lsu_exc_req;
 // Sign- or zero-extending data received from DMEM
 always_comb begin
     case (lsu_cmd_ff)
-        SCR1_LSU_CMD_LH : lsu2exu_ldata_o = {{16{dmem2lsu_rdata_i[15]}}, dmem2lsu_rdata_i[15:0]};
-        SCR1_LSU_CMD_LHU: lsu2exu_ldata_o = { 16'b0,                     dmem2lsu_rdata_i[15:0]};
-        SCR1_LSU_CMD_LB : lsu2exu_ldata_o = {{24{dmem2lsu_rdata_i[7]}},  dmem2lsu_rdata_i[7:0]};
-        SCR1_LSU_CMD_LBU: lsu2exu_ldata_o = { 24'b0,                     dmem2lsu_rdata_i[7:0]};
-        default         : lsu2exu_ldata_o = dmem2lsu_rdata_i;
+        SCR1_LSU_CMD_LH : lsu2exu_ldata_o = {{16{ordered_dmem2lsu_rdata[15]}}, ordered_dmem2lsu_rdata[15:0]};
+        SCR1_LSU_CMD_LHU: lsu2exu_ldata_o = { 16'b0,                     ordered_dmem2lsu_rdata[15:0]};
+        SCR1_LSU_CMD_LB : lsu2exu_ldata_o = {{24{ordered_dmem2lsu_rdata[7]}},  ordered_dmem2lsu_rdata[7:0]};
+        SCR1_LSU_CMD_LBU: lsu2exu_ldata_o = { 24'b0,                     ordered_dmem2lsu_rdata[7:0]};
+        default         : lsu2exu_ldata_o = ordered_dmem2lsu_rdata;
     endcase // lsu_cmd_ff
 end
 
@@ -256,7 +289,17 @@ end
 
 assign lsu2dmem_req_o   = exu2lsu_req_i & ~lsu_exc_req & lsu_fsm_idle;
 assign lsu2dmem_addr_o  = exu2lsu_addr_i;
-assign lsu2dmem_wdata_o = exu2lsu_sdata_i;
+//assign lsu2dmem_wdata_o = exu2lsu_sdata_i;
+scr1_lsu_byte_swapper lsu2dmem_byte_swapper (
+  .control(swap_control),
+  .in(exu2lsu_sdata_i),
+  .out(lsu2dmem_wdata_o)
+);
+scr1_lsu_byte_swapper dmem2lsu_byte_swapper (
+  .control(swap_control_ff),
+  .in(dmem2lsu_rdata_i),
+  .out(ordered_dmem2lsu_rdata)
+);
 assign lsu2dmem_cmd_o   = dmem_cmd_store  ? SCR1_MEM_CMD_WR : SCR1_MEM_CMD_RD;
 assign lsu2dmem_width_o = dmem_wdth_byte  ? SCR1_MEM_WIDTH_BYTE
                         : dmem_wdth_hword ? SCR1_MEM_WIDTH_HWORD
@@ -352,3 +395,63 @@ SCR1_COV_LSU_MISALIGN_BRKPT : cover property (
 `endif // SCR1_TRGT_SIMULATION
 
 endmodule : scr1_pipe_lsu
+
+//------------------------------------------------------------------------------
+// Modules only used by scr1_pipe_lsu are written bellow because local module
+// declarations within a module are not supported.
+//
+// Functionality:
+// - scr1_lsu_byte_swapper is a combinational module. The with of its data input
+//   and is data ouput is XLEN. The data ouput is obtained by permutin the data
+//   input in the following way:
+//    -if control[0]=1 each even byte is swapped for the following (odd) byte
+//    -if control[1]=1 each even halfword is swapped for the following halfword
+//    -(RV64 only) if control[2]=1 the even word is swapped for the odd word
+//------------------------------------------------------------------------------
+
+module swapper #(parameter stages=0, size=0, type wire_t=logic) (
+  input logic [stages-1:0] control,
+  input wire_t [size-1:0] in,
+  output wire_t [size-1:0] out
+);
+
+localparam half_size = size>>1;
+wire_t [half_size-1:0] out0,out1; //halves of out
+assign out = control[stages-1]? {out0,out1} : {out1,out0};
+generate
+  if(stages>1)
+    begin
+      swapper #(.stages(stages-1),
+                .size(half_size),
+                .wire_t(wire_t))
+      swapper0 (.control(control[stages-2:0]),
+                .in(in[half_size-1:0]),
+                .out(out0));
+      swapper #(.stages(stages-1),
+                .size(half_size),
+                .wire_t(wire_t))
+      swapper1 (.control(control[stages-2:0]),
+                .in(in[size-1:half_size]),
+                .out(out1));
+    end
+  else
+    assign {out1,out0} = in;
+endgenerate
+
+endmodule : swapper
+
+module scr1_lsu_byte_swapper
+#(localparam controlwidth=$clog2(`SCR1_XLEN)-3) //base2 log of the size in bytes
+(
+  input logic [controlwidth-1:0] control,
+  input logic [`SCR1_XLEN-1:0] in,
+  output logic [`SCR1_XLEN-1:0] out
+);
+
+swapper #(
+    .stages(controlwidth),
+    .size(`SCR1_XLEN)
+)
+swapper(.*);
+
+endmodule : scr1_lsu_byte_swapper
