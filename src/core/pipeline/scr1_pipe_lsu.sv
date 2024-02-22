@@ -289,7 +289,6 @@ end
 
 assign lsu2dmem_req_o   = exu2lsu_req_i & ~lsu_exc_req & lsu_fsm_idle;
 assign lsu2dmem_addr_o  = exu2lsu_addr_i;
-//assign lsu2dmem_wdata_o = exu2lsu_sdata_i;
 scr1_lsu_byte_swapper lsu2dmem_byte_swapper (
   .control(swap_control),
   .in(exu2lsu_sdata_i),
@@ -402,7 +401,7 @@ endmodule : scr1_pipe_lsu
 //
 // Functionality:
 // - scr1_lsu_byte_swapper is a combinational module. The with of its data input
-//   and is data ouput is XLEN. The data ouput is obtained by permutin the data
+//   and is data ouput is XLEN. The data ouput is obtained by permuting the data
 //   input in the following way:
 //    -if control[0]=1 each even byte is swapped for the following (odd) byte
 //    -if control[1]=1 each even halfword is swapped for the following halfword
