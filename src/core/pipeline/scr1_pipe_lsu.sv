@@ -401,7 +401,7 @@ endmodule : scr1_pipe_lsu
 //
 // Functionality:
 // - scr1_lsu_byte_swapper is a combinational module. The with of its data input
-//   and is data ouput is XLEN. The data ouput is obtained by permuting the data
+//   and data ouput is XLEN. The data ouput is obtained by permuting the data
 //   input in the following way:
 //    -if control[0]=1 each even byte is swapped for the following (odd) byte
 //    -if control[1]=1 each even halfword is swapped for the following halfword
