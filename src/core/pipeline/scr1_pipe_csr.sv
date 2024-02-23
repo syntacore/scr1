@@ -117,16 +117,15 @@ module scr1_pipe_csr (
     input   type_scr1_csr_resp_e                        tdu2csr_resp_i,             // TDU response
 `endif // SCR1_TDU_EN
 
+    // CSR -> EXU LOAD/STORE interface
+`ifndef SCR1_IMMUTABLE_ENDIANNES
+    output   type_endianness                            csr2exu_endianness_o,       // Endianness of the data access
+`endif // SCR1_IMMUTABLE_ENDIANNES
+
     // CSR <-> EXU PC interface
 `ifndef SCR1_CSR_REDUCED_CNT
     input   logic                                       exu2csr_instret_no_exc_i,   // Instruction retired (without exception)
 `endif // SCR1_CSR_REDUCED_CNT
-
-`ifndef SCR1_IMMUTABLE_ENDIANNES
-    // CSR -> EXU LOAD/STORE interface
-    output   type_endianness                            csr2exu_endianness_o,       // Endianness of the data access
-`endif // SCR1_IMMUTABLE_ENDIANNES
-
     input   logic [`SCR1_XLEN-1:0]                      exu2csr_pc_curr_i,          // Current PC
     input   logic [`SCR1_XLEN-1:0]                      exu2csr_pc_next_i,          // Next PC
     output  logic [`SCR1_XLEN-1:0]                      csr2exu_new_pc_o            // Exception/IRQ/MRET new PC
