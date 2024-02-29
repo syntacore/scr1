@@ -1,6 +1,9 @@
 src_dir := $(dir $(lastword $(MAKEFILE_LIST)))
 depend_dir := $(src_dir)/../../../../dependencies/coremark
 
+ADD_FLAGS   := -flto
+ADD_LDFLAGS := -flto
+
 ifeq ("$(ITERATIONS)","")
 ITERATIONS=1
 endif
