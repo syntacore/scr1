@@ -18,7 +18,7 @@ CL_SIZE = 32;
 SECTIONS {
 
   /* code segment */
-  .text.init 0 : { 
+  .text.init ORIGIN(RAM) : { 
     FILL(0);
     . = 0x100 - 12;
     SIM_EXIT = .;

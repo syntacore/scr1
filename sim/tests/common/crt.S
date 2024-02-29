@@ -43,6 +43,12 @@ _start:
     add     a1, a1, 4
 4:  bne     a1, a2, 3b
     la      sp, __C_STACK_TOP__
+    /* init tp */
+    la    a0, _tdata_begin
+    la    a2, _tbss_end
+    sub   a1, a2, a0
+    la    a4, __STACK_START__
+    sub   tp, a4, a1
 
     // Timer init
     li      t0, mtime_ctrl
