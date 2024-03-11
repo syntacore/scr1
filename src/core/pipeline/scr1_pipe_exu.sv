@@ -101,6 +101,11 @@ module scr1_pipe_exu (
     input   logic                               csr2exu_ip_ie_i,            // Some IRQ pending and locally enabled
     input   logic                               csr2exu_mstatus_mie_up_i,   // MSTATUS or MIE update in the current cycle
 
+    `ifndef SCR1_IMMUTABLE_ENDIANNES
+    // CSR -> EXU LOAD/STORE interface
+    input type_endianness                       csr2exu_endianness_i,         // access endianess
+    `endif // SCR1_IMMUTABLE_ENDIANNES
+
     // EXU <-> DMEM interface
     output  logic                               exu2dmem_req_o,             // Data memory request
     output  type_scr1_mem_cmd_e                 exu2dmem_cmd_o,             // Data memory command
@@ -771,6 +776,11 @@ scr1_pipe_lsu i_lsu(
     .lsu2exu_ldata_o            (lsu_l_data              ),       // Loaded data form DMEM
     .lsu2exu_exc_o              (lsu_exc_req             ),       // LSU exception
     .lsu2exu_exc_code_o         (lsu_exc_code            ),       // LSU exception code
+
+    `ifndef SCR1_IMMUTABLE_ENDIANNES
+    // CSR -> LSU interface
+    .exu2lsu_endianness_i       (csr2exu_endianness_i    ),
+    `endif // SCR1_IMMUTABLE_ENDIANNES
 
 `ifdef SCR1_TDU_EN
     // TDU <-> LSU interface

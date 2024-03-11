@@ -25,6 +25,10 @@
 // TAP IDCODE
 `define SCR1_TAP_IDCODE         'hDEB11001
 
+// Bi-endian support is active by default, but can be disabled.
+// Uncomment one of the following two lines to force single-endian
+//`define SCR1_IMMUTABLE_ENDIANNES LITTLE_ENDIAN //only little-endian is supported
+//`define SCR1_IMMUTABLE_ENDIANNES BIG_ENDIAN    //only big-endian is supported
 
 `ifdef SCR1_ARCH_CUSTOM
 //------------------------------------------------------------------------------
