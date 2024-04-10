@@ -172,7 +172,7 @@ TARGETS += isr_sample
 TARGETS += coremark
 
 # Comment this target if you don't want to run the dhrystone
-TARGETS += dhrystone21
+#TARGETS += dhrystone21
 
 # Comment this target if you don't want to run the hello test
 TARGETS += hello
@@ -226,6 +226,9 @@ riscv_arch: | $(bld_dir)
 
 hello: | $(bld_dir)
 	-$(MAKE) -C $(tst_dir)/hello EXT_CFLAGS="$(EXT_CFLAGS)" ARCH=$(ARCH)
+
+biendian_sample: | $(bld_dir)
+	-$(MAKE) -C $(tst_dir)/biendian_sample EXT_CFLAGS="$(EXT_CFLAGS) -fno-strict-aliasing  -fno-inline" ARCH=$(ARCH)
 
 clean_hex: | $(bld_dir)
 	$(RM) $(bld_dir)/*.hex
