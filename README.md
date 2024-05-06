@@ -85,7 +85,7 @@ RISC-V GCC toolchain is required to compile the software. You can use pre-built 
 
 ##### Using pre-built binary tools
 
-Pre-built RISC-V GCC toolchain with support for all SCR1 architectural configurations is available for download from http://syntacore.com/page/products/sw-tools.
+Pre-built RISC-V GCC toolchain with support for all SCR1 architectural configurations is available for download from https://syntacore.com/tools/development-tools.
 
 1. Download the archive for your platform.
 2. Extract the archive to preferred directory `<GCC_INSTALL_PATH>`.
