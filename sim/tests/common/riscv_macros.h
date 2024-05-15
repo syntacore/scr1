@@ -101,21 +101,35 @@
 
 #define INTERRUPT_HANDLER j other_exception /* No interrupts should occur */
 
-#define RVTEST_CODE_BEGIN                                               \
+#define RVTEST_CODE_BEGIN   \
+                     .org 0x2000,0;                                                   \
+        MSG_TRAP:                                                       \
+        .string "break-break";                        \
         .section .text.init;                                            \
         .org 0xC0, 0x00;                                                \
         .balign  64;                                                    \
         .weak stvec_handler;                                            \
         .weak mtvec_handler;                                            \
-trap_vector:                                                            \
+trap_vector:  \
         /* test whether the test came from pass/fail */                 \
         csrr a4, mcause;                                                \
         li a5, CAUSE_USER_ECALL;                                        \
-        beq a4, a5, _report;                                            \
+        beq a4, a5, _report;   \
+                                         \
         li a5, CAUSE_SUPERVISOR_ECALL;                                  \
         beq a4, a5, _report;                                            \
         li a5, CAUSE_MACHINE_ECALL;                                     \
-        beq a4, a5, _report;                                            \
+        beq a4, a5, _report;    \
+     /* init for loop, 0xf0000000 address for print */               \
+        lui a6, 0xf0000;                                              \
+        la a2, MSG_TRAP;                                              \
+next_iter:                                                              \
+        lb a3, 0(a2);                                                   \
+        beq a3, x0, break_from_loop;                                    \
+        sw a3, 0(a6);   /* write to a6 char for print */                \
+        addi a2, a2, 1;                                                 \
+        jal x0,next_iter;                                               \
+break_from_loop:  \
         /* if an mtvec_handler is defined, jump to it */                \
         la a4, mtvec_handler;                                           \
         beqz a4, 1f;                                                    \
@@ -132,7 +146,8 @@ other_exception:                                                        \
 _report:                                                                \
         j sc_exit;                                                      \
         .balign  64;                                                    \
-        .globl _start;                                                  \
+        .globl _start; \
+        /*.section .text.start;        */                                    \
 _start:                                                                 \
         RISCV_MULTICORE_DISABLE;                                        \
         /*INIT_SPTBR;*/                                                 \

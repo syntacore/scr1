@@ -18,7 +18,7 @@ CL_SIZE = 32;
 SECTIONS {
 
   /* code segment */
-  .text.init 0 : { 
+  .text.init 0x000 : { 
     FILL(0);
     . = 0x100 - 12;
     SIM_EXIT = .;
@@ -26,10 +26,17 @@ SECTIONS {
     SIM_STOP = .;
     LONG(0x6F);
     LONG(-1);
-    . = 0x100;
-    PROVIDE(__TEXT_START__ = .);
+    . = 0x540;
+PROVIDE(__TEXT_START__ = .);
     *(.text.init) 
   } >RAM
+
+.text.start 0x400: { 
+    PROVIDE(__TEXT_END__ = .);
+    PROVIDE(__TEXT_START__ = .);
+    *(.text.start) 
+  } >RAM
+
 
   .text  : {
     *crt.o(.text .text.*)
