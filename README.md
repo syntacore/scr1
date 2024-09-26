@@ -31,6 +31,7 @@ For more information on project usage, see [SCR1 User Manual](https://github.com
 |------ | -----------
 |**dependencies**                  | **Dependent submodules**
 |├─ riscv-tests                    | Common source files for RISC-V ISA tests
+|├─ riscv_arch                     | Common source files for RISC-V Architectural tests
 |├─ riscv-compliance               | Common source files for RISC-V Compliance tests
 |└─ coremark                       | Common source files for EEMBC's CoreMark® benchmark
 |**docs**                          | **SCR1 documentation**
@@ -123,6 +124,7 @@ The simulation package includes the following tests:
 * **hello** - "Hello" sample program
 * **isr_sample** - "Interrupt Service Routine" sample program
 * **riscv_isa** - RISC-V ISA tests (submodule)
+* **riscv_arch** - RISC-V Architectural tests (submodule)
 * **riscv_compliance** - RISC-V Compliance tests (submodule)
 * **dhrystone21** - Dhrystone 2.1 benchmark
 * **coremark** - EEMBC's CoreMark® benchmark (submodule)
@@ -150,7 +152,7 @@ Makefile supports:
 * selection of external interface - `BUS = <AHB, AXI>`,
 * configuration setup - `CFG = <MAX, BASE, MIN, CUSTOM>`,
 * parameters for CUSTOM configuration - `ARCH = <IMC, IC, IM, I, EMC, EM, EC, E>, VECT_IRQ = <0, 1>, IPIC = <0, 1>, TCM = <0, 1>`
-* tests subset to run - `TARGETS = <hello, isr_sample, riscv_isa, riscv_compliance, dhrystone21, coremark>`
+* tests subset to run - `TARGETS = <hello, isr_sample, riscv_isa, riscv_compliance, riscv_arch, dhrystone21, coremark>`
 * enabling tracelog - `TRACE = <0, 1>`
 * and any additional options to pass to the simulator - `SIM_BUILD_OPTS`.
 

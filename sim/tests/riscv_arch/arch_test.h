@@ -582,7 +582,9 @@ rvtest_data_end:
 
 #define TEST_JALR_OP(tempreg, rd, rs1, imm, swreg, offset,adj) \
 5:                                            ;\
+    .if rd != x0 ;\
     LA(rd,5b                                 ) ;\
+    .endif ;\
     .if adj & 1 == 1                          ;\
     LA(rs1, 3f-imm+adj-1  )                    ;\
     jalr rd, imm+1(rs1)                      ;\
