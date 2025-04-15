@@ -94,7 +94,7 @@ logic                                               rst_n_sync;
 logic                                               cpu_rst_n_sync;
 logic                                               core_rst_n_local;
 `ifdef SCR1_DBG_EN
-logic                                               tapc_trst_n;
+logic                                               tapc_trst_n/* synthesis syn_keep = 1 */;
 `endif // SCR1_DBG_EN
 
 // Instruction memory interface from core to router

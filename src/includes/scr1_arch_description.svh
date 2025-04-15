@@ -46,6 +46,7 @@
 // `define SCR1_TRGT_FPGA_INTEL_ARRIAV  // target platform is Intel Arria V FPGAs (used in the SCR1-SDK project)
 // `define SCR1_TRGT_FPGA_XILINX        // target platform is Xilinx FPGAs (used in the SCR1-SDK project)
 // `define SCR1_TRGT_ASIC               // target platform is ASIC
+// `define SCR1_TRGT_FPGA_GOWIN         // target platform is Gowin FPGAs (used in the SCR1-SDK project)
 // `define SCR1_TRGT_SIMULATION         // target is simulation (enable simulation code)
 
  `include "scr1_arch_custom.svh"
