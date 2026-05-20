@@ -17,8 +17,21 @@ CL_SIZE = 32;
 
 SECTIONS {
 
-  /* code segment */
-  .text.init 0 : { 
+
+
+
+
+
+  .text 0x400 : {
+    *crt.o(.text .text.*)
+    *(.text .text.*)
+    *(sc_test_section)
+    . = ALIGN(CL_SIZE);
+     PROVIDE(__TEXT_END__ = .);
+  } >RAM 
+/* code segment */
+. = 0xA00;
+.text.init 0 : { 
     FILL(0);
     . = 0x100 - 12;
     SIM_EXIT = .;
@@ -26,18 +39,10 @@ SECTIONS {
     SIM_STOP = .;
     LONG(0x6F);
     LONG(-1);
-    . = 0x100;
     PROVIDE(__TEXT_START__ = .);
     *(.text.init) 
   } >RAM
 
-  .text  : {
-    *crt.o(.text .text.*)
-    *(.text .text.*)
-    *(sc_test_section)
-    . = ALIGN(CL_SIZE);
-     PROVIDE(__TEXT_END__ = .);
-  } >RAM 
 
   /* data segment */
   .data : {
