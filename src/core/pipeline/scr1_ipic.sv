@@ -457,7 +457,7 @@ always_comb begin
             SCR1_IPIC_CICSR: ipic_ipr_clr_req[irq_serv_idx] = csr2ipic_wdata_i[SCR1_IPIC_ICSR_IP]
                                                             & irq_serv_vd;
             SCR1_IPIC_IPR  : ipic_ipr_clr_req               = csr2ipic_wdata_i[SCR1_IRQ_VECT_NUM-1:0];
-            SCR1_IPIC_SOI  : ipic_ipr_clr_req[irq_req_idx]  = irq_req_vd;
+            SCR1_IPIC_SOI  : ipic_ipr_clr_req[irq_req_idx]  = irq_start_vd;
             SCR1_IPIC_ICSR : ipic_ipr_clr_req[ipic_idxr_ff] = csr2ipic_wdata_i[SCR1_IPIC_ICSR_IP];
             default        : begin end
         endcase
