@@ -103,35 +103,9 @@
 
 #define RVTEST_CODE_BEGIN                                               \
         .section .text.init;                                            \
-        .org 0xC0, 0x00;                                                \
         .balign  64;                                                    \
         .weak stvec_handler;                                            \
         .weak mtvec_handler;                                            \
-trap_vector:                                                            \
-        /* test whether the test came from pass/fail */                 \
-        csrr a4, mcause;                                                \
-        li a5, CAUSE_USER_ECALL;                                        \
-        beq a4, a5, _report;                                            \
-        li a5, CAUSE_SUPERVISOR_ECALL;                                  \
-        beq a4, a5, _report;                                            \
-        li a5, CAUSE_MACHINE_ECALL;                                     \
-        beq a4, a5, _report;                                            \
-        /* if an mtvec_handler is defined, jump to it */                \
-        la a4, mtvec_handler;                                           \
-        beqz a4, 1f;                                                    \
-        jr a4;                                                          \
-        /* was it an interrupt or an exception? */                      \
-1:      csrr a4, mcause;                                                \
-        bgez a4, handle_exception;                                      \
-        INTERRUPT_HANDLER;                                              \
-handle_exception:                                                       \
-        /* we don't know how to handle whatever the exception was */    \
-other_exception:                                                        \
-        /* some unhandlable exception occurred */                       \
-        li   a0, 0x1;                                                   \
-_report:                                                                \
-        j sc_exit;                                                      \
-        .balign  64;                                                    \
         .globl _start;                                                  \
 _start:                                                                 \
         RISCV_MULTICORE_DISABLE;                                        \
@@ -163,6 +137,45 @@ _start:                                                                 \
         csrw mepc, t0;                                                  \
         csrr a0, mhartid;                                               \
         mret;                                                           \
+        .section .text.trap,"ax",@progbits;                             \
+        .balign  64;                                                    \
+trap_vector:                                                            \
+        /* test whether the test came from pass/fail */                 \
+        csrr a4, mcause;                                                \
+        li a5, CAUSE_USER_ECALL;                                        \
+        beq a4, a5, _report;                                            \
+        li a5, CAUSE_SUPERVISOR_ECALL;                                  \
+        beq a4, a5, _report;                                            \
+        li a5, CAUSE_MACHINE_ECALL;                                     \
+        beq a4, a5, _report;                                            \
+        /* print "misalign trap" if mcause == 0 (misaligned fetch) */   \
+        bnez a4, no_print;                                              \
+        la t5, trap_msg;                                                \
+        li t6, 0xF0000000;                                              \
+print_loop:                                                             \
+        lbu t4, 0(t5);                                                  \
+        beqz t4, no_print;                                              \
+        sb t4, 0(t6);                                                   \
+        addi t5, t5, 1;                                                 \
+        j print_loop;                                                   \
+no_print:                                                               \
+        /* if an mtvec_handler is defined, jump to it */                \
+        la a4, mtvec_handler;                                           \
+        beqz a4, 1f;                                                    \
+        jr a4;                                                          \
+        /* was it an interrupt or an exception? */                      \
+1:      csrr a4, mcause;                                                \
+        bgez a4, handle_exception;                                      \
+        INTERRUPT_HANDLER;                                              \
+handle_exception:                                                       \
+        /* we don't know how to handle whatever the exception was */    \
+other_exception:                                                        \
+        /* some unhandlable exception occurred */                       \
+        li   a0, 0x1;                                                   \
+_report:                                                                \
+        j sc_exit;                                                      \
+trap_msg:                                                               \
+        .string "misalign trap\n";                                      \
         .section .text;                                                 \
 _run_test:
 

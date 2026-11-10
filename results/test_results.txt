@@ -1,0 +1,1 @@
+                    ma_fetch.hex		OK	  PASS
