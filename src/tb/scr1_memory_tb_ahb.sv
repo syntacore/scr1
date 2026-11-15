@@ -313,11 +313,14 @@ end
 // Instruction Memory response
 //-------------------------------------------------------------------------------
 always_comb begin
-    imem_hready = 1'b1;
+    imem_hready = 1'b0;
     imem_hresp  = SCR1_HRESP_OKAY;
     imem_hrdata = 'x;
     case (imem_ahb_state)
         SCR1_AHB_STATE_IDLE : begin
+            if (imem_req_ack) begin
+                imem_hready = 1'b1;
+            end
         end
         SCR1_AHB_STATE_DATA : begin
             if (imem_req_ack) begin
