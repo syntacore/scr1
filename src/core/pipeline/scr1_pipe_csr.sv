@@ -905,8 +905,8 @@ assign csr_mcycle_hi_new  = csr_mcycle_hi_ff + 1'b1;
 assign csr_mcycle_lo_next = csr_mcycle_upd[0] ? csr_w_data[7:0]
                           : csr_mcycle_lo_inc ? csr_mcycle_lo_ff + 1'b1
                                               : csr_mcycle_lo_ff;
-assign csr_mcycle_hi_next = csr_mcycle_upd[0] ? {csr_mcycle_hi_new[63:32], csr_w_data[31:8]}
-                          : csr_mcycle_upd[1] ? {csr_w_data, csr_mcycle_hi_new[31:8]}
+assign csr_mcycle_hi_next = csr_mcycle_upd[0] ? {csr_mcycle_hi_ff[63:32], csr_w_data[31:8]}
+                          : csr_mcycle_upd[1] ? {csr_w_data, csr_mcycle_hi_inc ? csr_mcycle_hi_new[31:8] : csr_mcycle_hi_ff[31:8]}
                           : csr_mcycle_hi_inc ? csr_mcycle_hi_new
                                               : csr_mcycle_hi_ff;
 
@@ -942,8 +942,8 @@ assign csr_minstret_hi_new  = csr_minstret_hi_ff + 1'b1;
 assign csr_minstret_lo_next = csr_minstret_upd[0] ? csr_w_data[7:0]
                             : csr_minstret_lo_inc ? csr_minstret_lo_ff + 1'b1
                                                   : csr_minstret_lo_ff;
-assign csr_minstret_hi_next = csr_minstret_upd[0] ? {csr_minstret_hi_new[63:32], csr_w_data[31:8]}
-                            : csr_minstret_upd[1] ? {csr_w_data, csr_minstret_hi_new[31:8]}
+assign csr_minstret_hi_next = csr_minstret_upd[0] ? {csr_minstret_hi_ff[63:32], csr_w_data[31:8]}
+                            : csr_minstret_upd[1] ? {csr_w_data, csr_minstret_hi_inc ? csr_minstret_hi_new[31:8] : csr_minstret_hi_ff[31:8]}
                             : csr_minstret_hi_inc ? csr_minstret_hi_new
                                                   : csr_minstret_hi_ff;
 
