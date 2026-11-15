@@ -367,10 +367,11 @@ assign csr_icount_skip_dsbl  = exu2tdu_imon_i.req & csr_icount_decr_en & csr_ico
 
 always_comb begin
     if (csr_icount_upd) begin
-        csr_icount_dmode_next  = csr_wr_data[SCR1_TDU_TDATA1_DMODE];
+        csr_icount_dmode_next  = csr_wr_data[SCR1_TDU_TDATA1_DMODE] & tdu_dsbl_i;
         csr_icount_m_next      = csr_wr_data[SCR1_TDU_ICOUNT_M];
         csr_icount_action_next = (csr_wr_data[SCR1_TDU_ICOUNT_ACTION_HI
-                                             :SCR1_TDU_ICOUNT_ACTION_LO] == 'b1);
+                                             :SCR1_TDU_ICOUNT_ACTION_LO] == 'b1)
+                               & csr_icount_dmode_next;
         csr_icount_hit_next    = csr_wr_data[SCR1_TDU_ICOUNT_HIT];
         csr_icount_count_next  = csr_wr_data[SCR1_TDU_ICOUNT_COUNT_HI:SCR1_TDU_ICOUNT_COUNT_LO];
     end else begin
@@ -429,13 +430,14 @@ end
 
 always_comb begin
     if (csr_mcontrol_upd[trig]) begin
-        csr_mcontrol_dmode_next [trig] = csr_wr_data[SCR1_TDU_TDATA1_DMODE];
+        csr_mcontrol_dmode_next [trig] = csr_wr_data[SCR1_TDU_TDATA1_DMODE] & tdu_dsbl_i;
         csr_mcontrol_m_next     [trig] = csr_wr_data[SCR1_TDU_MCONTROL_M];
         csr_mcontrol_exec_next  [trig] = csr_wr_data[SCR1_TDU_MCONTROL_EXECUTE];
         csr_mcontrol_load_next  [trig] = csr_wr_data[SCR1_TDU_MCONTROL_LOAD];
         csr_mcontrol_store_next [trig] = csr_wr_data[SCR1_TDU_MCONTROL_STORE];
         csr_mcontrol_action_next[trig] = (csr_wr_data[SCR1_TDU_MCONTROL_ACTION_HI
-                                                     :SCR1_TDU_MCONTROL_ACTION_LO] == 'b1);
+                                                     :SCR1_TDU_MCONTROL_ACTION_LO] == 'b1)
+                                       & csr_mcontrol_dmode_next[trig];
         csr_mcontrol_hit_next   [trig] = csr_wr_data[SCR1_TDU_MCONTROL_HIT];
     end else begin
         csr_mcontrol_dmode_next [trig] = csr_mcontrol_dmode_ff [trig];
