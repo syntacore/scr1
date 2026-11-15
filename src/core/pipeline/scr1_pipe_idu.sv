@@ -322,17 +322,11 @@ always_comb begin
                     SCR1_OPCODE_MISC_MEM    : begin
                         case (funct3)
                             3'b000  : begin
-                                if (~|{instr[31:28], instr[19:15], instr[11:7]}) begin
-                                    // FENCE = NOP
-                                end
-                                else rvi_illegal = 1'b1;
+                                // FENCE = NOP
                             end
                             3'b001  : begin
-                                if (~|{instr[31:15], instr[11:7]}) begin
-                                    // FENCE.I
-                                    idu2exu_cmd_o.fencei_req    = 1'b1;
-                                end
-                                else rvi_illegal = 1'b1;
+                                // FENCE.I
+                                idu2exu_cmd_o.fencei_req    = 1'b1;
                             end
                             default : rvi_illegal = 1'b1;
                         endcase // funct3
